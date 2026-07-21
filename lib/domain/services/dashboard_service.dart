@@ -1,0 +1,119 @@
+import 'package:quran_mobile/domain/entities/dashboard_data.dart';
+import 'package:quran_mobile/data/local/database/daos/student_dao.dart';
+import 'package:quran_mobile/data/local/database/daos/session_dao.dart';
+import 'package:quran_mobile/data/local/database/daos/schedule_dao.dart';
+import 'package:quran_mobile/data/local/database/daos/user_dao.dart';
+
+class DashboardService {
+  final StudentDao _studentDao;
+  final SessionDao _sessionDao;
+  final ScheduleDao _scheduleDao;
+  final UserDao _userDao;
+
+  DashboardService({
+    required StudentDao studentDao,
+    required SessionDao sessionDao,
+    required ScheduleDao scheduleDao,
+    required UserDao userDao,
+  })  : _studentDao = studentDao,
+        _sessionDao = sessionDao,
+        _scheduleDao = scheduleDao,
+        _userDao = userDao;
+
+  Future<DashboardData> getDashboardData() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final totalStudents = await _studentDao.count();
+    final todaySessions = await _sessionDao.countByDate(today);
+
+    final upcoming = await _scheduleDao.getUpcoming();
+    final upcomingSessions = upcoming.length;
+
+    final allSessions = await _sessionDao.getAll();
+    final allSessionsCount = allSessions.length;
+    final presentSessions = allSessions.where((s) => s.attendanceStatus == 'حاضر').length;
+    final avgAttendance = allSessionsCount > 0
+        ? (presentSessions / allSessionsCount * 100).toStringAsFixed(1)
+        : '0.0';
+
+    // Pages memorized (total ayahs / 20)
+    int totalAyahs = 0;
+    for (final s in allSessions) {
+      if (s.attendanceStatus == 'حاضر') {
+        final mem = await _sessionDao.getMemorizationBySession(s.id);
+        if (mem != null) {
+          totalAyahs += (mem.toAyah - mem.fromAyah + 1);
+        }
+      }
+    }
+    final totalPagesMemorized = totalAyahs ~/ 20;
+
+    final totalSurahsCompleted = await _studentDao.countWithCompletedSurah();
+    final totalTeachers =
+        await _userDao.countByRole('Admin') + await _userDao.countByRole('Teacher');
+
+    // Top 5 students by average evaluation score
+    final studentScores = <int, List<double>>{};
+    for (final s in allSessions) {
+      if (s.attendanceStatus == 'حاضر') {
+        final eval = await _sessionDao.getEvaluationBySession(s.id);
+        if (eval != null) {
+          final score = (eval.memorizationScore +
+                  eval.tajweedScore +
+                  eval.fluencyScore +
+                  eval.accuracyScore) /
+              4;
+          studentScores.putIfAbsent(s.studentId, () => []).add(score);
+        }
+      }
+    }
+    final avgScores =
+        studentScores.map((k, v) => MapEntry(k, v.reduce((a, b) => a + b) / v.length));
+    final topStudentIds = avgScores.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final topStudentEntries = topStudentIds.take(5).toList();
+
+    final topStudents = <DashboardTopStudent>[];
+    for (final entry in topStudentEntries) {
+      final student = await _studentDao.getById(entry.key);
+      if (student != null) {
+        topStudents.add(DashboardTopStudent(
+          studentName: student.fullName,
+          averageScore: double.parse(entry.value.toStringAsFixed(1)),
+        ));
+      }
+    }
+
+    // Weekly attendance (last 7 days)
+    final weekStart = today.subtract(const Duration(days: 6));
+    final weeklyStats = await _sessionDao.getByDateRange(weekStart, today);
+
+    final weeklyAttendance = <WeeklyAttendanceData>[];
+    for (int i = 0; i < 7; i++) {
+      final day = weekStart.add(Duration(days: i));
+      final daySessions = weeklyStats.where((s) =>
+          s.date.year == day.year &&
+          s.date.month == day.month &&
+          s.date.day == day.day).toList();
+      final present = daySessions.where((s) => s.attendanceStatus == 'حاضر').length;
+      final total = daySessions.length;
+      final pct =
+          total > 0 ? double.parse((present / total * 100).toStringAsFixed(1)) : 0.0;
+      weeklyAttendance.add(WeeklyAttendanceData(date: day, percent: pct));
+    }
+
+    return DashboardData(
+      totalStudents: totalStudents,
+      todaySessions: todaySessions,
+      upcomingSessions: upcomingSessions,
+      averageAttendance: double.parse(avgAttendance),
+      totalPagesMemorized: totalPagesMemorized,
+      totalSurahsCompleted: totalSurahsCompleted,
+      totalSessionsEver: allSessionsCount,
+      totalTeachers: totalTeachers,
+      topStudents: topStudents,
+      weeklyAttendance: weeklyAttendance,
+    );
+  }
+}
