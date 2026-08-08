@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quran_mobile/core/theme/app_text_styles.dart';
+import 'package:quran_mobile/core/widgets/app_snackbar.dart';
+import 'package:quran_mobile/core/widgets/confirm_dialog.dart';
+import 'package:quran_mobile/core/widgets/date_picker_tile.dart';
+import 'package:quran_mobile/core/widgets/discard_changes_dialog.dart';
+import 'package:quran_mobile/core/widgets/student_picker.dart';
 import 'package:quran_mobile/data/local/database/app_database.dart';
 import 'package:quran_mobile/features/schedules/providers/schedule_provider.dart';
 import 'package:quran_mobile/providers.dart';
@@ -22,6 +27,7 @@ class _ScheduleCreateScreenState extends ConsumerState<ScheduleCreateScreen> {
   TimeOfDay _selectedTime = TimeOfDay.now();
   int? _studentId;
   bool _isLoading = false;
+  bool _isDirty = false;
 
   @override
   void initState() {
@@ -31,10 +37,23 @@ class _ScheduleCreateScreenState extends ConsumerState<ScheduleCreateScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final dao = ref.read(scheduleDaoProvider);
+    final timeStr = '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
+    final existing = await dao.getUpcoming(studentId: _studentId);
+    final hasConflict = existing.any((s) =>
+        s.date.year == _selectedDate.year && s.date.month == _selectedDate.month && s.date.day == _selectedDate.day && s.time == timeStr);
+    if (hasConflict) {
+      if (!mounted) return;
+      final proceed = await showConfirmDialog(
+        context,
+        title: 'تعارض في الجدولة',
+        message: 'يوجد جدول آخر لهذا الطالب في نفس التاريخ والوقت. هل تريد المتابعة؟',
+        confirmLabel: 'متابعة',
+      );
+      if (!proceed) return;
+    }
     setState(() => _isLoading = true);
     try {
-      final dao = ref.read(scheduleDaoProvider);
-      final timeStr = '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
       await dao.insert(SchedulesCompanion(
         studentId: Value(_studentId!),
         date: Value(_selectedDate),
@@ -42,11 +61,13 @@ class _ScheduleCreateScreenState extends ConsumerState<ScheduleCreateScreen> {
       ));
       if (mounted) {
         ref.invalidate(upcomingScheduleListProvider);
+        AppSnackbar.success(context, 'تم حفظ الجدولة');
+        _isDirty = false;
         context.pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطأ: $e')));
+        AppSnackbar.error(context, e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -55,7 +76,14 @@ class _ScheduleCreateScreenState extends ConsumerState<ScheduleCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: !_isDirty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final discard = await confirmDiscardChanges(context);
+        if (discard && context.mounted) Navigator.of(context).pop();
+      },
+      child: Scaffold(
       appBar: AppBar(title: const Text('جدولة جلسة')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -66,22 +94,24 @@ class _ScheduleCreateScreenState extends ConsumerState<ScheduleCreateScreen> {
             children: [
               Text('معلومات الجدولة', style: AppTextStyles.sectionTitle),
               const SizedBox(height: 16),
-              if (_studentId == null)
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'رقم الطالب *'),
-                  keyboardType: TextInputType.number,
-                  validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال رقم الطالب' : null,
-                  onChanged: (v) => _studentId = int.tryParse(v.trim()),
+              if (_studentId == null) ...[
+                StudentPicker(
+                  value: _studentId,
+                  onChanged: (v) => setState(() {
+                    _studentId = v;
+                    _isDirty = true;
+                  }),
                 ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: const Icon(Icons.calendar_month),
-                title: Text('${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}'),
-                trailing: const Icon(Icons.edit),
-                onTap: () async {
-                  final picked = await showDatePicker(context: context, firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 365)), initialDate: _selectedDate);
-                  if (picked != null) setState(() => _selectedDate = picked);
-                },
+                const SizedBox(height: 16),
+              ],
+              DatePickerTile(
+                value: _selectedDate,
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+                onChanged: (picked) => setState(() {
+                  _selectedDate = picked;
+                  _isDirty = true;
+                }),
               ),
               ListTile(
                 leading: const Icon(Icons.access_time),
@@ -89,7 +119,12 @@ class _ScheduleCreateScreenState extends ConsumerState<ScheduleCreateScreen> {
                 trailing: const Icon(Icons.edit),
                 onTap: () async {
                   final picked = await showTimePicker(context: context, initialTime: _selectedTime);
-                  if (picked != null) setState(() => _selectedTime = picked);
+                  if (picked != null) {
+                    setState(() {
+                      _selectedTime = picked;
+                      _isDirty = true;
+                    });
+                  }
                 },
               ),
               const SizedBox(height: 32),
@@ -104,6 +139,7 @@ class _ScheduleCreateScreenState extends ConsumerState<ScheduleCreateScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

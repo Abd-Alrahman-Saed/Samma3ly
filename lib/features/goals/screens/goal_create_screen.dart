@@ -4,6 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quran_mobile/core/enums/goal_type.dart';
 import 'package:quran_mobile/core/theme/app_text_styles.dart';
+import 'package:quran_mobile/core/widgets/app_form_field.dart';
+import 'package:quran_mobile/core/widgets/app_snackbar.dart';
+import 'package:quran_mobile/core/widgets/date_picker_tile.dart';
+import 'package:quran_mobile/core/widgets/discard_changes_dialog.dart';
+import 'package:quran_mobile/core/widgets/student_picker.dart';
 import 'package:quran_mobile/data/local/database/app_database.dart';
 import 'package:quran_mobile/features/goals/providers/goal_provider.dart';
 import 'package:quran_mobile/providers.dart';
@@ -27,11 +32,15 @@ class _GoalCreateScreenState extends ConsumerState<GoalCreateScreen> {
   DateTime _startDate = DateTime.now();
   DateTime? _targetDate;
   bool _isLoading = false;
+  bool _isDirty = false;
 
   @override
   void initState() {
     super.initState();
     _studentId = widget.studentId;
+    for (final c in [_titleController, _targetSurahController, _targetJuzController]) {
+      c.addListener(() => _isDirty = true);
+    }
   }
 
   @override
@@ -44,6 +53,12 @@ class _GoalCreateScreenState extends ConsumerState<GoalCreateScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_targetDate != null && _targetDate!.isBefore(_startDate)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يجب أن يكون تاريخ الاستهداف بعد تاريخ البداية')),
+      );
+      return;
+    }
     setState(() => _isLoading = true);
     try {
       final dao = ref.read(goalDaoProvider);
@@ -58,11 +73,13 @@ class _GoalCreateScreenState extends ConsumerState<GoalCreateScreen> {
       ));
       if (mounted) {
         ref.invalidate(goalListProvider);
+        AppSnackbar.success(context, 'تم حفظ الهدف');
+        _isDirty = false;
         context.pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطأ: $e')));
+        AppSnackbar.error(context, e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -71,7 +88,14 @@ class _GoalCreateScreenState extends ConsumerState<GoalCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: !_isDirty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final discard = await confirmDiscardChanges(context);
+        if (discard && context.mounted) Navigator.of(context).pop();
+      },
+      child: Scaffold(
       appBar: AppBar(title: const Text('إضافة هدف')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -82,57 +106,77 @@ class _GoalCreateScreenState extends ConsumerState<GoalCreateScreen> {
             children: [
               Text('معلومات الهدف', style: AppTextStyles.sectionTitle),
               const SizedBox(height: 16),
-              if (_studentId == null)
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'رقم الطالب *'),
-                  keyboardType: TextInputType.number,
-                  validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال رقم الطالب' : null,
-                  onChanged: (v) => _studentId = int.tryParse(v.trim()),
+              if (_studentId == null) ...[
+                StudentPicker(
+                  value: _studentId,
+                  onChanged: (v) => setState(() {
+                    _studentId = v;
+                    _isDirty = true;
+                  }),
                 ),
-              const SizedBox(height: 16),
-              TextFormField(
+                const SizedBox(height: 16),
+              ],
+              AppFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'عنوان الهدف *'),
-                validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال عنوان الهدف' : null,
+                label: 'عنوان الهدف',
+                required: true,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _goalType,
                 decoration: const InputDecoration(labelText: 'نوع الهدف'),
                 items: GoalType.values.map((t) => DropdownMenuItem(value: t.arabic, child: Text(t.arabic))).toList(),
-                onChanged: (v) => setState(() => _goalType = v!),
+                onChanged: (v) => setState(() {
+                  _goalType = v!;
+                  _isDirty = true;
+                }),
               ),
               const SizedBox(height: 16),
               if (_goalType == 'سورة')
                 TextFormField(
                   controller: _targetSurahController,
-                  decoration: const InputDecoration(labelText: 'رقم السورة المستهدفة'),
+                  decoration: const InputDecoration(labelText: 'رقم السورة المستهدفة *'),
                   keyboardType: TextInputType.number,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'الرجاء إدخال رقم السورة المستهدفة';
+                    final n = int.tryParse(v.trim());
+                    if (n == null || n < 1 || n > 114) return 'يجب أن يكون رقم السورة بين 1 و 114';
+                    return null;
+                  },
                 ),
               if (_goalType == 'جزء')
                 TextFormField(
                   controller: _targetJuzController,
-                  decoration: const InputDecoration(labelText: 'رقم الجزء المستهدف'),
+                  decoration: const InputDecoration(labelText: 'رقم الجزء المستهدف *'),
                   keyboardType: TextInputType.number,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'الرجاء إدخال رقم الجزء المستهدف';
+                    final n = int.tryParse(v.trim());
+                    if (n == null || n < 1 || n > 30) return 'يجب أن يكون رقم الجزء بين 1 و 30';
+                    return null;
+                  },
                 ),
               const SizedBox(height: 16),
-              ListTile(
-                leading: const Icon(Icons.calendar_month),
-                title: Text('تاريخ البداية: ${_startDate.year}-${_startDate.month.toString().padLeft(2, '0')}-${_startDate.day.toString().padLeft(2, '0')}'),
-                trailing: const Icon(Icons.edit),
-                onTap: () async {
-                  final picked = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2030), initialDate: _startDate);
-                  if (picked != null) setState(() => _startDate = picked);
-                },
+              DatePickerTile(
+                label: 'تاريخ البداية',
+                value: _startDate,
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+                onChanged: (picked) => setState(() {
+                  _startDate = picked;
+                  _isDirty = true;
+                }),
               ),
-              ListTile(
-                leading: const Icon(Icons.event),
-                title: Text(_targetDate != null ? 'تاريخ الاستهداف: ${_targetDate!.year}-${_targetDate!.month.toString().padLeft(2, '0')}-${_targetDate!.day.toString().padLeft(2, '0')}' : 'تاريخ الاستهداف: (اختياري)'),
-                trailing: const Icon(Icons.edit),
-                onTap: () async {
-                  final picked = await showDatePicker(context: context, firstDate: DateTime.now(), lastDate: DateTime(2030), initialDate: _targetDate ?? DateTime.now().add(const Duration(days: 30)));
-                  if (picked != null) setState(() => _targetDate = picked);
-                },
+              DatePickerTile(
+                label: 'تاريخ الاستهداف',
+                icon: Icons.event,
+                value: _targetDate,
+                firstDate: DateTime.now(),
+                lastDate: DateTime(2030),
+                onChanged: (picked) => setState(() {
+                  _targetDate = picked;
+                  _isDirty = true;
+                }),
               ),
               const SizedBox(height: 32),
               SizedBox(
@@ -146,6 +190,7 @@ class _GoalCreateScreenState extends ConsumerState<GoalCreateScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
