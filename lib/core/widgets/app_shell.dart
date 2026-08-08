@@ -1,25 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:quran_mobile/core/theme/app_colors.dart';
 
-final currentTabIndexProvider = StateProvider<int>((ref) => 0);
-
-class AppShell extends ConsumerWidget {
+class AppShell extends StatelessWidget {
   final Widget child;
+  final String location;
 
-  const AppShell({super.key, required this.child});
+  const AppShell({super.key, required this.child, required this.location});
+
+  int get _currentIndex {
+    if (location.startsWith('/students')) return 1;
+    if (location.startsWith('/sessions')) return 2;
+    if (location.startsWith('/reports')) return 3;
+    if (location.startsWith('/settings')) return 4;
+    return 0;
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentIndex = ref.watch(currentTabIndexProvider);
-
+  Widget build(BuildContext context) {
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: currentIndex,
+        selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
-          ref.read(currentTabIndexProvider.notifier).state = index;
           switch (index) {
             case 0:
               context.goNamed('dashboard');

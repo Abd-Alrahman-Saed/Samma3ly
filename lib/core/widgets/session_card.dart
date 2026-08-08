@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:quran_mobile/core/theme/app_text_styles.dart';
 import 'package:quran_mobile/core/utils/date_utils.dart';
+import 'score_display.dart';
 import 'status_badge.dart';
 
 class SessionCardItem {
@@ -39,6 +39,10 @@ class SessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 6),
       child: InkWell(
@@ -48,15 +52,17 @@ class SessionCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                child: Text(
-                  item.initials,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+              ExcludeSemantics(
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: colorScheme.primary,
+                  child: Text(
+                    item.initials,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onPrimary,
+                    ),
                   ),
                 ),
               ),
@@ -67,29 +73,27 @@ class SessionCard extends StatelessWidget {
                   children: [
                     Text(
                       item.studentName,
-                      style: AppTextStyles.cardTitle,
+                      style: textTheme.titleSmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Text(
-                          AppDateUtils.formatDate(item.date),
-                          style: AppTextStyles.small,
-                        ),
-                        if (item.timeDisplay.isNotEmpty) ...[
-                          Text(' | ${item.timeDisplay}', style: AppTextStyles.muted),
-                        ],
-                      ],
+                    Text(
+                      item.timeDisplay.isNotEmpty
+                          ? '${AppDateUtils.formatDate(item.date)} | ${item.timeDisplay}'
+                          : AppDateUtils.formatDate(item.date),
+                      style: textTheme.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     if (item.memorizationInfo.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(
                           item.memorizationInfo,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF2563EB),
-                          ),
+                          style: TextStyle(fontSize: 12, color: colorScheme.primary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     if (item.revisionInfo.isNotEmpty)
@@ -97,10 +101,9 @@ class SessionCard extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 1),
                         child: Text(
                           item.revisionInfo,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF8B5CF6),
-                          ),
+                          style: TextStyle(fontSize: 12, color: colorScheme.secondary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                   ],
@@ -118,14 +121,11 @@ class SessionCard extends StatelessWidget {
                         constraints: const BoxConstraints(minWidth: 44),
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
+                          color: colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Center(
-                          child: Text(
-                            '${item.finalScore.toStringAsFixed(0)}/10',
-                            style: AppTextStyles.score,
-                          ),
+                          child: ScoreDisplay(score: item.finalScore),
                         ),
                       ),
                     ),
