@@ -15,7 +15,6 @@ dependencies:
 
   # State management
   flutter_riverpod: ^2.5.1
-  riverpod_annotation: ^2.3.5
 
   # Navigation
   go_router: ^14.2.0
@@ -42,6 +41,12 @@ dependencies:
   uuid: ^4.4.0
   collection: ^1.18.0
   crypto: ^3.0.3
+  cryptography: ^2.7.0
+  url_launcher: ^6.3.2
+  share_plus: ^13.2.1
+  flutter_local_notifications: ^22.1.0
+  timezone: ^0.11.1
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
@@ -51,11 +56,25 @@ dev_dependencies:
   drift_dev: ^2.19.0
   freezed: ^2.5.2
   json_serializable: ^6.8.0
-  riverpod_generator: ^2.4.0
   riverpod_lint: ^2.3.12
 
 flutter:
   uses-material-design: true
 
-dependency_overrides:
-  analyzer_plugin: ^0.13.0
+  # Sprint 1, item 1.5: this file is a variable font (its own `wght` axis
+  # covers 400–700). Registering it four times under different `weight:`
+  # values — the previous state here — tricks Flutter into treating it as
+  # four distinct STATIC faces that all happen to load the same (default,
+  # ~400) instance; anything requesting 500/600/700 then got synthetic
+  # ("faux") bold instead of the font's real bold glyphs. A single
+  # registration lets Skia interpolate the variable axis correctly for
+  # whatever FontWeight is requested — no separate static files needed.
+  #
+  # QuranHafs (for displaying actual ayah text) is intentionally not
+  # registered yet: no screen renders Quran verse text today, and it needs
+  # a real licensed asset (e.g. KFGQPC Uthmanic Hafs) — not something to
+  # fabricate here. Add it when a screen actually needs it.
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-VariableFont_wght.ttf

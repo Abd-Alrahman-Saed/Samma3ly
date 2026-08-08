@@ -23,7 +23,7 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
 
   Future<int> insert(SessionsCompanion entry) => into(sessions).insert(entry);
 
-  Future<bool> updateEntry(SessionsCompanion entry) => (update(sessions)..where((t) => t.id.equals(entry.id.value))).replace(entry);
+  Future<bool> updateEntry(SessionsCompanion entry) => update(sessions).replace(entry);
 
   Future<int> deleteById(int id) => (delete(sessions)..where((t) => t.id.equals(id))).go();
 
@@ -45,7 +45,7 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
       into(sessionMemorizations).insert(entry);
 
   Future<bool> updateMemorization(SessionMemorizationsCompanion entry) =>
-      (update(sessionMemorizations)..where((t) => t.id.equals(entry.id.value))).replace(entry);
+      update(sessionMemorizations).replace(entry);
 
   Future<int> deleteMemorization(int sessionId) =>
       (delete(sessionMemorizations)..where((t) => t.sessionId.equals(sessionId))).go();
@@ -57,6 +57,26 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
     return (select(sessionMemorizations)..where((t) => t.sessionId.isIn(ids))).get();
   }
 
+  /// Same result as calling [getAll] + [getMemorizationBySession] per
+  /// session, but as a single joined query — avoids the N+1 pattern that
+  /// used to live in `ProgressService` (Sprint 0, item 0.5).
+  ///
+  /// Pass [attendanceStatus] to filter sessions by attendance (e.g. only
+  /// present sessions), matching what `ProgressService` needs.
+  Future<List<SessionMemorization>> getMemorizationsForStudent(
+    int studentId, {
+    String? attendanceStatus,
+  }) {
+    final query = select(sessionMemorizations).join([
+      innerJoin(sessions, sessions.id.equalsExp(sessionMemorizations.sessionId)),
+    ]);
+    query.where(sessions.studentId.equals(studentId));
+    if (attendanceStatus != null) {
+      query.where(sessions.attendanceStatus.equals(attendanceStatus));
+    }
+    return query.map((row) => row.readTable(sessionMemorizations)).get();
+  }
+
   // Revision
   Future<SessionRevision?> getRevisionBySession(int sessionId) =>
       (select(sessionRevisions)..where((t) => t.sessionId.equals(sessionId))).getSingleOrNull();
@@ -65,7 +85,7 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
       into(sessionRevisions).insert(entry);
 
   Future<bool> updateRevision(SessionRevisionsCompanion entry) =>
-      (update(sessionRevisions)..where((t) => t.id.equals(entry.id.value))).replace(entry);
+      update(sessionRevisions).replace(entry);
 
   Future<int> deleteRevision(int sessionId) =>
       (delete(sessionRevisions)..where((t) => t.sessionId.equals(sessionId))).go();
@@ -78,7 +98,7 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
       into(sessionEvaluations).insert(entry);
 
   Future<bool> updateEvaluation(SessionEvaluationsCompanion entry) =>
-      (update(sessionEvaluations)..where((t) => t.id.equals(entry.id.value))).replace(entry);
+      update(sessionEvaluations).replace(entry);
 
   Future<int> deleteEvaluation(int sessionId) =>
       (delete(sessionEvaluations)..where((t) => t.sessionId.equals(sessionId))).go();

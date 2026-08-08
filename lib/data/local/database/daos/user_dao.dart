@@ -19,6 +19,8 @@ class UserDao extends DatabaseAccessor<AppDatabase> with _$UserDaoMixin {
 
   Future<int> insert(UsersCompanion entry) => into(users).insert(entry);
 
+  Future<bool> updateEntry(UsersCompanion entry) => update(users).replace(entry);
+
   Future<int> countByRole(String role) =>
       (select(users)..where((t) => t.role.equals(role))).get().then((list) => list.length);
 }

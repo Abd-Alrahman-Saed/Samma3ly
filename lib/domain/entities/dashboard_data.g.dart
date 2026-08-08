@@ -46,6 +46,7 @@ Map<String, dynamic> _$$DashboardDataImplToJson(_$DashboardDataImpl instance) =>
 _$DashboardTopStudentImpl _$$DashboardTopStudentImplFromJson(
         Map<String, dynamic> json) =>
     _$DashboardTopStudentImpl(
+      studentId: (json['studentId'] as num).toInt(),
       studentName: json['studentName'] as String,
       averageScore: (json['averageScore'] as num).toDouble(),
     );
@@ -53,6 +54,7 @@ _$DashboardTopStudentImpl _$$DashboardTopStudentImplFromJson(
 Map<String, dynamic> _$$DashboardTopStudentImplToJson(
         _$DashboardTopStudentImpl instance) =>
     <String, dynamic>{
+      'studentId': instance.studentId,
       'studentName': instance.studentName,
       'averageScore': instance.averageScore,
     };

@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:quran_mobile/core/enums/memorized_status.dart';
 import 'package:quran_mobile/data/local/database/daos/memorized_range_dao.dart';
 import 'package:quran_mobile/data/local/database/app_database.dart';
 
@@ -11,30 +12,21 @@ class MemorizedRangeService {
     final ranges = await _dao.getByStudent(studentId);
     final today = DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
-    bool needsSave = false;
+    return ranges.map((r) => _withEffectiveStatus(r, todayDate)).toList();
+  }
 
-    for (final r in ranges) {
-      if (r.status == 'محفوظ' &&
-          r.nextReviewDate != null &&
-          !r.nextReviewDate!.isAfter(todayDate)) {
-        await _dao.updateEntry(MemorizedRangesCompanion(
-          id: Value(r.id),
-          studentId: Value(r.studentId),
-          surahId: Value(r.surahId),
-          fromAyah: Value(r.fromAyah),
-          toAyah: Value(r.toAyah),
-          status: Value('يحتاج مراجعة'),
-          revisionCycleDays: Value(r.revisionCycleDays),
-          lastRevisedAt: Value(r.lastRevisedAt),
-          nextReviewDate: Value(r.nextReviewDate),
-          createdAt: Value(r.createdAt),
-          updatedAt: Value(DateTime.now()),
-        ));
-        needsSave = true;
-      }
-    }
-
-    return _dao.getByStudent(studentId);
+  /// "يحتاج مراجعة" is derived from `nextReviewDate`, not stored — a getter
+  /// must never write to the database (Sprint 0, item 0.6). This computes
+  /// the same apparent status the old code used to persist, without any
+  /// side effect: reading a student's ranges twice in a row no longer
+  /// issues surprise UPDATE statements, breaks `watch()` streams, or causes
+  /// UI flicker.
+  MemorizedRange _withEffectiveStatus(MemorizedRange r, DateTime today) {
+    final isDueForRevision = r.status == MemorizedStatus.memorized.arabic &&
+        r.nextReviewDate != null &&
+        !r.nextReviewDate!.isAfter(today);
+    if (!isDueForRevision) return r;
+    return r.copyWith(status: MemorizedStatus.needsRevision.arabic);
   }
 
   Future<MemorizedRange?> getById(int id) => _dao.getById(id);
@@ -91,7 +83,7 @@ class MemorizedRangeService {
       surahId: Value(range.surahId),
       fromAyah: Value(range.fromAyah),
       toAyah: Value(range.toAyah),
-      status: Value('محفوظ'),
+      status: Value(MemorizedStatus.memorized.arabic),
       revisionCycleDays: Value(range.revisionCycleDays),
       lastRevisedAt: Value(today),
       nextReviewDate: Value(nextReview),
@@ -113,7 +105,7 @@ class MemorizedRangeService {
       surahId: Value(existing.surahId),
       fromAyah: Value(existing.fromAyah),
       toAyah: Value(existing.toAyah),
-      status: Value('محفوظ'),
+      status: Value(MemorizedStatus.memorized.arabic),
       revisionCycleDays: Value(existing.revisionCycleDays),
       lastRevisedAt: Value(today),
       nextReviewDate: Value(nextReview),

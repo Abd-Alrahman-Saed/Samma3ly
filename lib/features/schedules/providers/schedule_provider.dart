@@ -7,6 +7,11 @@ final upcomingScheduleListProvider = FutureProvider.autoDispose<List<Schedule>>(
   return await repo.getUpcoming();
 });
 
+final schedulesByStudentProvider = FutureProvider.family.autoDispose<List<Schedule>, int>((ref, studentId) async {
+  final repo = ref.watch(scheduleRepositoryProvider);
+  return await repo.getUpcoming(studentId: studentId);
+});
+
 final scheduleByIdProvider = FutureProvider.family.autoDispose<Schedule?, int>((ref, id) async {
   final repo = ref.watch(scheduleRepositoryProvider);
   return await repo.getById(id);

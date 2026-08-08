@@ -4,5 +4,6 @@ part of 'juz_surah_range_dao.dart';
 
 // ignore_for_file: type=lint
 mixin _$JuzSurahRangeDaoMixin on DatabaseAccessor<AppDatabase> {
+  $SurahsTable get surahs => attachedDatabase.surahs;
   $JuzSurahRangesTable get juzSurahRanges => attachedDatabase.juzSurahRanges;
 }

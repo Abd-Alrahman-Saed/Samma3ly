@@ -16,7 +16,7 @@ class MemorizedRangeDao extends DatabaseAccessor<AppDatabase> with _$MemorizedRa
 
   Future<int> insert(MemorizedRangesCompanion entry) => into(memorizedRanges).insert(entry);
 
-  Future<bool> updateEntry(MemorizedRangesCompanion entry) => (update(memorizedRanges)..where((t) => t.id.equals(entry.id.value))).replace(entry);
+  Future<bool> updateEntry(MemorizedRangesCompanion entry) => update(memorizedRanges).replace(entry);
 
   Future<int> deleteById(int id) => (delete(memorizedRanges)..where((t) => t.id.equals(id))).go();
 

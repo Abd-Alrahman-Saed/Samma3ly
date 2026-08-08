@@ -1,3 +1,5 @@
+import 'package:quran_mobile/core/enums/attendance_status.dart';
+import 'package:quran_mobile/core/enums/user_role.dart';
 import 'package:quran_mobile/domain/entities/dashboard_data.dart';
 import 'package:quran_mobile/data/local/database/daos/student_dao.dart';
 import 'package:quran_mobile/data/local/database/daos/session_dao.dart';
@@ -32,7 +34,7 @@ class DashboardService {
 
     final allSessions = await _sessionDao.getAll();
     final allSessionsCount = allSessions.length;
-    final presentSessions = allSessions.where((s) => s.attendanceStatus == 'حاضر').length;
+    final presentSessions = allSessions.where((s) => s.attendanceStatus == AttendanceStatus.present.arabic).length;
     final avgAttendance = allSessionsCount > 0
         ? (presentSessions / allSessionsCount * 100).toStringAsFixed(1)
         : '0.0';
@@ -40,7 +42,7 @@ class DashboardService {
     // Pages memorized (total ayahs / 20)
     int totalAyahs = 0;
     for (final s in allSessions) {
-      if (s.attendanceStatus == 'حاضر') {
+      if (s.attendanceStatus == AttendanceStatus.present.arabic) {
         final mem = await _sessionDao.getMemorizationBySession(s.id);
         if (mem != null) {
           totalAyahs += (mem.toAyah - mem.fromAyah + 1);
@@ -50,20 +52,18 @@ class DashboardService {
     final totalPagesMemorized = totalAyahs ~/ 20;
 
     final totalSurahsCompleted = await _studentDao.countWithCompletedSurah();
-    final totalTeachers =
-        await _userDao.countByRole('Admin') + await _userDao.countByRole('Teacher');
+    final totalTeachers = await _userDao.countByRole(UserRole.admin.value) +
+        await _userDao.countByRole(UserRole.teacher.value);
 
     // Top 5 students by average evaluation score
     final studentScores = <int, List<double>>{};
     for (final s in allSessions) {
-      if (s.attendanceStatus == 'حاضر') {
+      if (s.attendanceStatus == AttendanceStatus.present.arabic) {
         final eval = await _sessionDao.getEvaluationBySession(s.id);
         if (eval != null) {
-          final score = (eval.memorizationScore +
-                  eval.tajweedScore +
-                  eval.fluencyScore +
-                  eval.accuracyScore) /
-              4;
+          final score =
+              (eval.memorizationScore + eval.tajweedScore + eval.fluencyScore) /
+                  3;
           studentScores.putIfAbsent(s.studentId, () => []).add(score);
         }
       }
@@ -79,6 +79,7 @@ class DashboardService {
       final student = await _studentDao.getById(entry.key);
       if (student != null) {
         topStudents.add(DashboardTopStudent(
+          studentId: student.id,
           studentName: student.fullName,
           averageScore: double.parse(entry.value.toStringAsFixed(1)),
         ));
@@ -96,7 +97,7 @@ class DashboardService {
           s.date.year == day.year &&
           s.date.month == day.month &&
           s.date.day == day.day).toList();
-      final present = daySessions.where((s) => s.attendanceStatus == 'حاضر').length;
+      final present = daySessions.where((s) => s.attendanceStatus == AttendanceStatus.present.arabic).length;
       final total = daySessions.length;
       final pct =
           total > 0 ? double.parse((present / total * 100).toStringAsFixed(1)) : 0.0;

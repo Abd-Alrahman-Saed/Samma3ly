@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -15,7 +16,6 @@ import 'tables/session_evaluations_table.dart';
 import 'tables/schedules_table.dart';
 import 'tables/goals_table.dart';
 import 'tables/memorized_ranges_table.dart';
-import 'tables/pending_changes_table.dart';
 
 part 'app_database.g.dart';
 
@@ -32,14 +32,18 @@ part 'app_database.g.dart';
     Schedules,
     Goals,
     MemorizedRanges,
-    PendingChanges,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+  /// Test-only constructor — lets tests inject an in-memory or temp-file
+  /// executor instead of the real on-disk database file.
+  @visibleForTesting
+  AppDatabase.forTesting(QueryExecutor executor) : super(executor);
+
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -48,7 +52,49 @@ class AppDatabase extends _$AppDatabase {
       await _seedSurahs();
       await _seedJuzRanges();
     },
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 2) {
+        // Sprint 0 (v2): the `pending_changes` table was never wired up to
+        // any real sync — drop it rather than carry dead schema forward.
+        await m.deleteTable('pending_changes');
+
+        // Sprint 0 (v2): rows referencing an already-deleted parent could
+        // accumulate before foreign keys were enforced. Purge them now so
+        // enabling enforcement below doesn't leave junk data behind that
+        // would silently leak into aggregate counts (e.g. Dashboard).
+        await _deleteOrphans();
+      }
+    },
+    beforeOpen: (details) async {
+      // SQLite defaults foreign-key enforcement to OFF on every new
+      // connection — this must be set on every open, not just on upgrade.
+      await customStatement('PRAGMA foreign_keys = ON');
+    },
   );
+
+  Future<void> _deleteOrphans() async {
+    await customStatement(
+      'DELETE FROM sessions WHERE student_id NOT IN (SELECT id FROM students)',
+    );
+    await customStatement(
+      'DELETE FROM schedules WHERE student_id NOT IN (SELECT id FROM students)',
+    );
+    await customStatement(
+      'DELETE FROM goals WHERE student_id NOT IN (SELECT id FROM students)',
+    );
+    await customStatement(
+      'DELETE FROM memorized_ranges WHERE student_id NOT IN (SELECT id FROM students)',
+    );
+    await customStatement(
+      'DELETE FROM session_memorizations WHERE session_id NOT IN (SELECT id FROM sessions)',
+    );
+    await customStatement(
+      'DELETE FROM session_revisions WHERE session_id NOT IN (SELECT id FROM sessions)',
+    );
+    await customStatement(
+      'DELETE FROM session_evaluations WHERE session_id NOT IN (SELECT id FROM sessions)',
+    );
+  }
 
   Future<void> _seedSurahs() async {
     await batch((batch) {

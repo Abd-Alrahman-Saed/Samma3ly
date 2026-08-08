@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:quran_mobile/core/enums/attendance_status.dart';
 import 'package:quran_mobile/data/local/database/daos/schedule_dao.dart';
 import 'package:quran_mobile/domain/entities/session.dart';
 import 'package:quran_mobile/domain/entities/schedule.dart';
@@ -96,7 +97,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
       studentId: Value(schedule.studentId),
       date: Value(schedule.date),
       time: Value(schedule.time),
-      attendanceStatus: const Value('حاضر'),
+      attendanceStatus: Value(AttendanceStatus.present.arabic),
       notes: const Value(null),
       createdAt: Value(DateTime.now()),
     ));

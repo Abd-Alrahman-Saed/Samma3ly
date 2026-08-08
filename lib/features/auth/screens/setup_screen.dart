@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
 import 'package:quran_mobile/core/theme/app_text_styles.dart';
+import 'package:quran_mobile/core/widgets/app_snackbar.dart';
 import 'package:quran_mobile/features/auth/providers/auth_provider.dart';
 
 class SetupScreen extends ConsumerStatefulWidget {
@@ -41,16 +42,12 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
         _fullNameController.text.trim(),
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم إنشاء حساب المشرف بنجاح')),
-        );
-        context.goNamed('login');
+        AppSnackbar.success(context, 'تم إنشاء حساب المشرف بنجاح');
+        context.goNamed('onboarding');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('حدث خطأ: $e')),
-        );
+        AppSnackbar.error(context, e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

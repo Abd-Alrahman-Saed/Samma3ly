@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_mobile/data/local/database/app_database.dart' hide Student;
 import 'package:quran_mobile/domain/entities/student.dart';
 import 'package:quran_mobile/providers.dart';
 
@@ -8,6 +9,11 @@ final studentListProvider = FutureProvider.autoDispose<List<Student>>((ref) asyn
   final repo = ref.watch(studentRepositoryProvider);
   final search = ref.watch(studentSearchProvider);
   return await repo.getAll(search: search.isEmpty ? null : search);
+});
+
+final allStudentsProvider = FutureProvider.autoDispose<List<Student>>((ref) async {
+  final repo = ref.watch(studentRepositoryProvider);
+  return await repo.getAll();
 });
 
 final studentByIdProvider = FutureProvider.family.autoDispose<Student?, int>((ref, id) async {
@@ -29,7 +35,7 @@ final refreshableStudentListProvider = FutureProvider.autoDispose<List<Student>>
   return await repo.getAll(search: search.isEmpty ? null : search);
 });
 
-final surahListProvider = FutureProvider.autoDispose<List>((ref) async {
+final surahListProvider = FutureProvider.autoDispose<List<Surah>>((ref) async {
   final dao = ref.watch(surahDaoProvider);
   return await dao.getAll();
 });

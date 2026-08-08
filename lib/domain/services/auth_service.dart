@@ -1,7 +1,6 @@
-import 'dart:convert';
-import 'dart:math';
-import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
+import 'package:quran_mobile/core/enums/user_role.dart';
+import 'package:quran_mobile/core/security/password_hasher.dart';
 import 'package:quran_mobile/data/local/database/daos/user_dao.dart';
 import 'package:quran_mobile/data/local/database/app_database.dart';
 
@@ -15,16 +14,33 @@ class AuthService {
   Future<User?> login(String username, String password) async {
     final user = await _userDao.getByUsername(username);
     if (user == null) return null;
-    if (!_verifyPassword(password, user.passwordHash)) return null;
+    if (!await PasswordHasher.verify(password, user.passwordHash)) return null;
+
+    // ترقية شفّافة: مستخدم بصيغة SHA-256 وحيدة الجولة (ما قبل Sprint 0)
+    // يُرقّى تلقائياً إلى PBKDF2 بمجرد نجاح تسجيل الدخول — بلا أي إجراء
+    // إضافي من المستخدم، وبلا تحويل جماعي محفوف بالمخاطر لكل السجلات دفعة واحدة.
+    if (PasswordHasher.isLegacyFormat(user.passwordHash)) {
+      final upgradedHash = await PasswordHasher.hash(password);
+      await _userDao.updateEntry(UsersCompanion(
+        id: Value(user.id),
+        username: Value(user.username),
+        passwordHash: Value(upgradedHash),
+        fullName: Value(user.fullName),
+        role: Value(user.role),
+        createdAt: Value(user.createdAt),
+      ));
+      return user.copyWith(passwordHash: upgradedHash);
+    }
+
     return user;
   }
 
   Future<User> createAdmin(String username, String password, String fullName) async {
     final id = await _userDao.insert(UsersCompanion(
       username: Value(username),
-      passwordHash: Value(_hashPassword(password)),
+      passwordHash: Value(await PasswordHasher.hash(password)),
       fullName: Value(fullName),
-      role: const Value('Admin'),
+      role: Value(UserRole.admin.value),
       createdAt: Value(DateTime.now()),
     ));
     return (await _userDao.getById(id))!;
@@ -33,38 +49,13 @@ class AuthService {
   Future<User> createTeacher(String username, String password, String fullName) async {
     final id = await _userDao.insert(UsersCompanion(
       username: Value(username),
-      passwordHash: Value(_hashPassword(password)),
+      passwordHash: Value(await PasswordHasher.hash(password)),
       fullName: Value(fullName),
-      role: const Value('Teacher'),
+      role: Value(UserRole.teacher.value),
       createdAt: Value(DateTime.now()),
     ));
     return (await _userDao.getById(id))!;
   }
 
   Future<List<User>> getAllUsers() => _userDao.getAll();
-
-  String _hashPassword(String password) {
-    final salt = _generateSalt();
-    final hash = _sha256Hash(password, salt);
-    return '$salt:$hash';
-  }
-
-  bool _verifyPassword(String password, String stored) {
-    final parts = stored.split(':');
-    if (parts.length != 2) return false;
-    final salt = parts[0];
-    final hash = parts[1];
-    return _sha256Hash(password, salt) == hash;
-  }
-
-  String _sha256Hash(String password, String salt) {
-    final bytes = utf8.encode(password + salt);
-    return sha256.convert(bytes).toString();
-  }
-
-  String _generateSalt() {
-    final random = Random.secure();
-    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
-    return base64Url.encode(bytes);
-  }
 }

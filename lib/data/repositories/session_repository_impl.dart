@@ -2,7 +2,9 @@ import 'package:drift/drift.dart';
 import 'package:quran_mobile/data/local/database/daos/session_dao.dart';
 import 'package:quran_mobile/domain/entities/session.dart';
 import 'package:quran_mobile/domain/repositories/session_repository.dart';
-import 'package:quran_mobile/data/local/database/app_database.dart' hide Session;
+import 'package:quran_mobile/data/local/database/app_database.dart'
+    hide Session, SessionMemorization, SessionRevision, SessionEvaluation;
+import 'package:quran_mobile/data/local/database/app_database.dart' as db;
 
 Session _toEntity(dynamic s) => Session(
       id: s.id,
@@ -14,20 +16,59 @@ Session _toEntity(dynamic s) => Session(
       createdAt: s.createdAt,
     );
 
+SessionMemorization _memorizationToEntity(db.SessionMemorization m) =>
+    SessionMemorization(
+      id: m.id,
+      sessionId: m.sessionId,
+      surahId: m.surahId,
+      fromAyah: m.fromAyah,
+      toAyah: m.toAyah,
+    );
+
+SessionRevision _revisionToEntity(db.SessionRevision r) => SessionRevision(
+      id: r.id,
+      sessionId: r.sessionId,
+      surahId: r.surahId,
+      fromAyah: r.fromAyah,
+      toAyah: r.toAyah,
+    );
+
+SessionEvaluation _evaluationToEntity(db.SessionEvaluation e) =>
+    SessionEvaluation(
+      id: e.id,
+      sessionId: e.sessionId,
+      memorizationScore: e.memorizationScore,
+      tajweedScore: e.tajweedScore,
+      fluencyScore: e.fluencyScore,
+      accuracyScore: e.accuracyScore,
+    );
+
 class SessionRepositoryImpl implements SessionRepository {
   final SessionDao _dao;
 
   SessionRepositoryImpl(this._dao);
 
+  Future<Session> _hydrate(Session session) async {
+    final memorization = await _dao.getMemorizationBySession(session.id);
+    final revision = await _dao.getRevisionBySession(session.id);
+    final evaluation = await _dao.getEvaluationBySession(session.id);
+    return session.copyWith(
+      memorization: memorization == null ? null : _memorizationToEntity(memorization),
+      revision: revision == null ? null : _revisionToEntity(revision),
+      evaluation: evaluation == null ? null : _evaluationToEntity(evaluation),
+    );
+  }
+
   @override
   Future<List<Session>> getAll({int? studentId, DateTime? from, DateTime? to}) async {
-    return (await _dao.getAll(studentId: studentId, from: from, to: to)).map(_toEntity).toList();
+    final rows = await _dao.getAll(studentId: studentId, from: from, to: to);
+    return Future.wait(rows.map(_toEntity).map(_hydrate));
   }
 
   @override
   Future<Session?> getById(int id) async {
     final s = await _dao.getById(id);
-    return s == null ? null : _toEntity(s);
+    return s == null ? null : _hydrate(_toEntity(s));
   }
 
   @override
@@ -68,7 +109,7 @@ class SessionRepositoryImpl implements SessionRepository {
       ));
     }
 
-    return _toEntity((await _dao.getById(sessionId))!);
+    return _hydrate(_toEntity((await _dao.getById(sessionId))!));
   }
 
   @override
@@ -151,7 +192,7 @@ class SessionRepositoryImpl implements SessionRepository {
       await _dao.deleteEvaluation(session.id);
     }
 
-    return _toEntity((await _dao.getById(session.id))!);
+    return _hydrate(_toEntity((await _dao.getById(session.id))!));
   }
 
   @override
@@ -162,6 +203,7 @@ class SessionRepositoryImpl implements SessionRepository {
 
   @override
   Future<List<Session>> getByDateRange(DateTime from, DateTime to) async {
-    return (await _dao.getByDateRange(from, to)).map(_toEntity).toList();
+    final rows = await _dao.getByDateRange(from, to);
+    return Future.wait(rows.map(_toEntity).map(_hydrate));
   }
 }

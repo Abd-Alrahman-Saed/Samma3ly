@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_mobile/core/widgets/app_shell.dart';
 import 'package:quran_mobile/features/auth/providers/auth_provider.dart';
 import 'package:quran_mobile/features/auth/screens/login_screen.dart';
 import 'package:quran_mobile/features/auth/screens/setup_screen.dart';
+import 'package:quran_mobile/features/onboarding/screens/onboarding_screen.dart';
 import 'package:quran_mobile/features/dashboard/screens/dashboard_screen.dart';
 import 'package:quran_mobile/features/students/screens/student_list_screen.dart';
 import 'package:quran_mobile/features/students/screens/student_details_screen.dart';
@@ -16,6 +16,7 @@ import 'package:quran_mobile/features/schedules/screens/schedule_create_screen.d
 import 'package:quran_mobile/features/goals/screens/goal_list_screen.dart';
 import 'package:quran_mobile/features/goals/screens/goal_create_screen.dart';
 import 'package:quran_mobile/features/memorization/screens/memorization_screen.dart';
+import 'package:quran_mobile/features/memorization/screens/review_queue_screen.dart';
 import 'package:quran_mobile/features/reports/screens/reports_screen.dart';
 import 'package:quran_mobile/features/settings/screens/settings_screen.dart';
 
@@ -26,6 +27,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     redirect: (context, state) {
       final location = state.matchedLocation;
+
+      if (location == '/onboarding') return null;
 
       if (location == '/login' || location == '/setup') {
         if (isLoggedIn) return '/';
@@ -47,8 +50,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: 'setup',
         builder: (_, __) => const SetupScreen(),
       ),
+      GoRoute(
+        path: '/onboarding',
+        name: 'onboarding',
+        builder: (_, state) => OnboardingScreen(nextRoute: state.uri.queryParameters['next'] ?? 'login'),
+      ),
       ShellRoute(
-        builder: (_, __, child) => AppShell(child: child),
+        builder: (_, state, child) => AppShell(location: state.matchedLocation, child: child),
         routes: [
           GoRoute(
             path: '/',
@@ -90,6 +98,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'goals/create',
                     name: 'goalCreate',
                     builder: (_, state) => GoalCreateScreen(
+                      studentId: int.parse(state.pathParameters['id']!),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'schedule/create',
+                    name: 'scheduleCreateForStudent',
+                    builder: (_, state) => ScheduleCreateScreen(
                       studentId: int.parse(state.pathParameters['id']!),
                     ),
                   ),
@@ -151,6 +166,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/reports',
             name: 'reports',
             builder: (_, __) => const ReportsScreen(),
+          ),
+          GoRoute(
+            path: '/review-queue',
+            name: 'reviewQueue',
+            builder: (_, __) => const ReviewQueueScreen(),
           ),
           GoRoute(
             path: '/settings',

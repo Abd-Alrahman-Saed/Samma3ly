@@ -68,7 +68,6 @@ class BackupService {
     final data = BackupData.fromJson(jsonDecode(json));
 
     // Clear all data (respect FK constraints - delete in reverse dependency order)
-    await _db.delete(_db.pendingChanges).go();
     await _db.delete(_db.sessionEvaluations).go();
     await _db.delete(_db.sessionRevisions).go();
     await _db.delete(_db.sessionMemorizations).go();

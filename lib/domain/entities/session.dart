@@ -66,8 +66,7 @@ class SessionEvaluation with _$SessionEvaluation {
       _$SessionEvaluationFromJson(json);
 
   double get finalScore {
-    final sum =
-        memorizationScore + tajweedScore + fluencyScore + accuracyScore;
-    return (sum / 4 * 10).roundToDouble() / 10;
+    final sum = memorizationScore + tajweedScore + fluencyScore;
+    return (sum / 3 * 10).roundToDouble() / 10;
   }
 }

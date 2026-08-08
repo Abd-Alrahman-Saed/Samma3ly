@@ -5,6 +5,10 @@ import 'package:quran_mobile/providers.dart';
 
 final sessionDateFilterProvider = StateProvider<DateTimeRange?>((ref) => null);
 
+enum SessionTimeFilter { all, past, upcoming }
+
+final sessionTimeFilterProvider = StateProvider<SessionTimeFilter>((ref) => SessionTimeFilter.all);
+
 final sessionListProvider = FutureProvider.autoDispose<List<Session>>((ref) async {
   final repo = ref.watch(sessionRepositoryProvider);
   final dateFilter = ref.watch(sessionDateFilterProvider);

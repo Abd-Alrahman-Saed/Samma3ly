@@ -8,15 +8,30 @@ final memorizedRangeByStudentProvider = FutureProvider.family.autoDispose<List<M
   return await repo.getByStudent(studentId);
 });
 
-final overdueMemorizedRangesProvider = FutureProvider.autoDispose<List<MemorizedRange>>((ref) async {
+class DueReviewItem {
+  final MemorizedRange range;
+  final int studentId;
+  final String studentName;
+
+  const DueReviewItem({required this.range, required this.studentId, required this.studentName});
+}
+
+/// Memorized ranges that are overdue for review, or due within the next 3 days,
+/// across all students, sorted soonest-first.
+final dueForReviewProvider = FutureProvider.autoDispose<List<DueReviewItem>>((ref) async {
   final repo = ref.watch(memorizedRangeRepositoryProvider);
-  final now = DateTime.now();
-  final allStudents = ref.watch(studentListProvider);
-  final all = <MemorizedRange>[];
-  final students = allStudents.valueOrNull ?? [];
+  final students = ref.watch(studentListProvider).valueOrNull ?? const [];
+  final cutoff = DateTime.now().add(const Duration(days: 3));
+
+  final items = <DueReviewItem>[];
   for (final student in students) {
-    final ranges = await repo.getByStudent(student.id!);
-    all.addAll(ranges.where((r) => r.nextReviewDate != null && r.nextReviewDate!.isBefore(now)));
+    final ranges = await repo.getByStudent(student.id);
+    for (final r in ranges) {
+      if (r.nextReviewDate != null && r.nextReviewDate!.isBefore(cutoff)) {
+        items.add(DueReviewItem(range: r, studentId: student.id, studentName: student.fullName));
+      }
+    }
   }
-  return all;
+  items.sort((a, b) => a.range.nextReviewDate!.compareTo(b.range.nextReviewDate!));
+  return items;
 });

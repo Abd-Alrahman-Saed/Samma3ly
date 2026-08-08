@@ -8,7 +8,8 @@ part 'surah_dao.g.dart';
 class SurahDao extends DatabaseAccessor<AppDatabase> with _$SurahDaoMixin {
   SurahDao(AppDatabase db) : super(db);
 
-  Future<List<Surah>> getAll() => select(surahs).get();
+  Future<List<Surah>> getAll() =>
+      (select(surahs)..orderBy([(t) => OrderingTerm.asc(t.number)])).get();
 
   Future<Surah?> getById(int id) => (select(surahs)..where((t) => t.id.equals(id))).getSingleOrNull();
 }

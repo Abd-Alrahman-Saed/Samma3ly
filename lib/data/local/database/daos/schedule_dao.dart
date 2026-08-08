@@ -22,7 +22,7 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase> with _$ScheduleDaoMixin 
 
   Future<int> insert(SchedulesCompanion entry) => into(schedules).insert(entry);
 
-  Future<bool> updateEntry(SchedulesCompanion entry) => (update(schedules)..where((t) => t.id.equals(entry.id.value))).replace(entry);
+  Future<bool> updateEntry(SchedulesCompanion entry) => update(schedules).replace(entry);
 
   Future<int> deleteById(int id) => (delete(schedules)..where((t) => t.id.equals(id))).go();
 }

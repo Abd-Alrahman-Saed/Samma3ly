@@ -27,6 +27,7 @@ class DashboardData with _$DashboardData {
 @freezed
 class DashboardTopStudent with _$DashboardTopStudent {
   const factory DashboardTopStudent({
+    required int studentId,
     required String studentName,
     required double averageScore,
   }) = _DashboardTopStudent;

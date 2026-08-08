@@ -19,7 +19,7 @@ class StudentDao extends DatabaseAccessor<AppDatabase> with _$StudentDaoMixin {
 
   Future<int> insert(StudentsCompanion entry) => into(students).insert(entry);
 
-  Future<bool> updateEntry(StudentsCompanion entry) => (update(students)..where((t) => t.id.equals(entry.id.value))).replace(entry);
+  Future<bool> updateEntry(StudentsCompanion entry) => update(students).replace(entry);
 
   Future<int> deleteById(int id) => (delete(students)..where((t) => t.id.equals(id))).go();
 

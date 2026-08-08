@@ -1,4 +1,8 @@
 import 'package:drift/drift.dart';
+import 'package:quran_mobile/core/enums/attendance_status.dart';
+import 'package:quran_mobile/core/enums/goal_status.dart';
+import 'package:quran_mobile/core/enums/goal_type.dart';
+import 'package:quran_mobile/core/enums/student_level.dart';
 import 'package:quran_mobile/data/local/database/daos/session_dao.dart';
 import 'package:quran_mobile/data/local/database/daos/student_dao.dart';
 import 'package:quran_mobile/data/local/database/daos/goal_dao.dart';
@@ -30,29 +34,35 @@ class ProgressService {
     if (student == null) return;
 
     final allSessions = await _sessionDao.getAll(studentId: studentId);
-    final presentSessions = allSessions.where((s) => s.attendanceStatus == 'حاضر').toList();
+    final presentSessions =
+        allSessions.where((s) => s.attendanceStatus == AttendanceStatus.present.arabic).toList();
 
-    final memorizations = <SessionMemorization>[];
-    for (final s in presentSessions) {
-      final mem = await _sessionDao.getMemorizationBySession(s.id);
-      if (mem != null) memorizations.add(mem);
-    }
-    memorizations.sort((a, b) {
-      final cmp = a.surahId.compareTo(b.surahId);
-      return cmp != 0 ? cmp : a.fromAyah.compareTo(b.fromAyah);
-    });
+    // Single joined query instead of one getMemorizationBySession() call per
+    // session (Sprint 0, item 0.5 — was the main N+1 offender here).
+    final memorizations = await _sessionDao.getMemorizationsForStudent(
+      studentId,
+      attendanceStatus: AttendanceStatus.present.arabic,
+    );
+    final sortedMemorizations = [...memorizations]..sort((a, b) {
+        final cmp = a.surahId.compareTo(b.surahId);
+        return cmp != 0 ? cmp : a.fromAyah.compareTo(b.fromAyah);
+      });
 
-    int? currentSurahId = memorizations.isNotEmpty ? memorizations.first.surahId : null;
+    int? currentSurahId = sortedMemorizations.isNotEmpty ? sortedMemorizations.first.surahId : null;
     int? lastCompletedSurahId = currentSurahId;
 
-    for (final m in memorizations) {
-      final surah = await _surahDao.getById(m.surahId);
+    // Batch-fetch every surah once instead of one surahDao.getById() call
+    // per memorization row (the surahs table is a tiny, static 114-row
+    // reference table — safe to load in full).
+    final surahById = {for (final s in await _surahDao.getAll()) s.id: s};
+    for (final m in sortedMemorizations) {
+      final surah = surahById[m.surahId];
       if (surah != null && m.toAyah >= surah.ayahCount) {
         lastCompletedSurahId = m.surahId;
       }
     }
 
-    final completedJuz = await _calculateCompletedJuz(studentId);
+    final completedJuz = await _calculateCompletedJuz(memorizations);
 
     final totalSessions = presentSessions.length;
     final hasProgress = totalSessions > 0;
@@ -62,11 +72,11 @@ class ProgressService {
 
     String level;
     if (hasMultipleSurahs && hasAdvanced) {
-      level = 'متقدم';
+      level = StudentLevel.advanced.arabic;
     } else if (hasProgress) {
-      level = 'متوسط';
+      level = StudentLevel.intermediate.arabic;
     } else {
-      level = 'مبتدئ';
+      level = StudentLevel.beginner.arabic;
     }
 
     await _studentDao.updateEntry(StudentsCompanion(
@@ -89,31 +99,28 @@ class ProgressService {
     final goals = await _goalDao.getByStudent(studentId);
     if (goals.isEmpty) return;
 
-    final allSessions = await _sessionDao.getAll(studentId: studentId);
-    final presentSessions = allSessions.where((s) => s.attendanceStatus == 'حاضر').toList();
-
-    final memorizations = <SessionMemorization>[];
-    for (final s in presentSessions) {
-      final mem = await _sessionDao.getMemorizationBySession(s.id);
-      if (mem != null) memorizations.add(mem);
-    }
+    final memorizations = await _sessionDao.getMemorizationsForStudent(
+      studentId,
+      attendanceStatus: AttendanceStatus.present.arabic,
+    );
 
     for (final goal in goals) {
-      if (goal.goalType == 'سورة' && goal.targetSurahId != null) {
+      if (goal.goalType == GoalType.surah.arabic && goal.targetSurahId != null) {
         final surah = await _surahDao.getById(goal.targetSurahId!);
         if (surah == null) continue;
 
-        final mems = memorizations.where((m) => m.surahId == goal.targetSurahId).toList();
-        final totalAyahs = mems.fold<int>(0, (sum, m) => sum + (m.toAyah - m.fromAyah + 1));
+        final intervals =
+            memorizations.where((m) => m.surahId == goal.targetSurahId).map((m) => (m.fromAyah, m.toAyah));
+        final totalAyahs = _coveredAyahsWithin(intervals, 1, surah.ayahCount);
         final targetAyahs = surah.ayahCount;
 
         String status;
         if (totalAyahs <= 0) {
-          status = 'لم يبدأ';
+          status = GoalStatus.notStarted.arabic;
         } else if (totalAyahs >= targetAyahs) {
-          status = 'مكتمل';
+          status = GoalStatus.completed.arabic;
         } else {
-          status = 'قيد التنفيذ';
+          status = GoalStatus.inProgress.arabic;
         }
 
         await _goalDao.updateEntry(GoalsCompanion(
@@ -128,27 +135,23 @@ class ProgressService {
           status: Value(status),
           createdAt: Value(goal.createdAt),
         ));
-      } else if (goal.goalType == 'جزء' && goal.targetJuzNumber != null) {
+      } else if (goal.goalType == GoalType.juz.arabic && goal.targetJuzNumber != null) {
         final ranges = await _juzRangeDao.getByJuzNumber(goal.targetJuzNumber!);
         final totalTargetAyahs = ranges.fold<int>(0, (sum, r) => sum + (r.toAyah - r.fromAyah + 1));
 
         int doneAyahs = 0;
         for (final r in ranges) {
-          doneAyahs += memorizations
-              .where((m) =>
-                  m.surahId == r.surahId &&
-                  m.fromAyah >= r.fromAyah &&
-                  m.toAyah <= r.toAyah)
-              .fold<int>(0, (sum, m) => sum + (m.toAyah - m.fromAyah + 1));
+          final intervals = memorizations.where((m) => m.surahId == r.surahId).map((m) => (m.fromAyah, m.toAyah));
+          doneAyahs += _coveredAyahsWithin(intervals, r.fromAyah, r.toAyah);
         }
 
         String status;
         if (doneAyahs <= 0) {
-          status = 'لم يبدأ';
+          status = GoalStatus.notStarted.arabic;
         } else if (doneAyahs >= totalTargetAyahs) {
-          status = 'مكتمل';
+          status = GoalStatus.completed.arabic;
         } else {
-          status = 'قيد التنفيذ';
+          status = GoalStatus.inProgress.arabic;
         }
 
         await _goalDao.updateEntry(GoalsCompanion(
@@ -167,16 +170,7 @@ class ProgressService {
     }
   }
 
-  Future<int> _calculateCompletedJuz(int studentId) async {
-    final allSessions = await _sessionDao.getAll(studentId: studentId);
-    final presentSessions = allSessions.where((s) => s.attendanceStatus == 'حاضر').toList();
-
-    final memorizations = <SessionMemorization>[];
-    for (final s in presentSessions) {
-      final mem = await _sessionDao.getMemorizationBySession(s.id);
-      if (mem != null) memorizations.add(mem);
-    }
-
+  Future<int> _calculateCompletedJuz(List<SessionMemorization> memorizations) async {
     final juzRanges = await _juzRangeDao.getAll();
     final juzGroups = <int, List<JuzSurahRange>>{};
     for (final r in juzRanges) {
@@ -187,15 +181,12 @@ class ProgressService {
     for (final entry in juzGroups.entries) {
       bool juzComplete = true;
       for (final range in entry.value) {
-        final ayahCount = memorizations
-            .where((m) =>
-                m.surahId == range.surahId &&
-                m.fromAyah >= range.fromAyah &&
-                m.toAyah <= range.toAyah)
-            .fold<int>(0, (sum, m) => sum + (m.toAyah - m.fromAyah + 1));
+        final intervals =
+            memorizations.where((m) => m.surahId == range.surahId).map((m) => (m.fromAyah, m.toAyah));
+        final covered = _coveredAyahsWithin(intervals, range.fromAyah, range.toAyah);
 
         final targetCount = range.toAyah - range.fromAyah + 1;
-        if (ayahCount < targetCount) {
+        if (covered < targetCount) {
           juzComplete = false;
           break;
         }
@@ -204,5 +195,43 @@ class ProgressService {
     }
 
     return completedJuz;
+  }
+
+  /// How many DISTINCT ayahs within [rangeFrom]..[rangeTo] are covered by
+  /// [memorized] intervals (Sprint 0, item 0.4).
+  ///
+  /// Replaces the old "containment filter + naive sum" logic, which had two
+  /// bugs: a recitation crossing the range boundary contributed nothing at
+  /// all (containment, not intersection), and overlapping/duplicate
+  /// recitations were summed rather than unioned, inflating the count.
+  ///
+  /// Each interval is first clipped to the target range (intersection),
+  /// then overlapping/adjacent clipped intervals are merged before summing
+  /// — so neither boundary-crossing recitations nor duplicates skew the
+  /// result.
+  static int _coveredAyahsWithin(Iterable<(int from, int to)> memorized, int rangeFrom, int rangeTo) {
+    final clipped = <(int, int)>[];
+    for (final (from, to) in memorized) {
+      final clippedFrom = from > rangeFrom ? from : rangeFrom;
+      final clippedTo = to < rangeTo ? to : rangeTo;
+      if (clippedFrom <= clippedTo) clipped.add((clippedFrom, clippedTo));
+    }
+    if (clipped.isEmpty) return 0;
+
+    clipped.sort((a, b) => a.$1.compareTo(b.$1));
+    var total = 0;
+    var curFrom = clipped.first.$1;
+    var curTo = clipped.first.$2;
+    for (final (from, to) in clipped.skip(1)) {
+      if (from <= curTo + 1) {
+        if (to > curTo) curTo = to;
+      } else {
+        total += curTo - curFrom + 1;
+        curFrom = from;
+        curTo = to;
+      }
+    }
+    total += curTo - curFrom + 1;
+    return total;
   }
 }

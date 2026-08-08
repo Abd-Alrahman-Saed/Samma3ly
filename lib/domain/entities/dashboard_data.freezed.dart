@@ -402,6 +402,7 @@ DashboardTopStudent _$DashboardTopStudentFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$DashboardTopStudent {
+  int get studentId => throw _privateConstructorUsedError;
   String get studentName => throw _privateConstructorUsedError;
   double get averageScore => throw _privateConstructorUsedError;
 
@@ -421,7 +422,7 @@ abstract class $DashboardTopStudentCopyWith<$Res> {
           DashboardTopStudent value, $Res Function(DashboardTopStudent) then) =
       _$DashboardTopStudentCopyWithImpl<$Res, DashboardTopStudent>;
   @useResult
-  $Res call({String studentName, double averageScore});
+  $Res call({int studentId, String studentName, double averageScore});
 }
 
 /// @nodoc
@@ -439,10 +440,15 @@ class _$DashboardTopStudentCopyWithImpl<$Res, $Val extends DashboardTopStudent>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? studentId = null,
     Object? studentName = null,
     Object? averageScore = null,
   }) {
     return _then(_value.copyWith(
+      studentId: null == studentId
+          ? _value.studentId
+          : studentId // ignore: cast_nullable_to_non_nullable
+              as int,
       studentName: null == studentName
           ? _value.studentName
           : studentName // ignore: cast_nullable_to_non_nullable
@@ -463,7 +469,7 @@ abstract class _$$DashboardTopStudentImplCopyWith<$Res>
       __$$DashboardTopStudentImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String studentName, double averageScore});
+  $Res call({int studentId, String studentName, double averageScore});
 }
 
 /// @nodoc
@@ -479,10 +485,15 @@ class __$$DashboardTopStudentImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? studentId = null,
     Object? studentName = null,
     Object? averageScore = null,
   }) {
     return _then(_$DashboardTopStudentImpl(
+      studentId: null == studentId
+          ? _value.studentId
+          : studentId // ignore: cast_nullable_to_non_nullable
+              as int,
       studentName: null == studentName
           ? _value.studentName
           : studentName // ignore: cast_nullable_to_non_nullable
@@ -499,11 +510,15 @@ class __$$DashboardTopStudentImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$DashboardTopStudentImpl implements _DashboardTopStudent {
   const _$DashboardTopStudentImpl(
-      {required this.studentName, required this.averageScore});
+      {required this.studentId,
+      required this.studentName,
+      required this.averageScore});
 
   factory _$DashboardTopStudentImpl.fromJson(Map<String, dynamic> json) =>
       _$$DashboardTopStudentImplFromJson(json);
 
+  @override
+  final int studentId;
   @override
   final String studentName;
   @override
@@ -511,7 +526,7 @@ class _$DashboardTopStudentImpl implements _DashboardTopStudent {
 
   @override
   String toString() {
-    return 'DashboardTopStudent(studentName: $studentName, averageScore: $averageScore)';
+    return 'DashboardTopStudent(studentId: $studentId, studentName: $studentName, averageScore: $averageScore)';
   }
 
   @override
@@ -519,6 +534,8 @@ class _$DashboardTopStudentImpl implements _DashboardTopStudent {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$DashboardTopStudentImpl &&
+            (identical(other.studentId, studentId) ||
+                other.studentId == studentId) &&
             (identical(other.studentName, studentName) ||
                 other.studentName == studentName) &&
             (identical(other.averageScore, averageScore) ||
@@ -527,7 +544,8 @@ class _$DashboardTopStudentImpl implements _DashboardTopStudent {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, studentName, averageScore);
+  int get hashCode =>
+      Object.hash(runtimeType, studentId, studentName, averageScore);
 
   /// Create a copy of DashboardTopStudent
   /// with the given fields replaced by the non-null parameter values.
@@ -548,12 +566,15 @@ class _$DashboardTopStudentImpl implements _DashboardTopStudent {
 
 abstract class _DashboardTopStudent implements DashboardTopStudent {
   const factory _DashboardTopStudent(
-      {required final String studentName,
+      {required final int studentId,
+      required final String studentName,
       required final double averageScore}) = _$DashboardTopStudentImpl;
 
   factory _DashboardTopStudent.fromJson(Map<String, dynamic> json) =
       _$DashboardTopStudentImpl.fromJson;
 
+  @override
+  int get studentId;
   @override
   String get studentName;
   @override
