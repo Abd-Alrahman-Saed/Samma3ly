@@ -8,9 +8,14 @@
 // (juz seed-data fix) land — update the assertion at that point, don't
 // delete the test. See docs/IMPLEMENTATION_PLAN.md.
 //
-// Juz-related fixtures deliberately stay within juz 1–19: the seed data for
-// juz 20–30 is itself corrupted (task 0.4b) and mixing that bug into these
-// tests would make them meaningless once 0.4b is fixed.
+// Juz-related fixtures deliberately stay within juz 1–2: at the time this
+// suite was written, the seed data for juz 3–30 was itself corrupted (task
+// 0.4b) and mixing that bug into these characterization tests would have
+// made them meaningless once 0.4b was fixed. 0.4b is now fixed (seed
+// rebuilt from verified sources — see the comment above `_juzRangeData` in
+// app_database.dart, and test/data/local/database/juz_range_seed_test.dart
+// for the regression guard); these fixtures were never widened since juz
+// 1–2 already exercise the logic being characterized here.
 import 'package:drift/drift.dart' hide isNull;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quran_mobile/data/local/database/app_database.dart';
