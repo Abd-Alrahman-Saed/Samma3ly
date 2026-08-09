@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
 import 'package:quran_mobile/core/theme/app_text_styles.dart';
 import 'package:quran_mobile/core/widgets/empty_state.dart';
@@ -77,25 +78,25 @@ class ReportsScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: KpiCard(icon: Icons.people, title: 'إجمالي الطلاب', value: '${data.totalStudents}')),
+                  Expanded(child: KpiCard(icon: AppIcons.people, title: 'إجمالي الطلاب', value: '${data.totalStudents}')),
                   const SizedBox(width: 12),
-                  Expanded(child: KpiCard(icon: Icons.calendar_today, title: 'الجلسات', value: '${data.totalSessionsEver}')),
+                  Expanded(child: KpiCard(icon: AppIcons.calendar, title: 'الجلسات', value: '${data.totalSessionsEver}')),
                 ],
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: KpiCard(icon: Icons.person, title: 'المعلمون', value: '${data.totalTeachers}')),
+                  Expanded(child: KpiCard(icon: AppIcons.person, title: 'المعلمون', value: '${data.totalTeachers}')),
                   const SizedBox(width: 12),
-                  Expanded(child: KpiCard(icon: Icons.check_circle, title: 'الحضور', value: '${data.averageAttendance.toStringAsFixed(0)}%')),
+                  Expanded(child: KpiCard(icon: AppIcons.checkCircle, title: 'الحضور', value: '${data.averageAttendance.toStringAsFixed(0)}%')),
                 ],
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: KpiCard(icon: Icons.auto_stories, title: 'الصفحات', value: '${data.totalPagesMemorized}')),
+                  Expanded(child: KpiCard(icon: AppIcons.book, title: 'الصفحات', value: '${data.totalPagesMemorized}')),
                   const SizedBox(width: 12),
-                  Expanded(child: KpiCard(icon: Icons.star, title: 'السور', value: '${data.totalSurahsCompleted}')),
+                  Expanded(child: KpiCard(icon: AppIcons.star, title: 'السور', value: '${data.totalSurahsCompleted}')),
                 ],
               ),
               const SizedBox(height: 24),

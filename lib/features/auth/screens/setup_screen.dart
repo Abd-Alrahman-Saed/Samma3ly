@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
-import 'package:quran_mobile/core/theme/app_text_styles.dart';
+import 'package:quran_mobile/core/widgets/app_form_field.dart';
+import 'package:quran_mobile/core/widgets/app_logo_mark.dart';
 import 'package:quran_mobile/core/widgets/app_snackbar.dart';
 import 'package:quran_mobile/features/auth/providers/auth_provider.dart';
 
@@ -19,7 +21,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _fullNameController = TextEditingController();
-  bool _obscurePassword = true;
+  final _obscurePassword = true;
   bool _isLoading = false;
 
   @override
@@ -57,58 +59,64 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.appBackground,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 36),
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.admin_panel_settings, size: 80, color: AppColors.primary),
-                  const SizedBox(height: 16),
-                  Text('الإعداد الأولي', style: AppTextStyles.pageHeader, textAlign: TextAlign.center),
-                  const SizedBox(height: 8),
-                  Text('إنشاء حساب المشرف الأول', style: AppTextStyles.sectionTitle, textAlign: TextAlign.center),
-                  const SizedBox(height: 32),
-                  TextFormField(
+                  const AppLogoMark(size: 54, radius: 14, icon: AppIcons.admin, iconSize: 26, showBadge: false),
+                  const SizedBox(height: 14),
+                  const Text('الإعداد الأولي', style: TextStyle(fontFamily: 'Reem Kufi', fontSize: 20, color: AppColors.textPrimary)),
+                  const SizedBox(height: 4),
+                  const Text('إنشاء حساب المشرف الأول', style: TextStyle(fontFamily: 'Cairo', fontSize: 12.5, color: AppColors.textSecondary)),
+                  const SizedBox(height: 24),
+                  AppFormField(
                     controller: _fullNameController,
-                    decoration: const InputDecoration(labelText: 'الاسم الكامل', prefixIcon: Icon(Icons.badge)),
+                    label: 'الاسم الكامل',
                     validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال الاسم' : null,
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
+                  const SizedBox(height: 12),
+                  AppFormField(
                     controller: _usernameController,
-                    decoration: const InputDecoration(labelText: 'اسم المستخدم', prefixIcon: Icon(Icons.person)),
+                    label: 'اسم المستخدم',
                     validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال اسم المستخدم' : null,
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
+                  const SizedBox(height: 12),
+                  AppFormField(
                     controller: _passwordController,
+                    label: 'كلمة المرور',
                     obscureText: _obscurePassword,
-                    decoration: const InputDecoration(labelText: 'كلمة المرور', prefixIcon: Icon(Icons.lock)),
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'الرجاء إدخال كلمة المرور';
                       if (v.length < 6) return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
+                  const SizedBox(height: 12),
+                  AppFormField(
                     controller: _confirmPasswordController,
+                    label: 'تأكيد كلمة المرور',
                     obscureText: _obscurePassword,
-                    decoration: const InputDecoration(labelText: 'تأكيد كلمة المرور', prefixIcon: Icon(Icons.lock_outline)),
                     validator: (v) => v != _passwordController.text ? 'كلمة المرور غير متطابقة' : null,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
-                    height: 48,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _setup,
-                      child: _isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('إنشاء الحساب'),
+                      child: _isLoading
+                          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.onPrimary))
+                          : const Text('إنشاء الحساب'),
                     ),
+                  ),
+                  TextButton(
+                    onPressed: () => context.goNamed('login'),
+                    child: const Text('رجوع لتسجيل الدخول'),
                   ),
                 ],
               ),

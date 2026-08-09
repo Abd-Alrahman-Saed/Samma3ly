@@ -1,63 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:quran_mobile/core/icons/app_icons.dart';
+import 'package:quran_mobile/core/theme/app_colors.dart';
 
+/// KPI stat card — exact layout from the adopted design: bare icon (no
+/// colored container) on top, large bold value below it, small muted
+/// title at the bottom. See docs/DESIGN_SPEC.md.
 class KpiCard extends StatelessWidget {
   final String title;
   final String value;
-  final IconData icon;
-  final Color? iconBackground;
+  final String icon; // AppIcons markup string
+  final Color? iconColor;
 
   const KpiCard({
     super.key,
     required this.title,
     required this.value,
     required this.icon,
-    this.iconBackground,
+    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     return Card(
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(13),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: iconBackground ?? colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, size: 18, color: colorScheme.primary),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
+            AppIcon(icon, size: 18, color: iconColor ?? AppColors.primary),
+            const SizedBox(height: 7),
             Text(
               value,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontFamily: 'Cairo', fontSize: 21, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 1),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, color: AppColors.textSecondary),
             ),
           ],
         ),

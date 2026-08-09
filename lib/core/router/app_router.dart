@@ -12,9 +12,7 @@ import 'package:quran_mobile/features/students/screens/student_create_screen.dar
 import 'package:quran_mobile/features/sessions/screens/session_list_screen.dart';
 import 'package:quran_mobile/features/sessions/screens/session_create_screen.dart';
 import 'package:quran_mobile/features/schedules/screens/schedule_list_screen.dart';
-import 'package:quran_mobile/features/schedules/screens/schedule_create_screen.dart';
 import 'package:quran_mobile/features/goals/screens/goal_list_screen.dart';
-import 'package:quran_mobile/features/goals/screens/goal_create_screen.dart';
 import 'package:quran_mobile/features/memorization/screens/memorization_screen.dart';
 import 'package:quran_mobile/features/memorization/screens/review_queue_screen.dart';
 import 'package:quran_mobile/features/reports/screens/reports_screen.dart';
@@ -95,20 +93,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     ),
                   ),
                   GoRoute(
-                    path: 'goals/create',
-                    name: 'goalCreate',
-                    builder: (_, state) => GoalCreateScreen(
-                      studentId: int.parse(state.pathParameters['id']!),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'schedule/create',
-                    name: 'scheduleCreateForStudent',
-                    builder: (_, state) => ScheduleCreateScreen(
-                      studentId: int.parse(state.pathParameters['id']!),
-                    ),
-                  ),
-                  GoRoute(
                     path: 'memorization',
                     name: 'memorization',
                     builder: (_, state) => MemorizationScreen(
@@ -142,25 +126,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/schedules',
             name: 'schedulesList',
             builder: (_, __) => const ScheduleListScreen(),
-            routes: [
-              GoRoute(
-                path: 'create',
-                name: 'scheduleCreate',
-                builder: (_, __) => const ScheduleCreateScreen(),
-              ),
-            ],
           ),
           GoRoute(
             path: '/goals',
             name: 'goalsList',
             builder: (_, __) => const GoalListScreen(),
-            routes: [
-              GoRoute(
-                path: 'create',
-                name: 'goalCreateStandalone',
-                builder: (_, __) => const GoalCreateScreen(),
-              ),
-            ],
           ),
           GoRoute(
             path: '/reports',

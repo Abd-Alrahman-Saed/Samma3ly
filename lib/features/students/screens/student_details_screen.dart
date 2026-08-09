@@ -3,21 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:quran_mobile/core/enums/goal_status.dart';
+import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
-import 'package:quran_mobile/core/theme/app_text_styles.dart';
+import 'package:quran_mobile/core/utils/date_utils.dart';
 import 'package:quran_mobile/core/widgets/app_snackbar.dart';
 import 'package:quran_mobile/core/widgets/convert_to_session_button.dart';
 import 'package:quran_mobile/core/widgets/error_banner.dart';
 import 'package:quran_mobile/core/widgets/loading_overlay.dart';
 import 'package:quran_mobile/core/widgets/score_display.dart';
-import 'package:quran_mobile/core/utils/date_utils.dart';
-import 'package:quran_mobile/core/enums/goal_status.dart';
 import 'package:quran_mobile/domain/entities/goal.dart';
-import 'package:quran_mobile/features/students/providers/student_provider.dart';
-import 'package:quran_mobile/features/sessions/providers/session_provider.dart';
-import 'package:quran_mobile/features/schedules/providers/schedule_provider.dart';
+import 'package:quran_mobile/domain/entities/student.dart';
 import 'package:quran_mobile/features/goals/providers/goal_provider.dart';
-import 'package:quran_mobile/features/memorization/providers/memorization_provider.dart';
+import 'package:quran_mobile/features/goals/screens/goal_form_sheet.dart';
+import 'package:quran_mobile/features/schedules/providers/schedule_provider.dart';
+import 'package:quran_mobile/features/schedules/screens/schedule_form_sheet.dart';
+import 'package:quran_mobile/features/sessions/providers/session_provider.dart';
+import 'package:quran_mobile/features/students/providers/student_provider.dart';
 import 'package:quran_mobile/providers.dart';
 
 class StudentDetailsScreen extends ConsumerWidget {
@@ -28,6 +30,7 @@ class StudentDetailsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final studentAsync = ref.watch(studentByIdProvider(studentId));
+    final surahsAsync = ref.watch(surahListProvider);
 
     return studentAsync.when(
       loading: () => const Scaffold(body: LoadingOverlay()),
@@ -36,93 +39,83 @@ class StudentDetailsScreen extends ConsumerWidget {
         if (student == null) {
           return const Scaffold(body: Center(child: Text('الطالب غير موجود')));
         }
+        final currentSurahName = student.currentSurahId != null
+            ? (surahsAsync.valueOrNull ?? const []).where((s) => s.id == student.currentSurahId).firstOrNull?.name
+            : null;
         return Scaffold(
-          appBar: AppBar(
-            title: Text(student.fullName),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.edit),
-                tooltip: 'تعديل بيانات الطالب',
-                onPressed: () => context.goNamed('studentEdit', pathParameters: {'id': '$studentId'}),
-              ),
-            ],
-          ),
-          body: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          body: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 24),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                  child: Row(
                     children: [
-                      Text('معلومات الطالب', style: AppTextStyles.sectionTitle),
-                      const Divider(),
-                      _InfoRow(label: 'الاسم', value: student.fullName),
-                      _InfoRow(label: 'العمر', value: '${student.age}'),
-                      _InfoRow(label: 'رقم الهاتف', value: student.phone ?? '', isPhone: true),
-                      _InfoRow(label: 'العنوان', value: student.address ?? ''),
-                      _InfoRow(label: 'ولي الأمر', value: student.parentName ?? ''),
-                      _InfoRow(label: 'هاتف ولي الأمر', value: student.parentPhone ?? '', isPhone: true),
-                      _InfoRow(label: 'المستوى', value: student.level),
-                      _InfoRow(label: 'الأجزاء المكتملة', value: '${student.totalCompletedJuz}'),
+                      _RoundIconButton(icon: AppIcons.chevronRight, onTap: () => context.pop()),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(student.fullName, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleLarge),
+                      ),
+                      const SizedBox(width: 10),
+                      _RoundIconButton(icon: AppIcons.edit, onTap: () => context.goNamed('studentEdit', pathParameters: {'id': '$studentId'})),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: _ActionButton(
-                      icon: Icons.playlist_add_check,
-                      label: 'جلسة جديدة',
-                      onTap: () => context.goNamed('sessionCreate', pathParameters: {'id': '$studentId'}),
-                    ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _ProfileCard(student: student, currentSurahName: currentSurahName),
+                      if ((student.phone).trim().isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _PhoneRow(student: student),
+                      ],
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _QuickAction(
+                              icon: AppIcons.calendar,
+                              label: 'جلسة جديدة',
+                              onTap: () => context.goNamed('sessionCreate', pathParameters: {'id': '$studentId'}),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _QuickAction(
+                              icon: AppIcons.clock,
+                              label: 'جدولة',
+                              onTap: () => ScheduleFormSheet.show(context, studentId: studentId),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _QuickAction(
+                              icon: AppIcons.flag,
+                              label: 'هدف جديد',
+                              onTap: () => GoalFormSheet.show(context, studentId: studentId),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 22),
+                      const Text('الجلسات القادمة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                      const SizedBox(height: 8),
+                      _StudentUpcomingSchedulesList(studentId: studentId),
+                      const SizedBox(height: 22),
+                      const Text('الجلسات السابقة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                      const SizedBox(height: 8),
+                      _StudentSessionsList(studentId: studentId),
+                      const SizedBox(height: 22),
+                      const Text('الأهداف', style: TextStyle(fontFamily: 'Cairo', fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                      const SizedBox(height: 8),
+                      _StudentGoalsList(studentId: studentId),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _ActionButton(
-                      icon: Icons.schedule,
-                      label: 'جدولة',
-                      onTap: () => context.goNamed('scheduleCreateForStudent', pathParameters: {'id': '$studentId'}),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _ActionButton(
-                      icon: Icons.auto_stories,
-                      label: 'الحفظ',
-                      onTap: () => context.goNamed('memorization', pathParameters: {'id': '$studentId'}),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _ActionButton(
-                      icon: Icons.flag,
-                      label: 'هدف جديد',
-                      onTap: () => context.goNamed('goalCreate', pathParameters: {'id': '$studentId'}),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Text('الجلسات القادمة', style: AppTextStyles.sectionTitle),
-              const SizedBox(height: 8),
-              _StudentUpcomingSchedulesList(studentId: studentId),
-              const SizedBox(height: 24),
-              Text('الجلسات السابقة', style: AppTextStyles.sectionTitle),
-              const SizedBox(height: 8),
-              _StudentSessionsList(studentId: studentId),
-              const SizedBox(height: 24),
-              Text('الأهداف', style: AppTextStyles.sectionTitle),
-              const SizedBox(height: 8),
-              _StudentGoalsList(studentId: studentId),
-            ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -130,77 +123,166 @@ class StudentDetailsScreen extends ConsumerWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool isPhone;
+class _RoundIconButton extends StatelessWidget {
+  final String icon;
+  final VoidCallback onTap;
 
-  const _InfoRow({required this.label, required this.value, this.isPhone = false});
-
-  Future<void> _call(BuildContext context) async {
-    final uri = Uri(scheme: 'tel', path: value.trim());
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
-  }
-
-  Future<void> _copy(BuildContext context) async {
-    await Clipboard.setData(ClipboardData(text: value.trim()));
-    if (context.mounted) {
-      AppSnackbar.info(context, 'تم نسخ الرقم');
-    }
-  }
+  const _RoundIconButton({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final hasValue = value.trim().isNotEmpty;
-    final showPhone = isPhone && hasValue;
-    final row = Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(width: 120, child: Text('$label:', style: AppTextStyles.infoLabel)),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            hasValue ? value : '—',
-            style: showPhone ? AppTextStyles.infoValue.copyWith(color: AppColors.primary) : AppTextStyles.infoValue,
-          ),
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 36,
+          height: 36,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.inputBorder)),
+          child: AppIcon(icon, size: 15, color: AppColors.textPrimary),
         ),
-        if (showPhone) const Icon(Icons.call, size: 16, color: AppColors.primary),
-      ],
+      ),
     );
-
-    if (showPhone) {
-      return InkWell(
-        onTap: () => _call(context),
-        onLongPress: () => _copy(context),
-        child: Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: row),
-      );
-    }
-    return Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: row);
   }
 }
 
-class _ActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
+class _ProfileCard extends StatelessWidget {
+  final Student student;
+  final String? currentSurahName;
 
-  const _ActionButton({required this.icon, required this.label, required this.onTap});
+  const _ProfileCard({required this.student, required this.currentSurahName});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    final levelColors = StatusColors.forLevel(student.level);
+    final progressPct = (student.totalCompletedJuz / 30 * 100).clamp(0, 100).toDouble();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.cardBorder)),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+            child: Text(
+              student.fullName.isNotEmpty ? student.fullName[0] : '؟',
+              style: const TextStyle(fontFamily: 'Cairo', fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.onPrimary),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                      decoration: BoxDecoration(color: levelColors.bg, borderRadius: BorderRadius.circular(999)),
+                      child: Text(student.level, style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, fontWeight: FontWeight.w700, color: levelColors.fg)),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('${student.age} سنة', style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, color: AppColors.textSecondary)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'السورة الحالية: ${currentSurahName ?? '—'} · ${student.totalCompletedJuz} جزء مكتمل',
+                  style: const TextStyle(fontFamily: 'Cairo', fontSize: 12.5, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    value: progressPct / 100,
+                    minHeight: 6,
+                    backgroundColor: AppColors.dividerLight,
+                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+extension _FirstOrNull<T> on Iterable<T> {
+  T? get firstOrNull => isEmpty ? null : first;
+}
+
+class _PhoneRow extends StatelessWidget {
+  final Student student;
+
+  const _PhoneRow({required this.student});
+
+  Future<void> _call() async {
+    final uri = Uri(scheme: 'tel', path: student.phone.trim());
+    if (await canLaunchUrl(uri)) await launchUrl(uri);
+  }
+
+  Future<void> _copy(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: student.phone.trim()));
+    if (context.mounted) AppSnackbar.info(context, 'تم نسخ الرقم');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: _call,
+      onLongPress: () => _copy(context),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.cardBorder)),
+        child: Row(
+          children: [
+            const AppIcon(AppIcons.phone, size: 15, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Text(student.phone, style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary)),
+            const Spacer(),
+            if ((student.parentName ?? '').trim().isNotEmpty)
+              Text('ولي الأمر: ${student.parentName}', style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, color: AppColors.textSecondary)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickAction extends StatelessWidget {
+  final String icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _QuickAction({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.cardBorder)),
           child: Column(
             children: [
-              Icon(icon, color: AppColors.primary, size: 28),
-              const SizedBox(height: 4),
-              Text(label, style: AppTextStyles.small),
+              AppIcon(icon, size: 18, color: AppColors.primary),
+              const SizedBox(height: 5),
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
             ],
           ),
         ),
@@ -222,29 +304,48 @@ class _StudentUpcomingSchedulesList extends ConsumerWidget {
       loading: () => const LoadingOverlay(),
       error: (e, _) => ErrorBanner(message: e.toString()),
       data: (schedules) {
-        if (schedules.isEmpty) return Text('لا توجد جلسات قادمة', style: AppTextStyles.muted);
-        final surahNames = <int, String>{
-          for (final s in surahsAsync.valueOrNull ?? const []) s.id: s.name,
-        };
+        if (schedules.isEmpty) {
+          return const Text('لا توجد جلسات قادمة', style: TextStyle(fontFamily: 'Cairo', fontSize: 12.5, color: AppColors.textSecondary));
+        }
+        final surahNames = <int, String>{for (final s in surahsAsync.valueOrNull ?? const []) s.id: s.name};
         String surahLabel(int surahId) => surahNames[surahId] ?? 'سورة $surahId';
         return Column(
-          children: schedules.map((s) => Card(
-            child: ListTile(
-              leading: const Icon(Icons.schedule, color: AppColors.primary),
-              title: Text('${AppDateUtils.formatDate(s.date)} - ${s.time}', style: AppTextStyles.cardTitle),
-              subtitle: s.memorizationSurahId != null
-                  ? Text('حفظ مقرر: ${surahLabel(s.memorizationSurahId!)}', style: AppTextStyles.small)
-                  : null,
-              trailing: ConvertToSessionButton(
-                scheduleId: s.id,
-                onConverted: () {
-                  ref.invalidate(schedulesByStudentProvider(studentId));
-                  ref.invalidate(sessionsByStudentProvider(studentId));
-                  ref.invalidate(studentByIdProvider(studentId));
-                },
-              ),
-            ),
-          )).toList(),
+          children: schedules
+              .map((s) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.cardBorder)),
+                      child: Row(
+                        children: [
+                          const AppIcon(AppIcons.clock, size: 15, color: AppColors.streakIconFg),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('${AppDateUtils.formatDate(s.date)} - ${s.time}', style: const TextStyle(fontFamily: 'Cairo', fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                                if (s.memorizationSurahId != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: Text('حفظ مقرر: ${surahLabel(s.memorizationSurahId!)}', style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.textSecondary)),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          ConvertToSessionButton(
+                            scheduleId: s.id,
+                            onConverted: () {
+                              ref.invalidate(schedulesByStudentProvider(studentId));
+                              ref.invalidate(sessionsByStudentProvider(studentId));
+                              ref.invalidate(studentByIdProvider(studentId));
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ))
+              .toList(),
         );
       },
     );
@@ -264,52 +365,70 @@ class _StudentSessionsList extends ConsumerWidget {
       loading: () => const LoadingOverlay(),
       error: (e, _) => ErrorBanner(message: e.toString()),
       data: (sessions) {
-        if (sessions.isEmpty) return Text('لا توجد جلسات', style: AppTextStyles.muted);
-        final surahNames = <int, String>{
-          for (final s in surahsAsync.valueOrNull ?? const []) s.id: s.name,
-        };
+        if (sessions.isEmpty) {
+          return const Text('لا توجد جلسات', style: TextStyle(fontFamily: 'Cairo', fontSize: 12.5, color: AppColors.textSecondary));
+        }
+        final surahNames = <int, String>{for (final s in surahsAsync.valueOrNull ?? const []) s.id: s.name};
         String surahLabel(int surahId) => surahNames[surahId] ?? 'سورة $surahId';
         return Column(
-          children: sessions.take(5).map((s) => Card(
-            child: InkWell(
-              onTap: () => context.goNamed('sessionEdit', pathParameters: {'id': '${s.id}'}),
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: sessions.take(5).map((s) {
+            final statusColors = StatusColors.forAttendance(s.attendanceStatus);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: () => context.goNamed('sessionEdit', pathParameters: {'id': '${s.id}'}),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.cardBorder)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(AppDateUtils.formatDate(s.date), style: AppTextStyles.cardTitle),
-                        if (s.evaluation != null)
-                          ScoreDisplay(score: s.evaluation!.finalScore),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(AppDateUtils.formatDate(s.date), style: const TextStyle(fontFamily: 'Cairo', fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                            Row(
+                              children: [
+                                if (s.evaluation != null) ...[
+                                  ScoreDisplay(score: s.evaluation!.finalScore),
+                                  const SizedBox(width: 8),
+                                ],
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                                  decoration: BoxDecoration(color: statusColors.bg, borderRadius: BorderRadius.circular(999)),
+                                  child: Text(s.attendanceStatus, style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w700, color: statusColors.fg)),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        if (s.memorization != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 5),
+                            child: Text(
+                              'حفظ: ${surahLabel(s.memorization!.surahId)} (${s.memorization!.fromAyah}-${s.memorization!.toAyah})',
+                              style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, color: AppColors.primary),
+                            ),
+                          ),
+                        if (s.revision != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              'مراجعة: ${surahLabel(s.revision!.surahId)} (${s.revision!.fromAyah}-${s.revision!.toAyah})',
+                              style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, color: AppColors.streakIconFg),
+                            ),
+                          ),
                       ],
                     ),
-                    const SizedBox(height: 2),
-                    Text('الحضور: ${s.attendanceStatus}', style: AppTextStyles.small),
-                    if (s.memorization != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          'حفظ: ${surahLabel(s.memorization!.surahId)} (${s.memorization!.fromAyah}-${s.memorization!.toAyah})',
-                          style: const TextStyle(fontSize: 12, color: AppColors.primary),
-                        ),
-                      ),
-                    if (s.revision != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          'مراجعة: ${surahLabel(s.revision!.surahId)} (${s.revision!.fromAyah}-${s.revision!.toAyah})',
-                          style: const TextStyle(fontSize: 12, color: AppColors.secondary),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          )).toList(),
+            );
+          }).toList(),
         );
       },
     );
@@ -328,19 +447,38 @@ class _StudentGoalsList extends ConsumerWidget {
       loading: () => const LoadingOverlay(),
       error: (e, _) => ErrorBanner(message: e.toString()),
       data: (goals) {
-        if (goals.isEmpty) return Text('لا توجد أهداف', style: AppTextStyles.muted);
+        if (goals.isEmpty) {
+          return const Text('لا توجد أهداف', style: TextStyle(fontFamily: 'Cairo', fontSize: 12.5, color: AppColors.textSecondary));
+        }
         return Column(
-          children: goals.map((g) => Card(
-            child: ListTile(
-              title: Text(g.title),
-              subtitle: Text(
-                '${AppDateUtils.formatDate(g.startDate)}'
-                '${g.targetDate != null ? ' → ${AppDateUtils.formatDate(g.targetDate!)}' : ''}',
-                style: AppTextStyles.muted,
-              ),
-              trailing: _GoalStatusMenu(goal: g, studentId: studentId),
-            ),
-          )).toList(),
+          children: goals
+              .map((g) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.cardBorder)),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(g.title, style: const TextStyle(fontFamily: 'Cairo', fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${AppDateUtils.formatDate(g.startDate)}'
+                                  '${g.targetDate != null ? ' → ${AppDateUtils.formatDate(g.targetDate!)}' : ''}',
+                                  style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          _GoalStatusMenu(goal: g, studentId: studentId),
+                        ],
+                      ),
+                    ),
+                  ))
+              .toList(),
         );
       },
     );
@@ -368,9 +506,7 @@ class _GoalStatusMenuState extends ConsumerState<_GoalStatusMenu> {
       ref.invalidate(goalListProvider);
       ref.invalidate(activeGoalListProvider);
     } catch (e) {
-      if (mounted) {
-        AppSnackbar.error(context, e);
-      }
+      if (mounted) AppSnackbar.error(context, e);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -382,26 +518,30 @@ class _GoalStatusMenuState extends ConsumerState<_GoalStatusMenu> {
     if (_isLoading) {
       return const Padding(
         padding: EdgeInsets.all(8),
-        child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+        child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
       );
     }
     return PopupMenuButton<GoalStatus>(
       onSelected: _updateStatus,
-      itemBuilder: (context) => GoalStatus.values.map((s) => PopupMenuItem(
-        value: s,
-        child: Text(s.arabic),
-      )).toList(),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-        child: Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(status.icon, color: status.color),
-              const SizedBox(width: 4),
-              Text(widget.goal.status, style: AppTextStyles.small),
-            ],
-          ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: AppColors.inputBorder)),
+      color: Colors.white,
+      elevation: 6,
+      itemBuilder: (context) => GoalStatus.values
+          .map((s) => PopupMenuItem(
+                value: s,
+                child: Text(s.arabic, style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.textPrimary)),
+              ))
+          .toList(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(color: status.backgroundColor, borderRadius: BorderRadius.circular(999)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(widget.goal.status, style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w700, color: status.color)),
+            const SizedBox(width: 3),
+            AppIcon(AppIcons.chevronDown, size: 10, color: status.color),
+          ],
         ),
       ),
     );

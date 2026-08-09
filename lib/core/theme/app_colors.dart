@@ -1,90 +1,121 @@
 import 'package:flutter/material.dart';
 
-/// Brand + semantic color layer — Sprint 1, item 1.1 (resolves plan
-/// conflict C1: one class named `AppColors`, no `AppPalette`, no `late`
-/// as an identifier since it's a Dart reserved word).
+/// Exact palette from the adopted design (Claude Design project
+/// "Quran Mobile Redesign.dc.html") — see docs/DESIGN_SPEC.md §1.
 ///
-/// These are raw brand values used to seed [ColorScheme.fromSeed] in
-/// `app_theme.dart` and by [StatusColors] below. Prefer
-/// `Theme.of(context).colorScheme` in widgets for anything that must adapt
-/// between light and dark; the fields below marked `@Deprecated` are
-/// light-mode-only constants kept so screens not yet migrated to the new
-/// theme keep compiling and looking correct in light mode. They render
-/// wrong in dark mode until migrated — tracked as Sprint 1 follow-up.
+/// These are literal hex values from the design source, not a derived
+/// seed palette. Widgets should prefer `Theme.of(context).colorScheme`
+/// where Flutter's own semantics apply (e.g. `error`, `surface`), but for
+/// anything the design specifies as an exact standalone color (status
+/// pairs, level badges, borders), use these directly — that's what keeps
+/// the app pixel-faithful to the source.
 class AppColors {
   const AppColors._();
 
-  // ── Brand ──────────────────────────────────────────────
-  static const primary = Color(0xFF1B5E4A); // أخضر زيتوني عميق
-  static const primaryDark = Color(0xFF0F3D30);
-  static const primaryLight = Color(0xFFE6F2EE);
-  static const accent = Color(0xFFC9A227); // ذهبي — الإنجازات والشهادات فقط
-  static const accentLight = Color(0xFFFBF3D9);
+  // ── Brand / surfaces ───────────────────────────────────
+  static const primary = Color(0xFF1B5E4A);
+  static const onPrimary = Color(0xFFFAF8F3);
+  static const accent = Color(0xFFC9A227); // ذهبي — النجوم والزخرفة فقط
+  static const appBackground = Color(0xFFFAF8F3);
+  static const cardBg = Colors.white;
+  static const cardBorder = Color(0xFFEEE8DA);
+  static const inputBg = Color(0xFFFBFAF6); // شاشات الدخول/الإعداد/نموذج طالب
+  static const inputBgOnCard = Colors.white; // داخل الشرائح السفلية
+  static const inputBorder = Color(0xFFE7E1D3);
+  static const skeletonBg = Color(0xFFEEE8DA);
+  static const dividerLight = Color(0xFFF1EFE9);
 
-  // ── Semantic (general-purpose, theme-invariant) ────────
-  static const success = Color(0xFF16A34A);
+  // ── Text ────────────────────────────────────────────────
+  static const textPrimary = Color(0xFF1E2A24);
+  static const textSecondary = Color(0xFF6B7568);
+  static const textMuted = Color(0xFF8A8478);
+  static const textDisabled = Color(0xFFB9B2A0);
+  static const tabInactive = Color(0xFFB0AA98);
+  static const deleteIcon = Color(0xFFC9BBA0);
+
+  // ── Streak badge (دافئ ذهبي) ────────────────────────────
+  static const streakBg = Color(0xFFFBF3DD);
+  static const streakBorder = Color(0xFFF0E2B8);
+  static const streakFg = Color(0xFF7A5D14);
+  static const streakIconFg = Color(0xFF96731A);
+
+  // ── Legacy bridge (Sprint 1 field names, pre-design-adoption) ──
+  // Temporary: screens not yet re-skinned to docs/DESIGN_SPEC.md
+  // (tracked in IMPLEMENTATION_PLAN.md Sprint 1.5, items D.7–D.11)
+  // still reference these names. Remove this whole block once every
+  // screen is migrated — do not add new call sites against it.
+  @Deprecated('Use StatusColors.absent.fg')
+  static const error = Color(0xFFC0392B);
+  @Deprecated('Use StatusColors.present.fg')
+  static const success = Color(0xFF2F8F5B);
+  @Deprecated('Use StatusColors.attendanceLate.fg')
   static const warning = Color(0xFFD97706);
-  static const danger = Color(0xFFDC2626);
-  static const neutral = Color(0xFF64748B);
-
-  // ── Surfaces ────────────────────────────────────────────
-  static const surfaceCream = Color(0xFFFAF8F3); // ورق المصحف — light mode
-  static const surfaceRaised = Colors.white;
-
-  // ── Legacy light-only constants (pre-Sprint-1) ─────────
-  // Kept for screens not yet migrated to Theme.of(context).colorScheme /
-  // TextTheme. Do not use these in new code — read from the theme instead.
-  @Deprecated('Use Theme.of(context).colorScheme.error, or StatusColors.absent')
-  static const error = danger;
-  @Deprecated('Use a Theme-aware container color instead')
-  static const errorBg = Color(0xFFFEE2E2);
-  @Deprecated('Use Theme.of(context).colorScheme.secondary')
-  static const secondary = Color(0xFF8B5CF6);
-  @Deprecated('Use a Theme-aware container color instead')
-  static const successBg = Color(0xFFDCFCE7);
-  @Deprecated('Use a Theme-aware container color instead')
-  static const warningBg = Color(0xFFFEF9C3);
-  @Deprecated('Use StatusColors.attendanceLate or a Theme-aware color')
-  static const orange = Color(0xFFEA580C);
-  @Deprecated('Use a Theme-aware container color instead')
-  static const orangeBg = Color(0xFFFFEDD5);
-  @Deprecated('Use Theme.of(context).colorScheme.surface')
-  static const surface = Color(0xFFF8FAFC);
-  @Deprecated('Use Theme.of(context).colorScheme.onSurface')
-  static const textPrimary = Color(0xFF0F172A);
-  @Deprecated('Use Theme.of(context).colorScheme.onSurfaceVariant')
-  static const textSecondary = Color(0xFF64748B);
-  @Deprecated('Use Theme.of(context).colorScheme.onSurfaceVariant')
-  static const textMuted = Color(0xFF64748B);
-  @Deprecated('Use Theme.of(context).dividerColor')
-  static const divider = Color(0xFFE2E8F0);
-  @Deprecated('Use Theme.of(context).colorScheme.surfaceContainerHighest')
-  static const badgeGray = Color(0xFFF1F5F9);
+  @Deprecated('Use StatusColors.absent.fg')
+  static const danger = error;
+  @Deprecated('Use StatusColors.present.bg')
+  static const successBg = Color(0xFFE9F5EE);
+  @Deprecated('Use StatusColors.attendanceLate.bg')
+  static const warningBg = Color(0xFFFDF3E3);
+  @Deprecated('Use StatusColors.needsRevision.fg (٩٦٧٣١أ — نفس القيمة)')
+  static const orange = Color(0xFF96731A);
+  @Deprecated('Use dividerLight')
+  static const badgeGray = dividerLight;
+  @Deprecated('Use cardBorder (بين البطاقات) أو dividerLight (داخل البطاقة)')
+  static const divider = dividerLight;
+  @Deprecated('Use StatusColors.needsRevision.fg — نفس القيمة المستخدمة لنص المراجعة في الملف المصدر')
+  static const secondary = Color(0xFF96731A);
+  @Deprecated('Use StatusColors.memorized.bg')
+  static const primaryLight = Color(0xFFE9F3EF);
 }
 
-/// Status → color mapping, kept separate from [AppColors] so a status
-/// (`present`, `needsRevision`, …) is never a made-up color name on its
-/// own — it always resolves through the shared semantic palette.
-///
-/// Per the accessibility rule in docs/UI_DESIGN_SYSTEM.md §2.2: color is
-/// never the only indicator of a status in the UI — always pair with an
-/// icon and/or text (see StatusBadge).
+/// Status → (foreground, background) pairs, exact from the design source.
+/// Always pair with an icon/text label too — never color alone.
 class StatusColors {
   const StatusColors._();
 
-  // حضور
-  static const present = AppColors.success;
-  static const attendanceLate = AppColors.warning; // "late" اسم محجوز في Dart
-  static const absent = AppColors.danger;
-  static const excused = AppColors.neutral;
+  static const present = (fg: Color(0xFF2F8F5B), bg: Color(0xFFE9F5EE));
+  static const attendanceLate = (fg: Color(0xFFD97706), bg: Color(0xFFFDF3E3));
+  static const absent = (fg: Color(0xFFC0392B), bg: Color(0xFFFBEAE7));
+  static const excused = (fg: Color(0xFF8A8478), bg: Color(0xFFF1EFE9));
 
-  // حفظ
-  static const memorized = AppColors.success;
-  static const needsRevision = AppColors.warning;
-  static const notMemorized = AppColors.neutral;
+  static const memorized = (fg: Color(0xFF1B5E4A), bg: Color(0xFFE9F3EF));
+  static const needsRevision = (fg: Color(0xFF96731A), bg: Color(0xFFFBF3DD));
+  static const notMemorized = (fg: Color(0xFF8A8478), bg: Color(0xFFF1EFE9));
 
-  // أهداف
-  static const goalCompleted = AppColors.success;
-  static const goalInProgress = AppColors.warning;
-  static const goalNotStarted = AppColors.neutral;
+  static const goalActive = (fg: Color(0xFF1B5E4A), bg: Color(0xFFE9F3EF));
+  static const goalCompleted = (fg: Color(0xFF96731A), bg: Color(0xFFFBF3DD));
+  static const goalLate = (fg: Color(0xFFC0392B), bg: Color(0xFFFBEAE7));
+
+  static const levelBeginner = (fg: Color(0xFF8A8478), bg: Color(0xFFF1EFE9));
+  static const levelIntermediate = (fg: Color(0xFF96731A), bg: Color(0xFFFBF3DD));
+  static const levelAdvanced = (fg: Color(0xFF1B5E4A), bg: Color(0xFFE9F3EF));
+
+  /// Maps the Arabic attendance-status literal (as stored/displayed) to
+  /// its (fg, bg) pair. Falls back to [excused] for an unrecognized value.
+  static ({Color fg, Color bg}) forAttendance(String status) => switch (status) {
+        'حاضر' => present,
+        'متأخر' => attendanceLate,
+        'غائب' => absent,
+        _ => excused,
+      };
+
+  static ({Color fg, Color bg}) forMemorization(String status) => switch (status) {
+        'محفوظ' => memorized,
+        'يحتاج مراجعة' => needsRevision,
+        _ => notMemorized,
+      };
+
+  static ({Color fg, Color bg}) forGoal(String status) => switch (status) {
+        'نشط' => goalActive,
+        'مكتمل' => goalCompleted,
+        'متأخر' => goalLate,
+        _ => goalActive,
+      };
+
+  static ({Color fg, Color bg}) forLevel(String level) => switch (level) {
+        'مبتدئ' => levelBeginner,
+        'متوسط' => levelIntermediate,
+        'متقدم' => levelAdvanced,
+        _ => levelBeginner,
+      };
 }

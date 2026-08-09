@@ -10,6 +10,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_theme.dart';
 import 'package:quran_mobile/core/widgets/empty_state.dart';
 import 'package:quran_mobile/core/widgets/kpi_card.dart';
@@ -56,7 +57,7 @@ void main() {
     testWidgets('KpiCard — ${brightness.name}', (tester) async {
       await _expectGolden(
         tester,
-        const KpiCard(icon: Icons.people, title: 'الطلاب', value: '42'),
+        const KpiCard(icon: AppIcons.people, title: 'الطلاب', value: '42'),
         name: 'kpi_card',
         brightness: brightness,
         surfaceSize: const Size(200, 140),
@@ -66,7 +67,7 @@ void main() {
     testWidgets('KpiCard — عنوان طويل لا يفيض — ${brightness.name}', (tester) async {
       await _expectGolden(
         tester,
-        const KpiCard(icon: Icons.auto_stories, title: 'الصفحات المحفوظة هذا الأسبوع بالكامل', value: '128'),
+        const KpiCard(icon: AppIcons.book, title: 'الصفحات المحفوظة هذا الأسبوع بالكامل', value: '128'),
         name: 'kpi_card_long_title',
         brightness: brightness,
         surfaceSize: const Size(160, 155),

@@ -47,6 +47,7 @@ dependencies:
   flutter_local_notifications: ^22.1.0
   timezone: ^0.11.1
   shared_preferences: ^2.5.5
+  flutter_svg: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -78,3 +79,13 @@ flutter:
     - family: Cairo
       fonts:
         - asset: assets/fonts/Cairo-VariableFont_wght.ttf
+    # Display font for headers/titles — per the adopted design
+    # (docs/DESIGN_SPEC.md). OFL-licensed, same terms as Cairo.
+    - family: Reem Kufi
+      fonts:
+        - asset: assets/fonts/ReemKufi-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/ReemKufi-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/ReemKufi-Bold.ttf
+          weight: 700

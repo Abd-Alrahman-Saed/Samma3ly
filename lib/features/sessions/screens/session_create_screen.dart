@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quran_mobile/core/enums/attendance_status.dart';
-import 'package:quran_mobile/core/theme/app_text_styles.dart';
+import 'package:quran_mobile/core/icons/app_icons.dart';
+import 'package:quran_mobile/core/theme/app_colors.dart';
+import 'package:quran_mobile/core/utils/date_utils.dart';
 import 'package:quran_mobile/core/utils/quran_utils.dart';
+import 'package:quran_mobile/core/widgets/app_form_field.dart';
 import 'package:quran_mobile/core/widgets/app_snackbar.dart';
-import 'package:quran_mobile/core/widgets/date_picker_tile.dart';
 import 'package:quran_mobile/core/widgets/discard_changes_dialog.dart';
-import 'package:quran_mobile/core/widgets/score_field.dart';
 import 'package:quran_mobile/core/widgets/student_picker.dart';
 import 'package:quran_mobile/core/widgets/surah_dropdown.dart';
 import 'package:quran_mobile/data/local/database/app_database.dart' hide Student;
@@ -38,9 +39,9 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
   int? _revSurahId;
   final _revFromAyahController = TextEditingController();
   final _revToAyahController = TextEditingController();
-  final _evalMemController = TextEditingController();
-  final _evalTajweedController = TextEditingController();
-  final _evalFluencyController = TextEditingController();
+  double _evalMem = 0;
+  double _evalTajweed = 0;
+  double _evalFluency = 0;
   int? _studentId;
   bool _isLoading = false;
   bool _isEdit = false;
@@ -52,16 +53,7 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
     _isEdit = widget.sessionId != null;
     _studentId = widget.studentId;
     if (_isEdit) _loadSession();
-    for (final c in [
-      _notesController,
-      _memFromAyahController,
-      _memToAyahController,
-      _revFromAyahController,
-      _revToAyahController,
-      _evalMemController,
-      _evalTajweedController,
-      _evalFluencyController,
-    ]) {
+    for (final c in [_notesController, _memFromAyahController, _memToAyahController, _revFromAyahController, _revToAyahController]) {
       c.addListener(() => _isDirty = true);
     }
   }
@@ -90,9 +82,9 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
       }
       final evaluation = await dao.getEvaluationBySession(widget.sessionId!);
       if (evaluation != null) {
-        _evalMemController.text = '${evaluation.memorizationScore}';
-        _evalTajweedController.text = '${evaluation.tajweedScore}';
-        _evalFluencyController.text = '${evaluation.fluencyScore}';
+        _evalMem = evaluation.memorizationScore;
+        _evalTajweed = evaluation.tajweedScore;
+        _evalFluency = evaluation.fluencyScore;
       }
       setState(() {});
       _isDirty = false;
@@ -106,9 +98,6 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
     _memToAyahController.dispose();
     _revFromAyahController.dispose();
     _revToAyahController.dispose();
-    _evalMemController.dispose();
-    _evalTajweedController.dispose();
-    _evalFluencyController.dispose();
     super.dispose();
   }
 
@@ -133,22 +122,21 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_studentId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الرجاء اختيار الطالب')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('الرجاء اختيار الطالب')));
       return;
     }
     if (!_isPresent) {
       _memSurahId = null;
       _revSurahId = null;
-      _evalMemController.clear();
-      _evalTajweedController.clear();
-      _evalFluencyController.clear();
+      _evalMem = 0;
+      _evalTajweed = 0;
+      _evalFluency = 0;
     }
     setState(() => _isLoading = true);
     try {
       final sessionDao = ref.read(sessionDaoProvider);
       final timeStr = '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
+      final hasEvaluation = _isPresent && (_evalMem > 0 || _evalTajweed > 0 || _evalFluency > 0);
 
       if (_isEdit) {
         await sessionDao.updateEntry(SessionsCompanion(
@@ -180,12 +168,12 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
         } else {
           await sessionDao.deleteRevision(widget.sessionId!);
         }
-        if (_evalMemController.text.trim().isNotEmpty) {
+        if (hasEvaluation) {
           await sessionDao.upsertEvaluation(SessionEvaluationsCompanion(
             sessionId: Value(widget.sessionId!),
-            memorizationScore: Value(double.parse(_evalMemController.text.trim())),
-            tajweedScore: Value(double.parse(_evalTajweedController.text.trim().isEmpty ? '0' : _evalTajweedController.text.trim())),
-            fluencyScore: Value(double.parse(_evalFluencyController.text.trim().isEmpty ? '0' : _evalFluencyController.text.trim())),
+            memorizationScore: Value(_evalMem),
+            tajweedScore: Value(_evalTajweed),
+            fluencyScore: Value(_evalFluency),
           ));
         }
       } else {
@@ -213,12 +201,12 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
             toAyah: Value(int.parse(_revToAyahController.text.trim().isEmpty ? '1' : _revToAyahController.text.trim())),
           ));
         }
-        if (_evalMemController.text.trim().isNotEmpty) {
+        if (hasEvaluation) {
           await sessionDao.upsertEvaluation(SessionEvaluationsCompanion(
             sessionId: Value(sessionId),
-            memorizationScore: Value(double.parse(_evalMemController.text.trim())),
-            tajweedScore: Value(double.parse(_evalTajweedController.text.trim().isEmpty ? '0' : _evalTajweedController.text.trim())),
-            fluencyScore: Value(double.parse(_evalFluencyController.text.trim().isEmpty ? '0' : _evalFluencyController.text.trim())),
+            memorizationScore: Value(_evalMem),
+            tajweedScore: Value(_evalTajweed),
+            fluencyScore: Value(_evalFluency),
           ));
         }
 
@@ -253,6 +241,8 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
 
   bool get _isPresent => _attendanceStatus == AttendanceStatus.present.arabic;
 
+  double get _liveFinalScore => ((_evalMem + _evalTajweed + _evalFluency) / 3 * 10).roundToDouble() / 10;
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -263,170 +253,264 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
         if (discard && context.mounted) Navigator.of(context).pop();
       },
       child: Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? 'تعديل جلسة' : 'جلسة جديدة')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
+        backgroundColor: AppColors.appBackground,
+        body: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('معلومات الجلسة', style: AppTextStyles.sectionTitle),
-              const SizedBox(height: 16),
-              if (widget.studentId == null && !_isEdit) ...[
-                StudentPicker(
-                  value: _studentId,
-                  onChanged: (v) => setState(() {
-                    _studentId = v;
-                    _isDirty = true;
-                  }),
-                ),
-                const SizedBox(height: 16),
-              ],
-              DatePickerTile(
-                value: _selectedDate,
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2030),
-                onChanged: (picked) => setState(() {
-                  _selectedDate = picked;
-                  _isDirty = true;
-                }),
-              ),
-              ListTile(
-                leading: const Icon(Icons.access_time),
-                title: Text(_selectedTime.format(context)),
-                trailing: const Icon(Icons.edit),
-                onTap: () async {
-                  final picked = await showTimePicker(context: context, initialTime: _selectedTime);
-                  if (picked != null) {
-                    setState(() {
-                      _selectedTime = picked;
-                      _isDirty = true;
-                    });
-                  }
-                },
-              ),
-              DropdownButtonFormField<String>(
-                value: _attendanceStatus,
-                decoration: const InputDecoration(labelText: 'حالة الحضور'),
-                items: AttendanceStatus.values.map((s) => DropdownMenuItem(value: s.arabic, child: Text(s.arabic))).toList(),
-                onChanged: (v) => setState(() {
-                  _attendanceStatus = v!;
-                  _isDirty = true;
-                }),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _notesController,
-                decoration: const InputDecoration(labelText: 'ملاحظات'),
-                maxLines: 3,
-              ),
-              if (!_isPresent) ...[
-                const SizedBox(height: 16),
-                Text('لا يمكن تسجيل الحفظ أو المراجعة أو التقييم لجلسة غياب', style: AppTextStyles.muted),
-              ],
-              if (_isPresent) ...[
-                const SizedBox(height: 24),
-                Text('الحفظ الجديد', style: AppTextStyles.sectionTitle),
-                const SizedBox(height: 16),
-                SurahDropdown(
-                  value: _memSurahId,
-                  onChanged: (v) => setState(() {
-                    _memSurahId = v;
-                    _isDirty = true;
-                  }),
-                ),
-                const SizedBox(height: 12),
-                Row(
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Row(
                   children: [
-                    Expanded(child: TextFormField(
-                      controller: _memFromAyahController,
-                      decoration: const InputDecoration(labelText: 'من آية'),
-                      keyboardType: TextInputType.number,
-                      validator: (_) => _validateAyahRange(
-                        surahId: _memSurahId,
-                        fromController: _memFromAyahController,
-                        toController: _memToAyahController,
+                    Material(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      child: InkWell(
+                        onTap: () => context.pop(),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.inputBorder)),
+                          child: const AppIcon(AppIcons.chevronRight, size: 16, color: AppColors.textPrimary),
+                        ),
                       ),
-                    )),
-                    const SizedBox(width: 12),
-                    Expanded(child: TextFormField(
-                      controller: _memToAyahController,
-                      decoration: const InputDecoration(labelText: 'إلى آية'),
-                      keyboardType: TextInputType.number,
-                      validator: (_) => _validateAyahRange(
-                        surahId: _memSurahId,
-                        fromController: _memFromAyahController,
-                        toController: _memToAyahController,
-                      ),
-                    )),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(_isEdit ? 'تعديل جلسة' : 'جلسة جديدة', style: Theme.of(context).textTheme.titleLarge),
                   ],
                 ),
-                const SizedBox(height: 24),
-                Text('المراجعة', style: AppTextStyles.sectionTitle),
-                const SizedBox(height: 2),
-                Text('اختياري - اتركه فارغاً إذا لم تكن هناك مراجعة', style: AppTextStyles.muted),
-                const SizedBox(height: 16),
-                SurahDropdown(
-                  value: _revSurahId,
-                  onChanged: (v) => setState(() {
-                    _revSurahId = v;
-                    _isDirty = true;
-                  }),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(child: TextFormField(
-                      controller: _revFromAyahController,
-                      decoration: const InputDecoration(labelText: 'من آية'),
-                      keyboardType: TextInputType.number,
-                      validator: (_) => _validateAyahRange(
-                        surahId: _revSurahId,
-                        fromController: _revFromAyahController,
-                        toController: _revToAyahController,
-                      ),
-                    )),
-                    const SizedBox(width: 12),
-                    Expanded(child: TextFormField(
-                      controller: _revToAyahController,
-                      decoration: const InputDecoration(labelText: 'إلى آية'),
-                      keyboardType: TextInputType.number,
-                      validator: (_) => _validateAyahRange(
-                        surahId: _revSurahId,
-                        fromController: _revFromAyahController,
-                        toController: _revToAyahController,
-                      ),
-                    )),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Text('التقييم', style: AppTextStyles.sectionTitle),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(child: ScoreField(controller: _evalMemController, label: 'الحفظ')),
-                    const SizedBox(width: 12),
-                    Expanded(child: ScoreField(controller: _evalTajweedController, label: 'التجويد')),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ScoreField(controller: _evalFluencyController, label: 'الطلاقة'),
-              ],
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _save,
-                  child: _isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(_isEdit ? 'حفظ التعديلات' : 'حفظ الجلسة'),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 6, 20, 32),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (widget.studentId == null && !_isEdit) ...[
+                          StudentPicker(
+                            value: _studentId,
+                            onChanged: (v) => setState(() {
+                              _studentId = v;
+                              _isDirty = true;
+                            }),
+                          ),
+                          const SizedBox(height: 14),
+                        ],
+                        Row(
+                          children: [
+                            Expanded(child: _InlineDateField(value: _selectedDate, onTap: () async {
+                              final picked = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2030), initialDate: _selectedDate);
+                              if (picked != null) setState(() { _selectedDate = picked; _isDirty = true; });
+                            })),
+                            const SizedBox(width: 10),
+                            Expanded(child: _InlineTimeField(value: _selectedTime, onTap: () async {
+                              final picked = await showTimePicker(context: context, initialTime: _selectedTime);
+                              if (picked != null) setState(() { _selectedTime = picked; _isDirty = true; });
+                            })),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('حالة الحضور', style: TextStyle(fontFamily: 'Cairo', fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(child: _AttendanceButton(icon: AppIcons.checkCircle, label: AttendanceStatus.present.arabic, colors: StatusColors.present, selected: _attendanceStatus == AttendanceStatus.present.arabic, onTap: () => setState(() { _attendanceStatus = AttendanceStatus.present.arabic; _isDirty = true; }))),
+                            const SizedBox(width: 6),
+                            Expanded(child: _AttendanceButton(icon: AppIcons.clock, label: AttendanceStatus.late.arabic, colors: StatusColors.attendanceLate, selected: _attendanceStatus == AttendanceStatus.late.arabic, onTap: () => setState(() { _attendanceStatus = AttendanceStatus.late.arabic; _isDirty = true; }))),
+                            const SizedBox(width: 6),
+                            Expanded(child: _AttendanceButton(icon: AppIcons.circleX, label: AttendanceStatus.absent.arabic, colors: StatusColors.absent, selected: _attendanceStatus == AttendanceStatus.absent.arabic, onTap: () => setState(() { _attendanceStatus = AttendanceStatus.absent.arabic; _isDirty = true; }))),
+                            const SizedBox(width: 6),
+                            Expanded(child: _AttendanceButton(icon: AppIcons.circleDash, label: AttendanceStatus.excused.arabic, colors: StatusColors.excused, selected: _attendanceStatus == AttendanceStatus.excused.arabic, onTap: () => setState(() { _attendanceStatus = AttendanceStatus.excused.arabic; _isDirty = true; }))),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        AppFormField(controller: _notesController, label: 'ملاحظات', hintText: 'ملاحظات', maxLines: 2),
+                        if (!_isPresent) ...[
+                          const SizedBox(height: 14),
+                          const Text('لا يمكن تسجيل الحفظ أو التقييم لجلسة غياب', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.textSecondary)),
+                        ],
+                        if (_isPresent) ...[
+                          const SizedBox(height: 6),
+                          const Text('الحفظ الجديد', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                          const SizedBox(height: 8),
+                          SurahDropdown(value: _memSurahId, onChanged: (v) => setState(() { _memSurahId = v; _isDirty = true; }), label: 'السورة', noneLabel: 'اختر السورة'),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(child: AppFormField(controller: _memFromAyahController, label: 'من آية', keyboardType: TextInputType.number, validator: (_) => _validateAyahRange(surahId: _memSurahId, fromController: _memFromAyahController, toController: _memToAyahController))),
+                              const SizedBox(width: 10),
+                              Expanded(child: AppFormField(controller: _memToAyahController, label: 'إلى آية', keyboardType: TextInputType.number, validator: (_) => _validateAyahRange(surahId: _memSurahId, fromController: _memFromAyahController, toController: _memToAyahController))),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          const Text('المراجعة (اختياري)', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                          const SizedBox(height: 8),
+                          SurahDropdown(value: _revSurahId, onChanged: (v) => setState(() { _revSurahId = v; _isDirty = true; }), label: 'السورة', noneLabel: 'اختر السورة'),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(child: AppFormField(controller: _revFromAyahController, label: 'من آية', keyboardType: TextInputType.number, validator: (_) => _validateAyahRange(surahId: _revSurahId, fromController: _revFromAyahController, toController: _revToAyahController))),
+                              const SizedBox(width: 10),
+                              Expanded(child: AppFormField(controller: _revToAyahController, label: 'إلى آية', keyboardType: TextInputType.number, validator: (_) => _validateAyahRange(surahId: _revSurahId, fromController: _revFromAyahController, toController: _revToAyahController))),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('التقييم', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
+                                decoration: BoxDecoration(color: const Color(0xFFE9F3EF), borderRadius: BorderRadius.circular(999)),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(_liveFinalScore.toStringAsFixed(1), style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                                    const SizedBox(width: 3),
+                                    const Text('/ ١٠', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, color: AppColors.textSecondary)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          _ScoreSlider(label: 'الحفظ', value: _evalMem, onChanged: (v) => setState(() { _evalMem = v; _isDirty = true; })),
+                          _ScoreSlider(label: 'التجويد', value: _evalTajweed, onChanged: (v) => setState(() { _evalTajweed = v; _isDirty = true; })),
+                          _ScoreSlider(label: 'الطلاقة', value: _evalFluency, onChanged: (v) => setState(() { _evalFluency = v; _isDirty = true; })),
+                        ],
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _save,
+                            child: _isLoading
+                                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.onPrimary))
+                                : Text(_isEdit ? 'حفظ التعديلات' : 'حفظ الجلسة'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _InlineDateField extends StatelessWidget {
+  final DateTime value;
+  final VoidCallback onTap;
+
+  const _InlineDateField({required this.value, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(color: AppColors.inputBg, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.inputBorder)),
+        child: Text(AppDateUtils.formatDate(value), style: const TextStyle(fontFamily: 'Cairo', fontSize: 13.5, color: AppColors.textPrimary)),
       ),
+    );
+  }
+}
+
+class _InlineTimeField extends StatelessWidget {
+  final TimeOfDay value;
+  final VoidCallback onTap;
+
+  const _InlineTimeField({required this.value, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(color: AppColors.inputBg, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.inputBorder)),
+        child: Builder(builder: (context) => Text(value.format(context), style: const TextStyle(fontFamily: 'Cairo', fontSize: 13.5, color: AppColors.textPrimary))),
+      ),
+    );
+  }
+}
+
+class _AttendanceButton extends StatelessWidget {
+  final String icon;
+  final String label;
+  final ({Color fg, Color bg}) colors;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _AttendanceButton({required this.icon, required this.label, required this.colors, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? colors.bg : Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 44),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: selected ? colors.fg : AppColors.inputBorder)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppIcon(icon, size: 15, color: selected ? colors.fg : AppColors.textSecondary),
+              const SizedBox(height: 4),
+              Text(label, style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, fontWeight: FontWeight.w700, color: selected ? colors.fg : AppColors.textSecondary)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ScoreSlider extends StatelessWidget {
+  final String label;
+  final double value;
+  final ValueChanged<double> onChanged;
+
+  const _ScoreSlider({required this.label, required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.textSecondary)),
+            Text(value.toStringAsFixed(1), style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.textSecondary)),
+          ],
+        ),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 4,
+            activeTrackColor: AppColors.primary,
+            inactiveTrackColor: AppColors.dividerLight,
+            thumbColor: AppColors.primary,
+            overlayColor: AppColors.primary.withValues(alpha: 0.12),
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+          ),
+          child: Slider(min: 0, max: 10, divisions: 20, value: value, onChanged: onChanged),
+        ),
+      ],
     );
   }
 }

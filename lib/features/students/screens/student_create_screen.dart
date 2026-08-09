@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quran_mobile/core/enums/student_level.dart';
-import 'package:quran_mobile/core/theme/app_text_styles.dart';
+import 'package:quran_mobile/core/icons/app_icons.dart';
+import 'package:quran_mobile/core/theme/app_colors.dart';
+import 'package:quran_mobile/core/widgets/app_form_field.dart';
 import 'package:quran_mobile/core/widgets/app_snackbar.dart';
 import 'package:quran_mobile/core/widgets/confirm_dialog.dart';
 import 'package:quran_mobile/core/widgets/discard_changes_dialog.dart';
@@ -138,85 +140,140 @@ class _StudentCreateScreenState extends ConsumerState<StudentCreateScreen> {
         if (discard && context.mounted) Navigator.of(context).pop();
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(_isEdit ? 'تعديل طالب' : 'إضافة طالب')),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('البيانات الأساسية', style: AppTextStyles.sectionTitle),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _fullNameController,
-                  decoration: const InputDecoration(labelText: 'الاسم الكامل *'),
-                  validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال الاسم' : null,
+        backgroundColor: AppColors.appBackground,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Row(
+                  children: [
+                    Material(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      child: InkWell(
+                        onTap: () => context.pop(),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.inputBorder)),
+                          child: const AppIcon(AppIcons.chevronRight, size: 16, color: AppColors.textPrimary),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(_isEdit ? 'تعديل طالب' : 'إضافة طالب', style: Theme.of(context).textTheme.titleLarge),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _ageController,
-                  decoration: const InputDecoration(labelText: 'العمر *'),
-                  keyboardType: TextInputType.number,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'الرجاء إدخال العمر';
-                    final age = int.tryParse(v.trim());
-                    if (age == null) return 'الرجاء إدخال رقم صحيح';
-                    if (age < 3 || age > 100) return 'يجب أن يكون العمر بين 3 و 100';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: _selectedLevel,
-                  decoration: const InputDecoration(labelText: 'المستوى'),
-                  items: StudentLevel.values.map((l) => DropdownMenuItem(value: l.arabic, child: Text(l.arabic))).toList(),
-                  onChanged: (v) => setState(() {
-                    _selectedLevel = v!;
-                    _isDirty = true;
-                  }),
-                ),
-                const SizedBox(height: 24),
-                Text('معلومات الاتصال', style: AppTextStyles.sectionTitle),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: const InputDecoration(labelText: 'رقم الهاتف'),
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _addressController,
-                  decoration: const InputDecoration(labelText: 'العنوان'),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: 24),
-                Text('ولي الأمر', style: AppTextStyles.sectionTitle),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _parentNameController,
-                  decoration: const InputDecoration(labelText: 'اسم ولي الأمر'),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _parentPhoneController,
-                  decoration: const InputDecoration(labelText: 'هاتف ولي الأمر'),
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _save,
-                    child: _isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(_isEdit ? 'حفظ التعديلات' : 'إضافة الطالب'),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 6, 20, 32),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const _SectionLabel('البيانات الأساسية'),
+                        const SizedBox(height: 14),
+                        AppFormField(
+                          controller: _fullNameController,
+                          label: 'الاسم الكامل',
+                          hintText: 'الاسم الكامل *',
+                          validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال الاسم' : null,
+                        ),
+                        const SizedBox(height: 14),
+                        AppFormField(
+                          controller: _ageController,
+                          label: 'العمر',
+                          hintText: 'العمر *',
+                          keyboardType: TextInputType.number,
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return 'الرجاء إدخال العمر';
+                            final age = int.tryParse(v.trim());
+                            if (age == null) return 'الرجاء إدخال رقم صحيح';
+                            if (age < 3 || age > 100) return 'يجب أن يكون العمر بين 3 و 100';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        _LevelDropdown(
+                          value: _selectedLevel,
+                          onChanged: (v) => setState(() {
+                            _selectedLevel = v!;
+                            _isDirty = true;
+                          }),
+                        ),
+                        const SizedBox(height: 16),
+                        const _SectionLabel('معلومات الاتصال'),
+                        const SizedBox(height: 14),
+                        AppFormField(controller: _phoneController, label: 'رقم الهاتف', keyboardType: TextInputType.phone),
+                        const SizedBox(height: 14),
+                        AppFormField(controller: _addressController, label: 'العنوان', maxLines: 2),
+                        const SizedBox(height: 16),
+                        const _SectionLabel('ولي الأمر'),
+                        const SizedBox(height: 14),
+                        AppFormField(controller: _parentNameController, label: 'اسم ولي الأمر'),
+                        const SizedBox(height: 14),
+                        AppFormField(controller: _parentPhoneController, label: 'هاتف ولي الأمر', keyboardType: TextInputType.phone),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _save,
+                            child: _isLoading
+                                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.onPrimary))
+                                : Text(_isEdit ? 'حفظ التعديلات' : 'حفظ'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String text;
+
+  const _SectionLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text, style: const TextStyle(fontFamily: 'Cairo', fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textSecondary));
+  }
+}
+
+class _LevelDropdown extends StatelessWidget {
+  final String value;
+  final ValueChanged<String?> onChanged;
+
+  const _LevelDropdown({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      style: const TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.textPrimary),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: AppColors.inputBg,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.inputBorder)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.inputBorder)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+      ),
+      items: StudentLevel.values.map((l) => DropdownMenuItem(value: l.arabic, child: Text(l.arabic))).toList(),
+      onChanged: onChanged,
     );
   }
 }

@@ -34,6 +34,9 @@ migrate_working_dir/
 /android/build/
 /coverage/
 
+# Golden test failure diffs (regenerated locally on `flutter test` failures)
+test/widgets/failures/
+
 # Symbolication related
 app.*.symbols
 

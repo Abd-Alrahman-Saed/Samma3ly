@@ -9,8 +9,6 @@ class RouteNames {
   static const String sessionCreate = 'session-create';
   static const String sessionEdit = 'session-edit';
   static const String sessionsList = 'sessions-list';
-  static const String scheduleCreate = 'schedule-create';
-  static const String goalCreate = 'goal-create';
   static const String goalsList = 'goals-list';
   static const String memorization = 'memorization';
   static const String attendance = 'attendance';
