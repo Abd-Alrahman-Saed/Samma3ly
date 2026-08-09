@@ -43,7 +43,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(QueryExecutor executor) : super(executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,6 +63,17 @@ class AppDatabase extends _$AppDatabase {
         // enabling enforcement below doesn't leave junk data behind that
         // would silently leak into aggregate counts (e.g. Dashboard).
         await _deleteOrphans();
+      }
+      if (from < 3) {
+        // Item 0.4b (v3): `juz_surah_ranges` was seeded with corrupted
+        // data on every install prior to this version (juz 20-30 all
+        // miscoded as juz 30; juz 3/4/5 boundaries also wrong — see the
+        // comment above `_juzRangeData`). This is a reference/seed table,
+        // not user data, so the fix is a full re-seed rather than a
+        // row-by-row transform — wipe and re-insert from the corrected
+        // `_juzRangeData`.
+        await customStatement('DELETE FROM juz_surah_ranges');
+        await _seedJuzRanges();
       }
     },
     beforeOpen: (details) async {

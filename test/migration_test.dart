@@ -12,6 +12,7 @@ import 'package:quran_mobile/data/local/database/app_database.dart';
 
 import 'generated_migrations/schema.dart';
 import 'generated_migrations/schema_v1.dart' as v1;
+import 'generated_migrations/schema_v2.dart' as v2;
 
 void main() {
   late SchemaVerifier verifier;
@@ -79,5 +80,41 @@ void main() {
       throwsA(anything),
       reason: 'جدول pending_changes يجب أن يكون محذوفاً تماماً بعد الترقية',
     );
+  });
+
+  test('ترقية v2→v3 (بند 0.4b): تستبدل بيانات juz_surah_ranges المعطوبة بالنسخة الصحيحة', () async {
+    // نزرع قاعدة v2 بنسخة *معطوبة* فعلياً من juz_surah_ranges — نفس العطل
+    // اللي كان موجوداً قبل هذا الإصلاح: الأجزاء ٢٠-٣٠ كلها مكتوبة كـ"٣٠"،
+    // والأجزاء ٢٦-٢٩ غير موجودة إطلاقاً. هذا يحاكي تليفون مستخدم حقيقي
+    // ثبّت التطبيق قبل هذا الإصلاح.
+    final schema = await verifier.schemaAt(2);
+    final oldDb = v2.DatabaseAtV2(schema.newConnection());
+    await oldDb.customStatement('DELETE FROM juz_surah_ranges');
+    await oldDb.customStatement('''
+      INSERT INTO juz_surah_ranges (id, juz_number, surah_id, from_ayah, to_ayah)
+      VALUES (1, 1, 1, 1, 7)
+    ''');
+    // كل شيء من هنا معطوب: جزء ٢٧ (النمل) مكتوب كجزء ٣٠ خطأً، ولا وجود
+    // إطلاقاً لأي صف بجزء ٢٦، ٢٧ (الصحيح)، ٢٨، أو ٢٩.
+    await oldDb.customStatement('''
+      INSERT INTO juz_surah_ranges (id, juz_number, surah_id, from_ayah, to_ayah)
+      VALUES (2, 30, 27, 1, 93)
+    ''');
+    await oldDb.close();
+
+    // نفتح نفس القاعدة بالمُنشئ الحقيقي (schemaVersion=3) — يشغّل v2→v3.
+    final migratedDb = AppDatabase.forTesting(schema.newConnection());
+    addTearDown(migratedDb.close);
+
+    final rows = await migratedDb.select(migratedDb.juzSurahRanges).get();
+    expect(rows, hasLength(135), reason: 'يجب أن يُعاد بناء الجدول بالكامل (١٣٥ صفاً) بعد الترقية');
+
+    final juzNumbers = rows.map((r) => r.juzNumber).toSet();
+    expect(juzNumbers, equals(Set.from(List.generate(30, (i) => i + 1))),
+        reason: 'كل الأجزاء ١-٣٠ يجب أن تكون موجودة، بما فيها ٢٦-٢٩ اللي كانت غائبة تماماً في النسخة المعطوبة');
+
+    final juz30Surahs = rows.where((r) => r.juzNumber == 30).map((r) => r.surahId).toSet();
+    expect(juz30Surahs.contains(27), isFalse,
+        reason: 'سورة النمل (٢٧) كانت مكتوبة خطأً كجزء ٣٠ في البيانات المعطوبة — يجب ألا تظهر تحت جزء ٣٠ بعد الترقية');
   });
 }
