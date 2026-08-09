@@ -118,6 +118,24 @@ class AppTheme {
       checkboxTheme: CheckboxThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
+      // توست سفلي بيضاوي داكن (توست/Snackbar) — نفس الشكل في التصميم
+      // المعتمد لكل الحالات (نجاح/خطأ/معلومة)؛ اللون لا يتغير حسب النوع.
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: AppColors.textPrimary,
+        contentTextStyle: TextStyle(fontFamily: 'Cairo', fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.onPrimary),
+        actionTextColor: AppColors.accent,
+        behavior: SnackBarBehavior.floating,
+        shape: StadiumBorder(),
+        insetPadding: EdgeInsets.fromLTRB(40, 8, 40, 90),
+      ),
+      // نافذة تأكيد مركزية (رسالة تأكيد الحذف/الخروج/الاستعادة) — بطاقة
+      // بيضاء نصف قطرها 16، مطابقة للتصميم المعتمد.
+      dialogTheme: DialogThemeData(
+        backgroundColor: brightness == Brightness.light ? Colors.white : colorScheme.surfaceContainerHigh,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titleTextStyle: TextStyle(fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.w700, color: colorScheme.onSurface),
+        contentTextStyle: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: colorScheme.onSurfaceVariant, height: 1.6),
+      ),
       // لا navigationBarTheme هنا عمداً — AppShell يبني الشريط السفلي يدوياً
       // (Row من أزرار مسطّحة) بدل NavigationBar، مطابقةً للتصميم المعتمد.
     );

@@ -1,9 +1,12 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
-import 'package:quran_mobile/core/widgets/score_display.dart';
 import 'package:quran_mobile/domain/entities/dashboard_data.dart';
 
+/// Top-5-students ranking — exact layout from the adopted design: rank
+/// badge, name, a thin inline progress bar, then the score. Not a bar
+/// chart in the design source, so this isn't one either. See
+/// docs/DESIGN_SPEC.md.
 class TopStudentsScoreChart extends StatelessWidget {
   final List<DashboardTopStudent> students;
 
@@ -14,65 +17,77 @@ class TopStudentsScoreChart extends StatelessWidget {
     if (students.isEmpty) {
       return const SizedBox.shrink();
     }
-    return SizedBox(
-      height: 200,
-      child: BarChart(
-        BarChartData(
-          maxY: 10,
-          minY: 0,
-          alignment: BarChartAlignment.spaceAround,
-          gridData: const FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 2.5),
-          borderData: FlBorderData(show: false),
-          barTouchData: BarTouchData(
-            touchTooltipData: BarTouchTooltipData(
-              getTooltipItem: (group, groupIndex, rod, rodIndex) => BarTooltipItem(
-                rod.toY.toStringAsFixed(1),
-                const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
-              ),
-            ),
+    return Column(
+      children: [
+        for (var i = 0; i < students.length; i++)
+          Padding(
+            padding: EdgeInsets.only(bottom: i == students.length - 1 ? 0 : 8),
+            child: _TopStudentRow(rank: i + 1, student: students[i]),
           ),
-          titlesData: FlTitlesData(
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 28,
-                interval: 2.5,
-                getTitlesWidget: (value, meta) => Text(value.toStringAsFixed(0), style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 36,
-                getTitlesWidget: (value, meta) {
-                  final index = value.toInt();
-                  if (index < 0 || index >= students.length) return const SizedBox.shrink();
-                  final name = students[index].studentName;
-                  final short = name.length > 8 ? '${name.substring(0, 8)}…' : name;
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(short, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
-                  );
-                },
-              ),
-            ),
-          ),
-          barGroups: [
-            for (var i = 0; i < students.length; i++)
-              BarChartGroupData(
-                x: i,
-                barRods: [
-                  BarChartRodData(
-                    toY: students[i].averageScore,
-                    color: ScoreDisplay.colorFor(students[i].averageScore),
-                    width: 22,
-                    borderRadius: BorderRadius.circular(4),
+      ],
+    );
+  }
+}
+
+class _TopStudentRow extends StatelessWidget {
+  final int rank;
+  final DashboardTopStudent student;
+
+  const _TopStudentRow({required this.rank, required this.student});
+
+  @override
+  Widget build(BuildContext context) {
+    final isTop = rank == 1;
+    final badgeColors = isTop ? (bg: AppColors.streakBg, fg: AppColors.streakIconFg) : (bg: const Color(0xFFE9F3EF), fg: AppColors.primary);
+    final scorePct = (student.averageScore / 10 * 100).clamp(0, 100).toDouble();
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () => context.goNamed('studentDetails', pathParameters: {'id': '${student.studentId}'}),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.cardBorder)),
+          child: Row(
+            children: [
+              Semantics(
+                label: 'الترتيب $rank',
+                child: ExcludeSemantics(
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(color: badgeColors.bg, shape: BoxShape.circle),
+                    alignment: Alignment.center,
+                    child: Text('$rank', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w800, color: badgeColors.fg)),
                   ),
-                ],
+                ),
               ),
-          ],
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(student.studentName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 70,
+                height: 6,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    value: scorePct / 100,
+                    backgroundColor: AppColors.dividerLight,
+                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 28,
+                child: Text(student.averageScore.toStringAsFixed(1), textAlign: TextAlign.left, style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.primary)),
+              ),
+            ],
+          ),
         ),
       ),
     );

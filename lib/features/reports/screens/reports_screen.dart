@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
-import 'package:quran_mobile/core/theme/app_text_styles.dart';
-import 'package:quran_mobile/core/widgets/empty_state.dart';
 import 'package:quran_mobile/core/widgets/error_banner.dart';
 import 'package:quran_mobile/core/widgets/kpi_card.dart';
-import 'package:quran_mobile/core/widgets/score_display.dart';
 import 'package:quran_mobile/core/widgets/skeletons.dart';
 import 'package:quran_mobile/domain/entities/dashboard_data.dart';
 import 'package:quran_mobile/features/dashboard/providers/dashboard_provider.dart';
 import 'package:quran_mobile/features/reports/widgets/attendance_trend_chart.dart';
 import 'package:quran_mobile/features/reports/widgets/top_students_score_chart.dart';
-import 'package:quran_mobile/features/students/providers/student_provider.dart';
 
 class ReportsScreen extends ConsumerWidget {
   const ReportsScreen({super.key});
@@ -40,112 +35,100 @@ class ReportsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboardAsync = ref.watch(dashboardProvider);
-    final studentCountAsync = ref.watch(studentCountProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('التقارير'),
-        actions: [
-          if (dashboardAsync.hasValue)
-            IconButton(
-              icon: const Icon(Icons.ios_share),
-              tooltip: 'مشاركة التقرير',
-              onPressed: () => SharePlus.instance.share(
-                ShareParams(text: _summaryText(dashboardAsync.value!), subject: 'تقرير نظام إدارة وتحفيظ القرآن الكريم'),
-              ),
-            ),
-        ],
-      ),
-      body: dashboardAsync.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            children: [
-              KpiGridSkeleton(),
-              SizedBox(height: 24),
-              Expanded(child: ListSkeleton(itemCount: 5)),
-            ],
-          ),
-        ),
-        error: (e, st) => ErrorBanner(message: e.toString(), onRetry: () => ref.invalidate(dashboardProvider)),
-        data: (data) {
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Text('تقارير وإحصائيات شاملة عن أداء الطلاب والمعلمين', style: AppTextStyles.muted),
-              const SizedBox(height: 12),
-              Text('إحصائيات عامة', style: AppTextStyles.sectionTitle),
-              const SizedBox(height: 12),
-              Row(
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 22, 20, 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(child: KpiCard(icon: AppIcons.people, title: 'إجمالي الطلاب', value: '${data.totalStudents}')),
-                  const SizedBox(width: 12),
-                  Expanded(child: KpiCard(icon: AppIcons.calendar, title: 'الجلسات', value: '${data.totalSessionsEver}')),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(child: KpiCard(icon: AppIcons.person, title: 'المعلمون', value: '${data.totalTeachers}')),
-                  const SizedBox(width: 12),
-                  Expanded(child: KpiCard(icon: AppIcons.checkCircle, title: 'الحضور', value: '${data.averageAttendance.toStringAsFixed(0)}%')),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(child: KpiCard(icon: AppIcons.book, title: 'الصفحات', value: '${data.totalPagesMemorized}')),
-                  const SizedBox(width: 12),
-                  Expanded(child: KpiCard(icon: AppIcons.star, title: 'السور', value: '${data.totalSurahsCompleted}')),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Text('اتجاه الحضور الأسبوعي', style: AppTextStyles.sectionTitle),
-              const SizedBox(height: 8),
-              if (data.weeklyAttendance.isEmpty)
-                Text('لا توجد بيانات حضور كافية بعد', style: AppTextStyles.muted)
-              else
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
-                    child: AttendanceTrendChart(data: data.weeklyAttendance),
-                  ),
-                ),
-              const SizedBox(height: 24),
-              Text('أفضل 5 طلاب', style: AppTextStyles.sectionTitle),
-              const SizedBox(height: 8),
-              if (data.topStudents.isEmpty)
-                const EmptyState(
-                  icon: Icons.leaderboard_outlined,
-                  title: 'لا توجد بيانات كافية بعد',
-                  description: 'سجّل جلسات مع تقييم لعرض ترتيب أفضل الطلاب',
-                  card: true,
-                )
-              else ...[
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
-                    child: TopStudentsScoreChart(students: data.topStudents),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...data.topStudents.asMap().entries.map((entry) => Card(
-                  child: ListTile(
-                    leading: Semantics(
-                      label: 'الترتيب ${entry.key + 1}',
-                      child: ExcludeSemantics(
-                        child: CircleAvatar(backgroundColor: AppColors.primary, child: Text('${entry.key + 1}', style: const TextStyle(color: Colors.white))),
+                  Text('التقارير', style: Theme.of(context).textTheme.headlineSmall),
+                  if (dashboardAsync.hasValue)
+                    Material(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      child: InkWell(
+                        onTap: () => SharePlus.instance.share(
+                          ShareParams(text: _summaryText(dashboardAsync.value!), subject: 'تقرير نظام إدارة وتحفيظ القرآن الكريم'),
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.inputBorder)),
+                          child: const AppIcon(AppIcons.share, size: 17, color: AppColors.textPrimary),
+                        ),
                       ),
                     ),
-                    title: Text(entry.value.studentName),
-                    trailing: ScoreDisplay(score: entry.value.averageScore),
-                    onTap: () => context.goNamed('studentDetails', pathParameters: {'id': '${entry.value.studentId}'}),
+                ],
+              ),
+            ),
+            Expanded(
+              child: dashboardAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      KpiGridSkeleton(rows: 2),
+                      SizedBox(height: 24),
+                      Expanded(child: ListSkeleton(itemCount: 5)),
+                    ],
                   ),
-                )),
-              ],
-            ],
-          );
-        },
+                ),
+                error: (e, st) => ErrorBanner(message: e.toString(), onRetry: () => ref.invalidate(dashboardProvider)),
+                data: (data) {
+                  return ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
+                    children: [
+                      GridView.count(
+                        crossAxisCount: 2,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        mainAxisSpacing: 10,
+                        crossAxisSpacing: 10,
+                        childAspectRatio: 1.7,
+                        children: [
+                          KpiCard(icon: AppIcons.people, title: 'إجمالي الطلاب', value: '${data.totalStudents}'),
+                          KpiCard(icon: AppIcons.calendar, title: 'الجلسات', value: '${data.totalSessionsEver}'),
+                          KpiCard(icon: AppIcons.checkCircle, title: 'نسبة الحضور', value: '${data.averageAttendance.toStringAsFixed(0)}%'),
+                          KpiCard(icon: AppIcons.book, title: 'الصفحات المحفوظة', value: '${data.totalPagesMemorized}'),
+                        ],
+                      ),
+                      const SizedBox(height: 22),
+                      const Text('اتجاه الحضور الأسبوعي', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                      const SizedBox(height: 12),
+                      if (data.weeklyAttendance.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Text('لا توجد بيانات حضور كافية بعد', style: TextStyle(fontFamily: 'Cairo', fontSize: 12.5, color: AppColors.textSecondary)),
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(14, 16, 14, 10),
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.cardBorder)),
+                          child: AttendanceTrendChart(data: data.weeklyAttendance),
+                        ),
+                      const SizedBox(height: 22),
+                      const Text('أفضل 5 طلاب', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                      const SizedBox(height: 10),
+                      if (data.topStudents.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Text('لا توجد بيانات كافية بعد', style: TextStyle(fontFamily: 'Cairo', fontSize: 12.5, color: AppColors.textSecondary)),
+                        )
+                      else
+                        TopStudentsScoreChart(students: data.topStudents),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

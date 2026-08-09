@@ -33,7 +33,6 @@ dependencies:
   # UI
   cupertino_icons: ^1.0.6
   flutter_animate: ^4.5.0
-  fl_chart: ^0.68.0
   flutter_staggered_animations: ^1.1.0
   shimmer: ^3.0.0
 
