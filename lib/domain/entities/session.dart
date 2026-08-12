@@ -4,12 +4,23 @@ part 'session.freezed.dart';
 part 'session.g.dart';
 
 @freezed
-class Session with _$Session {
+abstract class Session with _$Session {
   const factory Session({
     @Default(0) int id,
-    required int studentId,
+    // nullable منذ Sprint 2 (v4): جلسة جماعية لا طالب واحد لها. لسه
+    // مطلوب فعلياً لكل الجلسات الفردية — راجع sessions_table.dart.
+    int? studentId,
+    // Sprint 2 (v4) — null لجلسة فردية.
+    int? groupId,
+    @Default('فردي') String sessionType,
+    // Sprint 2 (v4) — تُملأ فقط للجلسات المُنشأة من حلقة متكرّرة (بند 2.7).
+    DateTime? occurrenceDate,
     required DateTime date,
     @Default('00:00') String time,
+    // القيمة الفعلية تُقرأ/تُكتب عبر SessionAttendances منذ v4 (Sprint 2)
+    // — هذا الحقل مجرد راحة على مستوى الـdomain للحالة الشائعة (جلسة
+    // فردية = صف حضور واحد بالضبط)؛ الـrepository هو المسؤول عن الـjoin.
+    // راجع docs/DESIGN_SPEC.md وdocs/IMPLEMENTATION_PLAN.md القسم ب.
     @Default('حاضر') String attendanceStatus,
     String? notes,
     DateTime? createdAt,
@@ -22,7 +33,7 @@ class Session with _$Session {
 }
 
 @freezed
-class SessionMemorization with _$SessionMemorization {
+abstract class SessionMemorization with _$SessionMemorization {
   const factory SessionMemorization({
     @Default(0) int id,
     @Default(0) int sessionId,
@@ -36,7 +47,7 @@ class SessionMemorization with _$SessionMemorization {
 }
 
 @freezed
-class SessionRevision with _$SessionRevision {
+abstract class SessionRevision with _$SessionRevision {
   const factory SessionRevision({
     @Default(0) int id,
     @Default(0) int sessionId,
@@ -50,7 +61,7 @@ class SessionRevision with _$SessionRevision {
 }
 
 @freezed
-class SessionEvaluation with _$SessionEvaluation {
+abstract class SessionEvaluation with _$SessionEvaluation {
   const factory SessionEvaluation({
     @Default(0) int id,
     @Default(0) int sessionId,

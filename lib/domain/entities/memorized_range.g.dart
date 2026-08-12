@@ -6,8 +6,8 @@ part of 'memorized_range.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$MemorizedRangeImpl _$$MemorizedRangeImplFromJson(Map<String, dynamic> json) =>
-    _$MemorizedRangeImpl(
+_MemorizedRange _$MemorizedRangeFromJson(Map<String, dynamic> json) =>
+    _MemorizedRange(
       id: (json['id'] as num?)?.toInt() ?? 0,
       studentId: (json['studentId'] as num).toInt(),
       surahId: (json['surahId'] as num).toInt(),
@@ -29,8 +29,7 @@ _$MemorizedRangeImpl _$$MemorizedRangeImplFromJson(Map<String, dynamic> json) =>
           : DateTime.parse(json['updatedAt'] as String),
     );
 
-Map<String, dynamic> _$$MemorizedRangeImplToJson(
-        _$MemorizedRangeImpl instance) =>
+Map<String, dynamic> _$MemorizedRangeToJson(_MemorizedRange instance) =>
     <String, dynamic>{
       'id': instance.id,
       'studentId': instance.studentId,

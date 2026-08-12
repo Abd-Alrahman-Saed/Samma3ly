@@ -231,16 +231,35 @@ static TextTheme _text(ColorScheme cs) => TextTheme(
 | الإصدار | Sprint | التغييرات | الخطورة |
 |---|---|---|---|
 | **v1** | — | الحالي المشحون | — |
-| **v2** | Sprint 0 | تفعيل `PRAGMA foreign_keys` + تنظيف الصفوف اليتيمة · تنظيف `_juzRangeData` (0.4b، إن توفّر مصدر موثّق) · حذف `PendingChanges` | 🟢 منخفضة |
-| **v3** | Sprint 2 | `Groups`, `GroupMembers`, `GroupScheduleSlots`, `ScheduleExceptions`, `SessionAttendances` · `Sessions += groupId, sessionType, occurrenceDate` · **`Sessions.studentId` → nullable** · نقل `attendanceStatus` → `SessionAttendances` | 🔴 الأعلى خطورة |
-| **v4** | Sprint 5 | `MushafPages` (seed ٦٠٤) · `MemorizedRanges += revisionTier, easeFactor, successStreak` · `RecitationErrors` · `SessionEvaluations` محاور الـrubric | 🟠 seed كبير |
+| **v2** | Sprint 0 | تفعيل `PRAGMA foreign_keys` + تنظيف الصفوف اليتيمة · حذف `PendingChanges` | 🟢 منخفضة |
+| **v3** | Sprint 0 (متابعة، 0.4b) | إعادة بناء `_juzRangeData`/`juz_surah_ranges` بالكامل من مصادر موثّقة (كانت الأجزاء ٢٠-٣٠ منهارة كلها في ٣٠) — **ليست v2**: v2 كانت مشحونة فعلاً وقت اكتشاف عطل 0.4b، فالقاعدة أعلاه ("Migration اتشحن = ممنوع تعديله") تنطبق حرفياً؛ التصحيح صار إصداراً جديداً | 🟢 منخفضة |
+| **v4** | Sprint 2 | `Groups`, `GroupMembers`, `GroupScheduleSlots`, `ScheduleExceptions`, `SessionAttendances` · `Sessions += groupId, sessionType, occurrenceDate` · **`Sessions.studentId` → nullable** · نقل `attendanceStatus` → `SessionAttendances` | 🔴 الأعلى خطورة |
+| **v5** | Sprint 5 | `MushafPages` (seed ٦٠٤) · `MemorizedRanges += revisionTier, easeFactor, successStreak` · `RecitationErrors` · `SessionEvaluations` محاور الـrubric | 🟠 seed كبير |
 
 ### تحذيرات تنفيذية
 
-🔴 **v3 هو الأخطر.** SQLite ما بيدعمش `ALTER COLUMN` — تحويل `studentId` لـ nullable معناه **إعادة إنشاء الجدول** (`m.alterTable(TableMigration(...))` في drift) مع نقل كل الصفوف. لازم:
+🔴 **v4 هو الأخطر.** SQLite ما بيدعمش `ALTER COLUMN` — تحويل `studentId` لـ nullable معناه **إعادة إنشاء الجدول** (`m.alterTable(TableMigration(...))` في drift) مع نقل كل الصفوف. لازم:
 - نقل `attendanceStatus` لـ `SessionAttendances` **قبل** إعادة إنشاء `Sessions`، لا بعدها.
 - اختبار على قاعدة بيانات فيها بيانات حقيقية، مش فاضية.
 - كل الـmigration جوّه transaction واحدة.
+
+✅ **منجَز (2.1)** — الثلاثة شروط أعلاه مُطبَّقة حرفياً. تحقّق مزدوج: اختبار
+migration مخصّص ببيانات حقيقية (`test/migration_test.dart`) + فحص مباشر
+بـ`PRAGMA table_info(sessions)` على قاعدة v4 حقيقية، كلاهما أكّد أن الشكل
+الفعلي صحيح ١٠٠٪.
+
+🐛 **باگ حقيقي اكتُشف أثناء هذا التحقّق (مُصلَح):** كل كتل `onUpgrade` كانت
+تتحقق من `if (from < N)` فقط، بدون `to >= N`. تطبيق حقيقي ما كان
+هيلاحظها أبداً (`to` عنده دايماً = أحدث `schemaVersion`)، لكن اختبار
+`SchemaVerifier.migrateAndValidate()` اللي بيقيّد الترقية على وصول وسيط
+(مثال: فحص v2→v3 بمعزل عن v4) كشفها: كتلة v4 كانت بتشتغل زيادة فوق قاعدة
+كان المفروض تقف عند v3. الإصلاح: كل الكتل بقت `if (from < N && to >= N)`.
+هذا النوع من الأخطاء **ما كانش هيظهر إلا باختبار step-by-step فعلي** — سبب
+إضافي ليه "بوابة الخروج" هنا تشترط اختبار حقيقي لا افتراض.
+
+ملاحظة بيئة جانبية: `drift` و`drift_dev` لازم يتثبّتوا بنفس الرقم حرفياً
+(`2.34.0`، لا `^2.34.0`) — `drift 2.34.1+` يدخل سطح `drift3_preview`
+التجريبي اللي `drift_dev 2.34.0` لسه ما بيدعمهوش.
 
 ✏️ **تصحيح على الإصدار الأول من هذه الخطة:** كنت افترضت إن تفعيل `PRAGMA foreign_keys = ON` ممكن **يفشل فتح القاعدة** لو فيه صفوف يتيمة موجودة أصلاً. ده غير دقيق — SQLite لا يتحقق من البيانات الموجودة رجعياً عند تفعيل الـ pragma؛ التفعيل بيؤثر فقط على عمليات DML **لاحقة**. فتح القاعدة آمن ١٠٠٪ بغضّ النظر عن وجود يتامى.
 لكن تنظيف الصفوف اليتيمة يفضل مهماً لسببين: (١) صحة البيانات — يتامى بيسرّبوا لعدّادات التجميع (مثال: `DashboardService.getAll()` بيحسبهم ضمن `totalSessionsEver`). (٢) بمجرد التفعيل، أي محاولة **حذف** أب لسه له صفوف يتيمة تابعة له هتُرفض بقيد FK — فالتنظيف دلوقتي بيمنع مفاجأة مستقبلية عند الحذف.
@@ -366,15 +385,15 @@ Redesign.dc.html` حرفياً — راجع [DESIGN_SPEC.md](DESIGN_SPEC.md) ل�
 
 **الهدف:** الميزة اللي بتحوّل المنتج. تُبنى على ثيم Sprint 1.
 
-| # | البند | تعريف الإنجاز |
-|---|---|---|
-| 2.1 | schema v3 + migration (تحذيرات القسم ب) | v1→v2→v3 مختبَرة متتالية على بيانات حقيقية |
-| 2.2 | `RecurrenceService.expand()` + اختبارات وحدة | التوقيت الصيفي · `effectiveFrom/To` · الاستثناءات · حدود الشهر |
-| 2.3 | تعيين مواقيت الصلاة (`adhan`) + `anchorType` | «بعد المغرب +١٥د» يحسب وقتاً صحيحاً لكل يوم |
-| 2.4 | Repositories + Providers للمجموعات | حدود الطبقات محفوظة — صفر `drift` في `features/` |
-| 2.5 | شاشات: قائمة · إنشاء · تفاصيل (٤ تبويبات) | على `TextTheme` وrموز الحركة |
-| 2.6 | محرّر الجدول الأسبوعي | تعديل الموعد لا يغيّر جلسات ماضية |
-| 2.7 | Materialize-on-write | فتح حلقة بلا تسجيل لا يُنشئ صفاً |
+| # | البند | تعريف الإنجاز | الحالة |
+|---|---|---|---|
+| 2.1 | schema v4 + migration (تحذيرات القسم ب) | v1→v2→v3→v4 مختبَرة متتالية على بيانات حقيقية | ✅ منجَز — راجع الملاحظة في القسم ب أعلاه |
+| 2.2 | `RecurrenceService.expand()` + اختبارات وحدة | التوقيت الصيفي · `effectiveFrom/To` · الاستثناءات · حدود الشهر | 🔲 |
+| 2.3 | تعيين مواقيت الصلاة (`adhan`) + `anchorType` | «بعد المغرب +١٥د» يحسب وقتاً صحيحاً لكل يوم | 🔲 |
+| 2.4 | Repositories + Providers للمجموعات | حدود الطبقات محفوظة — صفر `drift` في `features/` | 🔲 |
+| 2.5 | شاشات: قائمة · إنشاء · تفاصيل (٤ تبويبات) | على `TextTheme` وrموز الحركة | 🔲 |
+| 2.6 | محرّر الجدول الأسبوعي | تعديل الموعد لا يغيّر جلسات ماضية | 🔲 |
+| 2.7 | Materialize-on-write | فتح حلقة بلا تسجيل لا يُنشئ صفاً | 🔲 |
 
 **بوابة الخروج:** تغطية `RecurrenceService` ≥ ٨٠٪ · إنشاء حلقة بـ٣ مواعيد يعرض ٢٤ موعداً صحيحاً لشهرين.
 
@@ -415,7 +434,7 @@ Redesign.dc.html` حرفياً — راجع [DESIGN_SPEC.md](DESIGN_SPEC.md) ل�
 
 ## Sprint 5 — العمق التخصّصي (أسبوع ١١–١٣)
 
-- [ ] schema v4 + `MushafPages` (seed ٦٠٤) + إدخال بالأوجه
+- [ ] schema v5 + `MushafPages` (seed ٦٠٤) + إدخال بالأوجه
 - [ ] المراجعة الثلاثية (سبق/حاضر/ماضي) + الترقية التلقائية
 - [ ] تصنيف أخطاء التلاوة + تقرير الأخطاء المتكررة
 - [ ] rubric رباعي المحاور

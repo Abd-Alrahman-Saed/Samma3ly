@@ -6,7 +6,7 @@ part of 'user.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
+_User _$UserFromJson(Map<String, dynamic> json) => _User(
       id: (json['id'] as num?)?.toInt() ?? 0,
       username: json['username'] as String,
       passwordHash: json['passwordHash'] as String,
@@ -17,8 +17,7 @@ _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
           : DateTime.parse(json['createdAt'] as String),
     );
 
-Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$UserToJson(_User instance) => <String, dynamic>{
       'id': instance.id,
       'username': instance.username,
       'passwordHash': instance.passwordHash,

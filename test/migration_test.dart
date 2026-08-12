@@ -13,6 +13,7 @@ import 'package:quran_mobile/data/local/database/app_database.dart';
 import 'generated_migrations/schema.dart';
 import 'generated_migrations/schema_v1.dart' as v1;
 import 'generated_migrations/schema_v2.dart' as v2;
+import 'generated_migrations/schema_v3.dart' as v3;
 
 void main() {
   late SchemaVerifier verifier;
@@ -117,4 +118,81 @@ void main() {
     expect(juz30Surahs.contains(27), isFalse,
         reason: 'سورة النمل (٢٧) كانت مكتوبة خطأً كجزء ٣٠ في البيانات المعطوبة — يجب ألا تظهر تحت جزء ٣٠ بعد الترقية');
   });
+
+  // ملاحظة تشخيصية (تركتها للمرجعية): "كل خطوات الترقية المُسجَّلة" أعلاه
+  // كان بيفشل على خطوة v3→v4 برسالة "Schema does not match" على
+  // student_id/attendance_status، رغم أن هذا الاختبار (بيانات حقيقية) وفحص
+  // مباشر بـ`PRAGMA table_info(sessions)` على قاعدة v4 من الصفر أكّدا أن
+  // الجدول الفعلي صحيح ١٠٠٪. السبب الحقيقي: onUpgrade في app_database.dart
+  // كان بيتحقق من `from < N` بس بدون `to >= N` — فلما drift_dev's
+  // migrateAndValidate() بيقيّد الترقية على وصول وسيط (مثال: يفحص v2→v3
+  // بمعزل، to=3) كانت كتلة v4 (`if (from < 4)`) بتشتغل برضه لأن from=2 < 4،
+  // فتزيد تحويلات v4 فوق قاعدة كان المفروض تقف عند v3 فقط. التطبيق الحقيقي
+  // ما كانش هيلاحظ العطل ده أبداً (لأن `to` عنده دايماً = أحدث schemaVersion)،
+  // لكنه عطل حقيقي في صحة كل خطوة migration بمعزل. الإصلاح: كل الكتل
+  // بقت بتتحقق من `from < N && to >= N` سوا.
+  test(
+    'ترقية v3→v4 (بند 2.1): تنقل attendanceStatus إلى session_attendances، '
+    'تُنشئ جداول المجموعات، وتُبقي بيانات الجلسة الأخرى سليمة',
+    () async {
+      // قاعدة v3 حقيقية: طالب + جلسة فيها attendanceStatus (العمود القديم
+      // على Sessions مباشرة، قبل ما يُنقل) + تسميع مرتبط بالجلسة — يحاكي
+      // تليفون مستخدم حقيقي فيه بيانات فعلية وقت الترقية لـv4.
+      final schema = await verifier.schemaAt(3);
+      final oldDb = v3.DatabaseAtV3(schema.newConnection());
+      await oldDb.customStatement('''
+        INSERT INTO students (id, full_name, age, phone, address)
+        VALUES (1, 'طالب حقيقي', 11, '0100000000', 'عنوان')
+      ''');
+      await oldDb.customStatement('''
+        INSERT INTO sessions (id, student_id, date, time, attendance_status, notes)
+        VALUES (1, 1, ${DateTime(2026, 1, 1).millisecondsSinceEpoch}, '18:00', 'متأخر', 'ملاحظة')
+      ''');
+      await oldDb.customStatement('''
+        INSERT INTO session_memorizations (id, session_id, surah_id, from_ayah, to_ayah)
+        VALUES (1, 1, 2, 1, 10)
+      ''');
+      await oldDb.close();
+
+      // نفتح نفس القاعدة بالمُنشئ الحقيقي (schemaVersion=4) — يشغّل v3→v4.
+      final migratedDb = AppDatabase.forTesting(schema.newConnection());
+      addTearDown(migratedDb.close);
+
+      // الجلسة نفسها سليمة، وطالبها وملاحظتها زي ما هم، ونوعها الافتراضي "فردي".
+      final sessions = await migratedDb.select(migratedDb.sessions).get();
+      expect(sessions, hasLength(1));
+      expect(sessions.first.studentId, 1);
+      expect(sessions.first.notes, 'ملاحظة');
+      expect(sessions.first.sessionType, 'فردي', reason: 'القيمة الافتراضية للجلسات الموجودة قبل v4');
+      expect(sessions.first.groupId, isNull);
+      expect(sessions.first.occurrenceDate, isNull);
+
+      // attendanceStatus انتقلت لـsession_attendances بنفس القيمة القديمة.
+      final attendances = await migratedDb.select(migratedDb.sessionAttendances).get();
+      expect(attendances, hasLength(1));
+      expect(attendances.first.sessionId, 1);
+      expect(attendances.first.studentId, 1);
+      expect(attendances.first.attendanceStatus, 'متأخر',
+          reason: 'يجب أن تُنقل القيمة القديمة حرفياً، لا أن تُستبدل بالافتراضي');
+
+      // التسميع المرتبط بالجلسة سليم، لم يتأثر بإعادة إنشاء Sessions.
+      final memorizations = await migratedDb.select(migratedDb.sessionMemorizations).get();
+      expect(memorizations, hasLength(1));
+      expect(memorizations.first.sessionId, 1);
+      expect(memorizations.first.surahId, 2);
+
+      // جداول المجموعات الجديدة موجودة (فارغة — لا شاشة تُنشئ بيانات فيها بعد).
+      expect(await migratedDb.select(migratedDb.groups).get(), isEmpty);
+      expect(await migratedDb.select(migratedDb.groupMembers).get(), isEmpty);
+      expect(await migratedDb.select(migratedDb.groupScheduleSlots).get(), isEmpty);
+      expect(await migratedDb.select(migratedDb.scheduleExceptions).get(), isEmpty);
+
+      // attendance_status لم يعد عموداً على sessions إطلاقاً.
+      expect(
+        () => migratedDb.customSelect('SELECT attendance_status FROM sessions').get(),
+        throwsA(anything),
+        reason: 'attendance_status يجب أن يكون قد انتقل بالكامل من sessions إلى session_attendances',
+      );
+    },
+  );
 }

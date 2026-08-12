@@ -22,12 +22,15 @@ Schedule _toScheduleEntity(dynamic s) => Schedule(
       createdAt: s.createdAt,
     );
 
-Session _toSessionEntity(dynamic s) => Session(
+Session _toSessionEntity(dynamic s, {String attendanceStatus = 'حاضر'}) => Session(
       id: s.id,
       studentId: s.studentId,
+      groupId: s.groupId,
+      sessionType: s.sessionType,
+      occurrenceDate: s.occurrenceDate,
       date: s.date,
       time: s.time,
-      attendanceStatus: s.attendanceStatus,
+      attendanceStatus: attendanceStatus,
       notes: s.notes,
       createdAt: s.createdAt,
     );
@@ -97,10 +100,10 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
       studentId: Value(schedule.studentId),
       date: Value(schedule.date),
       time: Value(schedule.time),
-      attendanceStatus: Value(AttendanceStatus.present.arabic),
       notes: const Value(null),
       createdAt: Value(DateTime.now()),
     ));
+    await _sessionDao.upsertAttendance(sessionId, schedule.studentId, AttendanceStatus.present.arabic);
 
     if (schedule.memorizationSurahId != null) {
       await _sessionDao.insertMemorization(SessionMemorizationsCompanion(
@@ -134,6 +137,6 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
       createdAt: Value(schedule.createdAt ?? DateTime.now()),
     ));
 
-    return _toSessionEntity((await _sessionDao.getById(sessionId))!);
+    return _toSessionEntity((await _sessionDao.getById(sessionId))!, attendanceStatus: AttendanceStatus.present.arabic);
   }
 }

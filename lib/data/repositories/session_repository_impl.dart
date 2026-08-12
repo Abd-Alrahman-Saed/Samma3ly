@@ -9,9 +9,11 @@ import 'package:quran_mobile/data/local/database/app_database.dart' as db;
 Session _toEntity(dynamic s) => Session(
       id: s.id,
       studentId: s.studentId,
+      groupId: s.groupId,
+      sessionType: s.sessionType,
+      occurrenceDate: s.occurrenceDate,
       date: s.date,
       time: s.time,
-      attendanceStatus: s.attendanceStatus,
       notes: s.notes,
       createdAt: s.createdAt,
     );
@@ -48,11 +50,24 @@ class SessionRepositoryImpl implements SessionRepository {
 
   SessionRepositoryImpl(this._dao);
 
+  /// Attendance moved to `SessionAttendances` in v4 (Sprint 2) — a group
+  /// session needs an independent status per attendee, so it's no longer a
+  /// plain column on Sessions. For the common individual-session case
+  /// (exactly one attendee: `session.studentId`), this hydrates the
+  /// domain entity's `attendanceStatus` convenience field so every
+  /// existing caller (screens, dashboard/progress services) keeps working
+  /// against `session.attendanceStatus` unchanged.
   Future<Session> _hydrate(Session session) async {
     final memorization = await _dao.getMemorizationBySession(session.id);
     final revision = await _dao.getRevisionBySession(session.id);
     final evaluation = await _dao.getEvaluationBySession(session.id);
+    String attendanceStatus = 'حاضر';
+    if (session.studentId != null) {
+      final attendance = await _dao.getAttendance(session.id, session.studentId!);
+      if (attendance != null) attendanceStatus = attendance.attendanceStatus;
+    }
     return session.copyWith(
+      attendanceStatus: attendanceStatus,
       memorization: memorization == null ? null : _memorizationToEntity(memorization),
       revision: revision == null ? null : _revisionToEntity(revision),
       evaluation: evaluation == null ? null : _evaluationToEntity(evaluation),
@@ -76,12 +91,18 @@ class SessionRepositoryImpl implements SessionRepository {
     final now = DateTime.now();
     final sessionId = await _dao.insert(SessionsCompanion(
       studentId: Value(session.studentId),
+      groupId: Value(session.groupId),
+      sessionType: Value(session.sessionType),
+      occurrenceDate: Value(session.occurrenceDate),
       date: Value(session.date),
       time: Value(session.time),
-      attendanceStatus: Value(session.attendanceStatus),
       notes: Value(session.notes),
       createdAt: Value(now),
     ));
+
+    if (session.studentId != null) {
+      await _dao.upsertAttendance(sessionId, session.studentId!, session.attendanceStatus);
+    }
 
     if (session.memorization != null) {
       await _dao.insertMemorization(SessionMemorizationsCompanion(
@@ -117,12 +138,18 @@ class SessionRepositoryImpl implements SessionRepository {
     await _dao.updateEntry(SessionsCompanion(
       id: Value(session.id),
       studentId: Value(session.studentId),
+      groupId: Value(session.groupId),
+      sessionType: Value(session.sessionType),
+      occurrenceDate: Value(session.occurrenceDate),
       date: Value(session.date),
       time: Value(session.time),
-      attendanceStatus: Value(session.attendanceStatus),
       notes: Value(session.notes),
       createdAt: Value(session.createdAt ?? DateTime.now()),
     ));
+
+    if (session.studentId != null) {
+      await _dao.upsertAttendance(session.id, session.studentId!, session.attendanceStatus);
+    }
 
     if (session.memorization != null) {
       final existing = await _dao.getMemorizationBySession(session.id);

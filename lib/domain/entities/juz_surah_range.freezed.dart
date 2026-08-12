@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,178 +9,33 @@ part of 'juz_surah_range.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
-JuzSurahRange _$JuzSurahRangeFromJson(Map<String, dynamic> json) {
-  return _JuzSurahRange.fromJson(json);
-}
 
 /// @nodoc
 mixin _$JuzSurahRange {
-  int get id => throw _privateConstructorUsedError;
-  int get juzNumber => throw _privateConstructorUsedError;
-  int get surahId => throw _privateConstructorUsedError;
-  int get fromAyah => throw _privateConstructorUsedError;
-  int get toAyah => throw _privateConstructorUsedError;
-
-  /// Serializes this JuzSurahRange to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  int get id;
+  int get juzNumber;
+  int get surahId;
+  int get fromAyah;
+  int get toAyah;
 
   /// Create a copy of JuzSurahRange
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
   $JuzSurahRangeCopyWith<JuzSurahRange> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+      _$JuzSurahRangeCopyWithImpl<JuzSurahRange>(
+          this as JuzSurahRange, _$identity);
 
-/// @nodoc
-abstract class $JuzSurahRangeCopyWith<$Res> {
-  factory $JuzSurahRangeCopyWith(
-          JuzSurahRange value, $Res Function(JuzSurahRange) then) =
-      _$JuzSurahRangeCopyWithImpl<$Res, JuzSurahRange>;
-  @useResult
-  $Res call({int id, int juzNumber, int surahId, int fromAyah, int toAyah});
-}
-
-/// @nodoc
-class _$JuzSurahRangeCopyWithImpl<$Res, $Val extends JuzSurahRange>
-    implements $JuzSurahRangeCopyWith<$Res> {
-  _$JuzSurahRangeCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of JuzSurahRange
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? juzNumber = null,
-    Object? surahId = null,
-    Object? fromAyah = null,
-    Object? toAyah = null,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      juzNumber: null == juzNumber
-          ? _value.juzNumber
-          : juzNumber // ignore: cast_nullable_to_non_nullable
-              as int,
-      surahId: null == surahId
-          ? _value.surahId
-          : surahId // ignore: cast_nullable_to_non_nullable
-              as int,
-      fromAyah: null == fromAyah
-          ? _value.fromAyah
-          : fromAyah // ignore: cast_nullable_to_non_nullable
-              as int,
-      toAyah: null == toAyah
-          ? _value.toAyah
-          : toAyah // ignore: cast_nullable_to_non_nullable
-              as int,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$JuzSurahRangeImplCopyWith<$Res>
-    implements $JuzSurahRangeCopyWith<$Res> {
-  factory _$$JuzSurahRangeImplCopyWith(
-          _$JuzSurahRangeImpl value, $Res Function(_$JuzSurahRangeImpl) then) =
-      __$$JuzSurahRangeImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({int id, int juzNumber, int surahId, int fromAyah, int toAyah});
-}
-
-/// @nodoc
-class __$$JuzSurahRangeImplCopyWithImpl<$Res>
-    extends _$JuzSurahRangeCopyWithImpl<$Res, _$JuzSurahRangeImpl>
-    implements _$$JuzSurahRangeImplCopyWith<$Res> {
-  __$$JuzSurahRangeImplCopyWithImpl(
-      _$JuzSurahRangeImpl _value, $Res Function(_$JuzSurahRangeImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of JuzSurahRange
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? juzNumber = null,
-    Object? surahId = null,
-    Object? fromAyah = null,
-    Object? toAyah = null,
-  }) {
-    return _then(_$JuzSurahRangeImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      juzNumber: null == juzNumber
-          ? _value.juzNumber
-          : juzNumber // ignore: cast_nullable_to_non_nullable
-              as int,
-      surahId: null == surahId
-          ? _value.surahId
-          : surahId // ignore: cast_nullable_to_non_nullable
-              as int,
-      fromAyah: null == fromAyah
-          ? _value.fromAyah
-          : fromAyah // ignore: cast_nullable_to_non_nullable
-              as int,
-      toAyah: null == toAyah
-          ? _value.toAyah
-          : toAyah // ignore: cast_nullable_to_non_nullable
-              as int,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$JuzSurahRangeImpl implements _JuzSurahRange {
-  const _$JuzSurahRangeImpl(
-      {this.id = 0,
-      required this.juzNumber,
-      required this.surahId,
-      required this.fromAyah,
-      required this.toAyah});
-
-  factory _$JuzSurahRangeImpl.fromJson(Map<String, dynamic> json) =>
-      _$$JuzSurahRangeImplFromJson(json);
-
-  @override
-  @JsonKey()
-  final int id;
-  @override
-  final int juzNumber;
-  @override
-  final int surahId;
-  @override
-  final int fromAyah;
-  @override
-  final int toAyah;
-
-  @override
-  String toString() {
-    return 'JuzSurahRange(id: $id, juzNumber: $juzNumber, surahId: $surahId, fromAyah: $fromAyah, toAyah: $toAyah)';
-  }
+  /// Serializes this JuzSurahRange to a JSON map.
+  Map<String, dynamic> toJson();
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$JuzSurahRangeImpl &&
+            other is JuzSurahRange &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.juzNumber, juzNumber) ||
                 other.juzNumber == juzNumber) &&
@@ -195,48 +50,348 @@ class _$JuzSurahRangeImpl implements _JuzSurahRange {
   int get hashCode =>
       Object.hash(runtimeType, id, juzNumber, surahId, fromAyah, toAyah);
 
-  /// Create a copy of JuzSurahRange
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
-  _$$JuzSurahRangeImplCopyWith<_$JuzSurahRangeImpl> get copyWith =>
-      __$$JuzSurahRangeImplCopyWithImpl<_$JuzSurahRangeImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$JuzSurahRangeImplToJson(
-      this,
-    );
+  String toString() {
+    return 'JuzSurahRange(id: $id, juzNumber: $juzNumber, surahId: $surahId, fromAyah: $fromAyah, toAyah: $toAyah)';
   }
 }
 
-abstract class _JuzSurahRange implements JuzSurahRange {
-  const factory _JuzSurahRange(
-      {final int id,
-      required final int juzNumber,
-      required final int surahId,
-      required final int fromAyah,
-      required final int toAyah}) = _$JuzSurahRangeImpl;
+/// @nodoc
+abstract mixin class $JuzSurahRangeCopyWith<$Res> {
+  factory $JuzSurahRangeCopyWith(
+          JuzSurahRange value, $Res Function(JuzSurahRange) _then) =
+      _$JuzSurahRangeCopyWithImpl;
+  @useResult
+  $Res call({int id, int juzNumber, int surahId, int fromAyah, int toAyah});
+}
 
-  factory _JuzSurahRange.fromJson(Map<String, dynamic> json) =
-      _$JuzSurahRangeImpl.fromJson;
+/// @nodoc
+class _$JuzSurahRangeCopyWithImpl<$Res>
+    implements $JuzSurahRangeCopyWith<$Res> {
+  _$JuzSurahRangeCopyWithImpl(this._self, this._then);
+
+  final JuzSurahRange _self;
+  final $Res Function(JuzSurahRange) _then;
+
+  /// Create a copy of JuzSurahRange
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? juzNumber = null,
+    Object? surahId = null,
+    Object? fromAyah = null,
+    Object? toAyah = null,
+  }) {
+    return _then(_self.copyWith(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      juzNumber: null == juzNumber
+          ? _self.juzNumber
+          : juzNumber // ignore: cast_nullable_to_non_nullable
+              as int,
+      surahId: null == surahId
+          ? _self.surahId
+          : surahId // ignore: cast_nullable_to_non_nullable
+              as int,
+      fromAyah: null == fromAyah
+          ? _self.fromAyah
+          : fromAyah // ignore: cast_nullable_to_non_nullable
+              as int,
+      toAyah: null == toAyah
+          ? _self.toAyah
+          : toAyah // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// Adds pattern-matching-related methods to [JuzSurahRange].
+extension JuzSurahRangePatterns on JuzSurahRange {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_JuzSurahRange value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _JuzSurahRange() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_JuzSurahRange value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _JuzSurahRange():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_JuzSurahRange value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _JuzSurahRange() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            int id, int juzNumber, int surahId, int fromAyah, int toAyah)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _JuzSurahRange() when $default != null:
+        return $default(_that.id, _that.juzNumber, _that.surahId,
+            _that.fromAyah, _that.toAyah);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            int id, int juzNumber, int surahId, int fromAyah, int toAyah)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _JuzSurahRange():
+        return $default(_that.id, _that.juzNumber, _that.surahId,
+            _that.fromAyah, _that.toAyah);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            int id, int juzNumber, int surahId, int fromAyah, int toAyah)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _JuzSurahRange() when $default != null:
+        return $default(_that.id, _that.juzNumber, _that.surahId,
+            _that.fromAyah, _that.toAyah);
+      case _:
+        return null;
+    }
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _JuzSurahRange implements JuzSurahRange {
+  const _JuzSurahRange(
+      {this.id = 0,
+      required this.juzNumber,
+      required this.surahId,
+      required this.fromAyah,
+      required this.toAyah});
+  factory _JuzSurahRange.fromJson(Map<String, dynamic> json) =>
+      _$JuzSurahRangeFromJson(json);
 
   @override
-  int get id;
+  @JsonKey()
+  final int id;
   @override
-  int get juzNumber;
+  final int juzNumber;
   @override
-  int get surahId;
+  final int surahId;
   @override
-  int get fromAyah;
+  final int fromAyah;
   @override
-  int get toAyah;
+  final int toAyah;
 
   /// Create a copy of JuzSurahRange
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$JuzSurahRangeImplCopyWith<_$JuzSurahRangeImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  @pragma('vm:prefer-inline')
+  _$JuzSurahRangeCopyWith<_JuzSurahRange> get copyWith =>
+      __$JuzSurahRangeCopyWithImpl<_JuzSurahRange>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$JuzSurahRangeToJson(
+      this,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _JuzSurahRange &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.juzNumber, juzNumber) ||
+                other.juzNumber == juzNumber) &&
+            (identical(other.surahId, surahId) || other.surahId == surahId) &&
+            (identical(other.fromAyah, fromAyah) ||
+                other.fromAyah == fromAyah) &&
+            (identical(other.toAyah, toAyah) || other.toAyah == toAyah));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, id, juzNumber, surahId, fromAyah, toAyah);
+
+  @override
+  String toString() {
+    return 'JuzSurahRange(id: $id, juzNumber: $juzNumber, surahId: $surahId, fromAyah: $fromAyah, toAyah: $toAyah)';
+  }
 }
+
+/// @nodoc
+abstract mixin class _$JuzSurahRangeCopyWith<$Res>
+    implements $JuzSurahRangeCopyWith<$Res> {
+  factory _$JuzSurahRangeCopyWith(
+          _JuzSurahRange value, $Res Function(_JuzSurahRange) _then) =
+      __$JuzSurahRangeCopyWithImpl;
+  @override
+  @useResult
+  $Res call({int id, int juzNumber, int surahId, int fromAyah, int toAyah});
+}
+
+/// @nodoc
+class __$JuzSurahRangeCopyWithImpl<$Res>
+    implements _$JuzSurahRangeCopyWith<$Res> {
+  __$JuzSurahRangeCopyWithImpl(this._self, this._then);
+
+  final _JuzSurahRange _self;
+  final $Res Function(_JuzSurahRange) _then;
+
+  /// Create a copy of JuzSurahRange
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? juzNumber = null,
+    Object? surahId = null,
+    Object? fromAyah = null,
+    Object? toAyah = null,
+  }) {
+    return _then(_JuzSurahRange(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      juzNumber: null == juzNumber
+          ? _self.juzNumber
+          : juzNumber // ignore: cast_nullable_to_non_nullable
+              as int,
+      surahId: null == surahId
+          ? _self.surahId
+          : surahId // ignore: cast_nullable_to_non_nullable
+              as int,
+      fromAyah: null == fromAyah
+          ? _self.fromAyah
+          : fromAyah // ignore: cast_nullable_to_non_nullable
+              as int,
+      toAyah: null == toAyah
+          ? _self.toAyah
+          : toAyah // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+// dart format on

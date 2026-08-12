@@ -6,10 +6,14 @@ part of 'session.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$SessionImpl _$$SessionImplFromJson(Map<String, dynamic> json) =>
-    _$SessionImpl(
+_Session _$SessionFromJson(Map<String, dynamic> json) => _Session(
       id: (json['id'] as num?)?.toInt() ?? 0,
-      studentId: (json['studentId'] as num).toInt(),
+      studentId: (json['studentId'] as num?)?.toInt(),
+      groupId: (json['groupId'] as num?)?.toInt(),
+      sessionType: json['sessionType'] as String? ?? 'فردي',
+      occurrenceDate: json['occurrenceDate'] == null
+          ? null
+          : DateTime.parse(json['occurrenceDate'] as String),
       date: DateTime.parse(json['date'] as String),
       time: json['time'] as String? ?? '00:00',
       attendanceStatus: json['attendanceStatus'] as String? ?? 'حاضر',
@@ -30,10 +34,12 @@ _$SessionImpl _$$SessionImplFromJson(Map<String, dynamic> json) =>
               json['evaluation'] as Map<String, dynamic>),
     );
 
-Map<String, dynamic> _$$SessionImplToJson(_$SessionImpl instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$SessionToJson(_Session instance) => <String, dynamic>{
       'id': instance.id,
       'studentId': instance.studentId,
+      'groupId': instance.groupId,
+      'sessionType': instance.sessionType,
+      'occurrenceDate': instance.occurrenceDate?.toIso8601String(),
       'date': instance.date.toIso8601String(),
       'time': instance.time,
       'attendanceStatus': instance.attendanceStatus,
@@ -44,9 +50,8 @@ Map<String, dynamic> _$$SessionImplToJson(_$SessionImpl instance) =>
       'evaluation': instance.evaluation,
     };
 
-_$SessionMemorizationImpl _$$SessionMemorizationImplFromJson(
-        Map<String, dynamic> json) =>
-    _$SessionMemorizationImpl(
+_SessionMemorization _$SessionMemorizationFromJson(Map<String, dynamic> json) =>
+    _SessionMemorization(
       id: (json['id'] as num?)?.toInt() ?? 0,
       sessionId: (json['sessionId'] as num?)?.toInt() ?? 0,
       surahId: (json['surahId'] as num).toInt(),
@@ -54,8 +59,8 @@ _$SessionMemorizationImpl _$$SessionMemorizationImplFromJson(
       toAyah: (json['toAyah'] as num?)?.toInt() ?? 1,
     );
 
-Map<String, dynamic> _$$SessionMemorizationImplToJson(
-        _$SessionMemorizationImpl instance) =>
+Map<String, dynamic> _$SessionMemorizationToJson(
+        _SessionMemorization instance) =>
     <String, dynamic>{
       'id': instance.id,
       'sessionId': instance.sessionId,
@@ -64,9 +69,8 @@ Map<String, dynamic> _$$SessionMemorizationImplToJson(
       'toAyah': instance.toAyah,
     };
 
-_$SessionRevisionImpl _$$SessionRevisionImplFromJson(
-        Map<String, dynamic> json) =>
-    _$SessionRevisionImpl(
+_SessionRevision _$SessionRevisionFromJson(Map<String, dynamic> json) =>
+    _SessionRevision(
       id: (json['id'] as num?)?.toInt() ?? 0,
       sessionId: (json['sessionId'] as num?)?.toInt() ?? 0,
       surahId: (json['surahId'] as num).toInt(),
@@ -74,8 +78,7 @@ _$SessionRevisionImpl _$$SessionRevisionImplFromJson(
       toAyah: (json['toAyah'] as num?)?.toInt() ?? 1,
     );
 
-Map<String, dynamic> _$$SessionRevisionImplToJson(
-        _$SessionRevisionImpl instance) =>
+Map<String, dynamic> _$SessionRevisionToJson(_SessionRevision instance) =>
     <String, dynamic>{
       'id': instance.id,
       'sessionId': instance.sessionId,
@@ -84,9 +87,8 @@ Map<String, dynamic> _$$SessionRevisionImplToJson(
       'toAyah': instance.toAyah,
     };
 
-_$SessionEvaluationImpl _$$SessionEvaluationImplFromJson(
-        Map<String, dynamic> json) =>
-    _$SessionEvaluationImpl(
+_SessionEvaluation _$SessionEvaluationFromJson(Map<String, dynamic> json) =>
+    _SessionEvaluation(
       id: (json['id'] as num?)?.toInt() ?? 0,
       sessionId: (json['sessionId'] as num?)?.toInt() ?? 0,
       memorizationScore: (json['memorizationScore'] as num?)?.toDouble() ?? 0.0,
@@ -95,8 +97,7 @@ _$SessionEvaluationImpl _$$SessionEvaluationImplFromJson(
       accuracyScore: (json['accuracyScore'] as num?)?.toDouble() ?? 0.0,
     );
 
-Map<String, dynamic> _$$SessionEvaluationImplToJson(
-        _$SessionEvaluationImpl instance) =>
+Map<String, dynamic> _$SessionEvaluationToJson(_SessionEvaluation instance) =>
     <String, dynamic>{
       'id': instance.id,
       'sessionId': instance.sessionId,

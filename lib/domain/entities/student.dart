@@ -4,7 +4,7 @@ part 'student.freezed.dart';
 part 'student.g.dart';
 
 @freezed
-class Student with _$Student {
+abstract class Student with _$Student {
   const factory Student({
     @Default(0) int id,
     required String fullName,

@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,30 +9,175 @@ part of 'app_error.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
 mixin _$AppError {
-  String get message => throw _privateConstructorUsedError;
+  String get message;
+
+  /// Create a copy of AppError
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $AppErrorCopyWith<AppError> get copyWith =>
+      _$AppErrorCopyWithImpl<AppError>(this as AppError, _$identity);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is AppError &&
+            (identical(other.message, message) || other.message == message));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, message);
+
+  @override
+  String toString() {
+    return 'AppError(message: $message)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $AppErrorCopyWith<$Res> {
+  factory $AppErrorCopyWith(AppError value, $Res Function(AppError) _then) =
+      _$AppErrorCopyWithImpl;
+  @useResult
+  $Res call({String message});
+}
+
+/// @nodoc
+class _$AppErrorCopyWithImpl<$Res> implements $AppErrorCopyWith<$Res> {
+  _$AppErrorCopyWithImpl(this._self, this._then);
+
+  final AppError _self;
+  final $Res Function(AppError) _then;
+
+  /// Create a copy of AppError
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? message = null,
+  }) {
+    return _then(_self.copyWith(
+      message: null == message
+          ? _self.message
+          : message // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// Adds pattern-matching-related methods to [AppError].
+extension AppErrorPatterns on AppError {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
   @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(String message, String? operation) database,
-    required TResult Function(String message, Map<String, String> fieldErrors)
-        validation,
-    required TResult Function(String message, Object? originalError) unknown,
-  }) =>
-      throw _privateConstructorUsedError;
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(DatabaseError value)? database,
+    TResult Function(ValidationError value)? validation,
+    TResult Function(UnknownError value)? unknown,
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case DatabaseError() when database != null:
+        return database(_that);
+      case ValidationError() when validation != null:
+        return validation(_that);
+      case UnknownError() when unknown != null:
+        return unknown(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
   @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(String message, String? operation)? database,
-    TResult? Function(String message, Map<String, String> fieldErrors)?
-        validation,
-    TResult? Function(String message, Object? originalError)? unknown,
-  }) =>
-      throw _privateConstructorUsedError;
+  TResult map<TResult extends Object?>({
+    required TResult Function(DatabaseError value) database,
+    required TResult Function(ValidationError value) validation,
+    required TResult Function(UnknownError value) unknown,
+  }) {
+    final _that = this;
+    switch (_that) {
+      case DatabaseError():
+        return database(_that);
+      case ValidationError():
+        return validation(_that);
+      case UnknownError():
+        return unknown(_that);
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(DatabaseError value)? database,
+    TResult? Function(ValidationError value)? validation,
+    TResult? Function(UnknownError value)? unknown,
+  }) {
+    final _that = this;
+    switch (_that) {
+      case DatabaseError() when database != null:
+        return database(_that);
+      case ValidationError() when validation != null:
+        return validation(_that);
+      case UnknownError() when unknown != null:
+        return unknown(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(String message, String? operation)? database,
@@ -40,132 +185,106 @@ mixin _$AppError {
         validation,
     TResult Function(String message, Object? originalError)? unknown,
     required TResult orElse(),
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(DatabaseError value) database,
-    required TResult Function(ValidationError value) validation,
-    required TResult Function(UnknownError value) unknown,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(DatabaseError value)? database,
-    TResult? Function(ValidationError value)? validation,
-    TResult? Function(UnknownError value)? unknown,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(DatabaseError value)? database,
-    TResult Function(ValidationError value)? validation,
-    TResult Function(UnknownError value)? unknown,
-    required TResult orElse(),
-  }) =>
-      throw _privateConstructorUsedError;
-
-  /// Create a copy of AppError
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $AppErrorCopyWith<AppError> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $AppErrorCopyWith<$Res> {
-  factory $AppErrorCopyWith(AppError value, $Res Function(AppError) then) =
-      _$AppErrorCopyWithImpl<$Res, AppError>;
-  @useResult
-  $Res call({String message});
-}
-
-/// @nodoc
-class _$AppErrorCopyWithImpl<$Res, $Val extends AppError>
-    implements $AppErrorCopyWith<$Res> {
-  _$AppErrorCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of AppError
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? message = null,
   }) {
-    return _then(_value.copyWith(
-      message: null == message
-          ? _value.message
-          : message // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
+    final _that = this;
+    switch (_that) {
+      case DatabaseError() when database != null:
+        return database(_that.message, _that.operation);
+      case ValidationError() when validation != null:
+        return validation(_that.message, _that.fieldErrors);
+      case UnknownError() when unknown != null:
+        return unknown(_that.message, _that.originalError);
+      case _:
+        return orElse();
+    }
   }
-}
 
-/// @nodoc
-abstract class _$$DatabaseErrorImplCopyWith<$Res>
-    implements $AppErrorCopyWith<$Res> {
-  factory _$$DatabaseErrorImplCopyWith(
-          _$DatabaseErrorImpl value, $Res Function(_$DatabaseErrorImpl) then) =
-      __$$DatabaseErrorImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({String message, String? operation});
-}
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
 
-/// @nodoc
-class __$$DatabaseErrorImplCopyWithImpl<$Res>
-    extends _$AppErrorCopyWithImpl<$Res, _$DatabaseErrorImpl>
-    implements _$$DatabaseErrorImplCopyWith<$Res> {
-  __$$DatabaseErrorImplCopyWithImpl(
-      _$DatabaseErrorImpl _value, $Res Function(_$DatabaseErrorImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of AppError
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? message = null,
-    Object? operation = freezed,
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(String message, String? operation) database,
+    required TResult Function(String message, Map<String, String> fieldErrors)
+        validation,
+    required TResult Function(String message, Object? originalError) unknown,
   }) {
-    return _then(_$DatabaseErrorImpl(
-      message: null == message
-          ? _value.message
-          : message // ignore: cast_nullable_to_non_nullable
-              as String,
-      operation: freezed == operation
-          ? _value.operation
-          : operation // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
+    final _that = this;
+    switch (_that) {
+      case DatabaseError():
+        return database(_that.message, _that.operation);
+      case ValidationError():
+        return validation(_that.message, _that.fieldErrors);
+      case UnknownError():
+        return unknown(_that.message, _that.originalError);
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(String message, String? operation)? database,
+    TResult? Function(String message, Map<String, String> fieldErrors)?
+        validation,
+    TResult? Function(String message, Object? originalError)? unknown,
+  }) {
+    final _that = this;
+    switch (_that) {
+      case DatabaseError() when database != null:
+        return database(_that.message, _that.operation);
+      case ValidationError() when validation != null:
+        return validation(_that.message, _that.fieldErrors);
+      case UnknownError() when unknown != null:
+        return unknown(_that.message, _that.originalError);
+      case _:
+        return null;
+    }
   }
 }
 
 /// @nodoc
 
-class _$DatabaseErrorImpl implements DatabaseError {
-  const _$DatabaseErrorImpl({required this.message, this.operation});
+class DatabaseError implements AppError {
+  const DatabaseError({required this.message, this.operation});
 
   @override
   final String message;
-  @override
   final String? operation;
 
+  /// Create a copy of AppError
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'AppError.database(message: $message, operation: $operation)';
-  }
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $DatabaseErrorCopyWith<DatabaseError> get copyWith =>
+      _$DatabaseErrorCopyWithImpl<DatabaseError>(this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$DatabaseErrorImpl &&
+            other is DatabaseError &&
             (identical(other.message, message) || other.message == message) &&
             (identical(other.operation, operation) ||
                 other.operation == operation));
@@ -174,154 +293,62 @@ class _$DatabaseErrorImpl implements DatabaseError {
   @override
   int get hashCode => Object.hash(runtimeType, message, operation);
 
-  /// Create a copy of AppError
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
-  _$$DatabaseErrorImplCopyWith<_$DatabaseErrorImpl> get copyWith =>
-      __$$DatabaseErrorImplCopyWithImpl<_$DatabaseErrorImpl>(this, _$identity);
-
-  @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(String message, String? operation) database,
-    required TResult Function(String message, Map<String, String> fieldErrors)
-        validation,
-    required TResult Function(String message, Object? originalError) unknown,
-  }) {
-    return database(message, operation);
+  String toString() {
+    return 'AppError.database(message: $message, operation: $operation)';
   }
-
-  @override
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(String message, String? operation)? database,
-    TResult? Function(String message, Map<String, String> fieldErrors)?
-        validation,
-    TResult? Function(String message, Object? originalError)? unknown,
-  }) {
-    return database?.call(message, operation);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(String message, String? operation)? database,
-    TResult Function(String message, Map<String, String> fieldErrors)?
-        validation,
-    TResult Function(String message, Object? originalError)? unknown,
-    required TResult orElse(),
-  }) {
-    if (database != null) {
-      return database(message, operation);
-    }
-    return orElse();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(DatabaseError value) database,
-    required TResult Function(ValidationError value) validation,
-    required TResult Function(UnknownError value) unknown,
-  }) {
-    return database(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(DatabaseError value)? database,
-    TResult? Function(ValidationError value)? validation,
-    TResult? Function(UnknownError value)? unknown,
-  }) {
-    return database?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(DatabaseError value)? database,
-    TResult Function(ValidationError value)? validation,
-    TResult Function(UnknownError value)? unknown,
-    required TResult orElse(),
-  }) {
-    if (database != null) {
-      return database(this);
-    }
-    return orElse();
-  }
-}
-
-abstract class DatabaseError implements AppError {
-  const factory DatabaseError(
-      {required final String message,
-      final String? operation}) = _$DatabaseErrorImpl;
-
-  @override
-  String get message;
-  String? get operation;
-
-  /// Create a copy of AppError
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$DatabaseErrorImplCopyWith<_$DatabaseErrorImpl> get copyWith =>
-      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$ValidationErrorImplCopyWith<$Res>
+abstract mixin class $DatabaseErrorCopyWith<$Res>
     implements $AppErrorCopyWith<$Res> {
-  factory _$$ValidationErrorImplCopyWith(_$ValidationErrorImpl value,
-          $Res Function(_$ValidationErrorImpl) then) =
-      __$$ValidationErrorImplCopyWithImpl<$Res>;
+  factory $DatabaseErrorCopyWith(
+          DatabaseError value, $Res Function(DatabaseError) _then) =
+      _$DatabaseErrorCopyWithImpl;
   @override
   @useResult
-  $Res call({String message, Map<String, String> fieldErrors});
+  $Res call({String message, String? operation});
 }
 
 /// @nodoc
-class __$$ValidationErrorImplCopyWithImpl<$Res>
-    extends _$AppErrorCopyWithImpl<$Res, _$ValidationErrorImpl>
-    implements _$$ValidationErrorImplCopyWith<$Res> {
-  __$$ValidationErrorImplCopyWithImpl(
-      _$ValidationErrorImpl _value, $Res Function(_$ValidationErrorImpl) _then)
-      : super(_value, _then);
+class _$DatabaseErrorCopyWithImpl<$Res>
+    implements $DatabaseErrorCopyWith<$Res> {
+  _$DatabaseErrorCopyWithImpl(this._self, this._then);
+
+  final DatabaseError _self;
+  final $Res Function(DatabaseError) _then;
 
   /// Create a copy of AppError
   /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
   @override
+  @pragma('vm:prefer-inline')
   $Res call({
     Object? message = null,
-    Object? fieldErrors = null,
+    Object? operation = freezed,
   }) {
-    return _then(_$ValidationErrorImpl(
+    return _then(DatabaseError(
       message: null == message
-          ? _value.message
+          ? _self.message
           : message // ignore: cast_nullable_to_non_nullable
               as String,
-      fieldErrors: null == fieldErrors
-          ? _value._fieldErrors
-          : fieldErrors // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>,
+      operation: freezed == operation
+          ? _self.operation
+          : operation // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
 
 /// @nodoc
 
-class _$ValidationErrorImpl implements ValidationError {
-  const _$ValidationErrorImpl(
+class ValidationError implements AppError {
+  const ValidationError(
       {required this.message, final Map<String, String> fieldErrors = const {}})
       : _fieldErrors = fieldErrors;
 
   @override
   final String message;
   final Map<String, String> _fieldErrors;
-  @override
   @JsonKey()
   Map<String, String> get fieldErrors {
     if (_fieldErrors is EqualUnmodifiableMapView) return _fieldErrors;
@@ -329,16 +356,19 @@ class _$ValidationErrorImpl implements ValidationError {
     return EqualUnmodifiableMapView(_fieldErrors);
   }
 
+  /// Create a copy of AppError
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'AppError.validation(message: $message, fieldErrors: $fieldErrors)';
-  }
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $ValidationErrorCopyWith<ValidationError> get copyWith =>
+      _$ValidationErrorCopyWithImpl<ValidationError>(this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ValidationErrorImpl &&
+            other is ValidationError &&
             (identical(other.message, message) || other.message == message) &&
             const DeepCollectionEquality()
                 .equals(other._fieldErrors, _fieldErrors));
@@ -348,162 +378,74 @@ class _$ValidationErrorImpl implements ValidationError {
   int get hashCode => Object.hash(
       runtimeType, message, const DeepCollectionEquality().hash(_fieldErrors));
 
-  /// Create a copy of AppError
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
-  _$$ValidationErrorImplCopyWith<_$ValidationErrorImpl> get copyWith =>
-      __$$ValidationErrorImplCopyWithImpl<_$ValidationErrorImpl>(
-          this, _$identity);
-
-  @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(String message, String? operation) database,
-    required TResult Function(String message, Map<String, String> fieldErrors)
-        validation,
-    required TResult Function(String message, Object? originalError) unknown,
-  }) {
-    return validation(message, fieldErrors);
+  String toString() {
+    return 'AppError.validation(message: $message, fieldErrors: $fieldErrors)';
   }
-
-  @override
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(String message, String? operation)? database,
-    TResult? Function(String message, Map<String, String> fieldErrors)?
-        validation,
-    TResult? Function(String message, Object? originalError)? unknown,
-  }) {
-    return validation?.call(message, fieldErrors);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(String message, String? operation)? database,
-    TResult Function(String message, Map<String, String> fieldErrors)?
-        validation,
-    TResult Function(String message, Object? originalError)? unknown,
-    required TResult orElse(),
-  }) {
-    if (validation != null) {
-      return validation(message, fieldErrors);
-    }
-    return orElse();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(DatabaseError value) database,
-    required TResult Function(ValidationError value) validation,
-    required TResult Function(UnknownError value) unknown,
-  }) {
-    return validation(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(DatabaseError value)? database,
-    TResult? Function(ValidationError value)? validation,
-    TResult? Function(UnknownError value)? unknown,
-  }) {
-    return validation?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(DatabaseError value)? database,
-    TResult Function(ValidationError value)? validation,
-    TResult Function(UnknownError value)? unknown,
-    required TResult orElse(),
-  }) {
-    if (validation != null) {
-      return validation(this);
-    }
-    return orElse();
-  }
-}
-
-abstract class ValidationError implements AppError {
-  const factory ValidationError(
-      {required final String message,
-      final Map<String, String> fieldErrors}) = _$ValidationErrorImpl;
-
-  @override
-  String get message;
-  Map<String, String> get fieldErrors;
-
-  /// Create a copy of AppError
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ValidationErrorImplCopyWith<_$ValidationErrorImpl> get copyWith =>
-      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$UnknownErrorImplCopyWith<$Res>
+abstract mixin class $ValidationErrorCopyWith<$Res>
     implements $AppErrorCopyWith<$Res> {
-  factory _$$UnknownErrorImplCopyWith(
-          _$UnknownErrorImpl value, $Res Function(_$UnknownErrorImpl) then) =
-      __$$UnknownErrorImplCopyWithImpl<$Res>;
+  factory $ValidationErrorCopyWith(
+          ValidationError value, $Res Function(ValidationError) _then) =
+      _$ValidationErrorCopyWithImpl;
   @override
   @useResult
-  $Res call({String message, Object? originalError});
+  $Res call({String message, Map<String, String> fieldErrors});
 }
 
 /// @nodoc
-class __$$UnknownErrorImplCopyWithImpl<$Res>
-    extends _$AppErrorCopyWithImpl<$Res, _$UnknownErrorImpl>
-    implements _$$UnknownErrorImplCopyWith<$Res> {
-  __$$UnknownErrorImplCopyWithImpl(
-      _$UnknownErrorImpl _value, $Res Function(_$UnknownErrorImpl) _then)
-      : super(_value, _then);
+class _$ValidationErrorCopyWithImpl<$Res>
+    implements $ValidationErrorCopyWith<$Res> {
+  _$ValidationErrorCopyWithImpl(this._self, this._then);
+
+  final ValidationError _self;
+  final $Res Function(ValidationError) _then;
 
   /// Create a copy of AppError
   /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
   @override
+  @pragma('vm:prefer-inline')
   $Res call({
     Object? message = null,
-    Object? originalError = freezed,
+    Object? fieldErrors = null,
   }) {
-    return _then(_$UnknownErrorImpl(
+    return _then(ValidationError(
       message: null == message
-          ? _value.message
+          ? _self.message
           : message // ignore: cast_nullable_to_non_nullable
               as String,
-      originalError:
-          freezed == originalError ? _value.originalError : originalError,
+      fieldErrors: null == fieldErrors
+          ? _self._fieldErrors
+          : fieldErrors // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>,
     ));
   }
 }
 
 /// @nodoc
 
-class _$UnknownErrorImpl implements UnknownError {
-  const _$UnknownErrorImpl({required this.message, this.originalError});
+class UnknownError implements AppError {
+  const UnknownError({required this.message, this.originalError});
 
   @override
   final String message;
-  @override
   final Object? originalError;
 
+  /// Create a copy of AppError
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'AppError.unknown(message: $message, originalError: $originalError)';
-  }
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $UnknownErrorCopyWith<UnknownError> get copyWith =>
+      _$UnknownErrorCopyWithImpl<UnknownError>(this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$UnknownErrorImpl &&
+            other is UnknownError &&
             (identical(other.message, message) || other.message == message) &&
             const DeepCollectionEquality()
                 .equals(other.originalError, originalError));
@@ -513,99 +455,47 @@ class _$UnknownErrorImpl implements UnknownError {
   int get hashCode => Object.hash(
       runtimeType, message, const DeepCollectionEquality().hash(originalError));
 
+  @override
+  String toString() {
+    return 'AppError.unknown(message: $message, originalError: $originalError)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $UnknownErrorCopyWith<$Res>
+    implements $AppErrorCopyWith<$Res> {
+  factory $UnknownErrorCopyWith(
+          UnknownError value, $Res Function(UnknownError) _then) =
+      _$UnknownErrorCopyWithImpl;
+  @override
+  @useResult
+  $Res call({String message, Object? originalError});
+}
+
+/// @nodoc
+class _$UnknownErrorCopyWithImpl<$Res> implements $UnknownErrorCopyWith<$Res> {
+  _$UnknownErrorCopyWithImpl(this._self, this._then);
+
+  final UnknownError _self;
+  final $Res Function(UnknownError) _then;
+
   /// Create a copy of AppError
   /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$UnknownErrorImplCopyWith<_$UnknownErrorImpl> get copyWith =>
-      __$$UnknownErrorImplCopyWithImpl<_$UnknownErrorImpl>(this, _$identity);
-
-  @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(String message, String? operation) database,
-    required TResult Function(String message, Map<String, String> fieldErrors)
-        validation,
-    required TResult Function(String message, Object? originalError) unknown,
+  $Res call({
+    Object? message = null,
+    Object? originalError = freezed,
   }) {
-    return unknown(message, originalError);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(String message, String? operation)? database,
-    TResult? Function(String message, Map<String, String> fieldErrors)?
-        validation,
-    TResult? Function(String message, Object? originalError)? unknown,
-  }) {
-    return unknown?.call(message, originalError);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(String message, String? operation)? database,
-    TResult Function(String message, Map<String, String> fieldErrors)?
-        validation,
-    TResult Function(String message, Object? originalError)? unknown,
-    required TResult orElse(),
-  }) {
-    if (unknown != null) {
-      return unknown(message, originalError);
-    }
-    return orElse();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(DatabaseError value) database,
-    required TResult Function(ValidationError value) validation,
-    required TResult Function(UnknownError value) unknown,
-  }) {
-    return unknown(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(DatabaseError value)? database,
-    TResult? Function(ValidationError value)? validation,
-    TResult? Function(UnknownError value)? unknown,
-  }) {
-    return unknown?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(DatabaseError value)? database,
-    TResult Function(ValidationError value)? validation,
-    TResult Function(UnknownError value)? unknown,
-    required TResult orElse(),
-  }) {
-    if (unknown != null) {
-      return unknown(this);
-    }
-    return orElse();
+    return _then(UnknownError(
+      message: null == message
+          ? _self.message
+          : message // ignore: cast_nullable_to_non_nullable
+              as String,
+      originalError:
+          freezed == originalError ? _self.originalError : originalError,
+    ));
   }
 }
 
-abstract class UnknownError implements AppError {
-  const factory UnknownError(
-      {required final String message,
-      final Object? originalError}) = _$UnknownErrorImpl;
-
-  @override
-  String get message;
-  Object? get originalError;
-
-  /// Create a copy of AppError
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$UnknownErrorImplCopyWith<_$UnknownErrorImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+// dart format on

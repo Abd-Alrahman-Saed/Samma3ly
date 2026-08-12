@@ -4,7 +4,7 @@ part 'surah.freezed.dart';
 part 'surah.g.dart';
 
 @freezed
-class Surah with _$Surah {
+abstract class Surah with _$Surah {
   const factory Surah({
     @Default(0) int id,
     required int number,

@@ -4,7 +4,7 @@ part 'dashboard_data.freezed.dart';
 part 'dashboard_data.g.dart';
 
 @freezed
-class DashboardData with _$DashboardData {
+abstract class DashboardData with _$DashboardData {
   const factory DashboardData({
     @Default(0) int totalStudents,
     @Default(0) int todaySessions,
@@ -25,7 +25,7 @@ class DashboardData with _$DashboardData {
 }
 
 @freezed
-class DashboardTopStudent with _$DashboardTopStudent {
+abstract class DashboardTopStudent with _$DashboardTopStudent {
   const factory DashboardTopStudent({
     required int studentId,
     required String studentName,
@@ -37,7 +37,7 @@ class DashboardTopStudent with _$DashboardTopStudent {
 }
 
 @freezed
-class WeeklyAttendanceData with _$WeeklyAttendanceData {
+abstract class WeeklyAttendanceData with _$WeeklyAttendanceData {
   const factory WeeklyAttendanceData({
     required DateTime date,
     @Default(0.0) double percent,

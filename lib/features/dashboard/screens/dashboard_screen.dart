@@ -373,7 +373,7 @@ class _RecentSessionsList extends ConsumerWidget {
           children: recent.map((s) => SessionCard(
             item: SessionCardItem(
               id: s.id,
-              studentId: s.studentId,
+              studentId: s.studentId!,
               studentName: studentNames[s.studentId] ?? 'طالب رقم ${s.studentId}',
               initials: (studentNames[s.studentId] ?? 'ط').substring(0, 1),
               date: s.date,

@@ -51,7 +51,7 @@ class _SessionListScreenState extends ConsumerState<SessionListScreen> {
     final dao = ref.read(sessionDaoProvider);
     await ref.read(sessionRepositoryProvider).delete(session.id);
     ref.invalidate(sessionListProvider);
-    ref.invalidate(sessionsByStudentProvider(session.studentId));
+    if (session.studentId != null) ref.invalidate(sessionsByStudentProvider(session.studentId!));
     if (!mounted) return;
     showUndoSnackbar(context, 'تم حذف الجلسة', () async {
       await dao.insert(SessionsCompanion(
@@ -59,10 +59,12 @@ class _SessionListScreenState extends ConsumerState<SessionListScreen> {
         studentId: Value(session.studentId),
         date: Value(session.date),
         time: Value(session.time),
-        attendanceStatus: Value(session.attendanceStatus),
         notes: Value(session.notes),
         createdAt: Value(session.createdAt ?? DateTime.now()),
       ));
+      if (session.studentId != null) {
+        await dao.upsertAttendance(session.id, session.studentId!, session.attendanceStatus);
+      }
       final mem = session.memorization;
       if (mem != null) {
         await dao.insertMemorization(SessionMemorizationsCompanion(
@@ -92,7 +94,7 @@ class _SessionListScreenState extends ConsumerState<SessionListScreen> {
         ));
       }
       ref.invalidate(sessionListProvider);
-      ref.invalidate(sessionsByStudentProvider(session.studentId));
+      if (session.studentId != null) ref.invalidate(sessionsByStudentProvider(session.studentId!));
     });
   }
 
@@ -206,7 +208,7 @@ class _SessionListScreenState extends ConsumerState<SessionListScreen> {
                                   child: SessionCard(
                                     item: SessionCardItem(
                                       id: session.id,
-                                      studentId: session.studentId,
+                                      studentId: session.studentId!,
                                       studentName: studentName,
                                       initials: studentName.substring(0, 1),
                                       date: session.date,

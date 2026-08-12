@@ -13,9 +13,14 @@ import 'tables/sessions_table.dart';
 import 'tables/session_memorizations_table.dart';
 import 'tables/session_revisions_table.dart';
 import 'tables/session_evaluations_table.dart';
+import 'tables/session_attendances_table.dart';
 import 'tables/schedules_table.dart';
 import 'tables/goals_table.dart';
 import 'tables/memorized_ranges_table.dart';
+import 'tables/groups_table.dart';
+import 'tables/group_members_table.dart';
+import 'tables/group_schedule_slots_table.dart';
+import 'tables/schedule_exceptions_table.dart';
 
 part 'app_database.g.dart';
 
@@ -29,9 +34,14 @@ part 'app_database.g.dart';
     SessionMemorizations,
     SessionRevisions,
     SessionEvaluations,
+    SessionAttendances,
     Schedules,
     Goals,
     MemorizedRanges,
+    Groups,
+    GroupMembers,
+    GroupScheduleSlots,
+    ScheduleExceptions,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -43,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(QueryExecutor executor) : super(executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -53,7 +63,17 @@ class AppDatabase extends _$AppDatabase {
       await _seedJuzRanges();
     },
     onUpgrade: (Migrator m, int from, int to) async {
-      if (from < 2) {
+      // Every block below is guarded by both `from < N` (haven't reached
+      // N yet) AND `to >= N` (actually migrating up to N or further) —
+      // not just `from < N` alone. A real app always migrates straight to
+      // `schemaVersion`, so `to` is always the latest version and this
+      // never mattered in practice; but drift_dev's SchemaVerifier can
+      // constrain a migration to stop at an intermediate version (e.g.
+      // testing v2->v3 in isolation), and without the `to >= N` guard a
+      // later block (e.g. v4's) would incorrectly also run during that
+      // constrained migration, corrupting the test. See the v3->v4
+      // migration test comment in test/migration_test.dart.
+      if (from < 2 && to >= 2) {
         // Sprint 0 (v2): the `pending_changes` table was never wired up to
         // any real sync — drop it rather than carry dead schema forward.
         await m.deleteTable('pending_changes');
@@ -64,7 +84,7 @@ class AppDatabase extends _$AppDatabase {
         // would silently leak into aggregate counts (e.g. Dashboard).
         await _deleteOrphans();
       }
-      if (from < 3) {
+      if (from < 3 && to >= 3) {
         // Item 0.4b (v3): `juz_surah_ranges` was seeded with corrupted
         // data on every install prior to this version (juz 20-30 all
         // miscoded as juz 30; juz 3/4/5 boundaries also wrong — see the
@@ -74,6 +94,40 @@ class AppDatabase extends _$AppDatabase {
         // `_juzRangeData`.
         await customStatement('DELETE FROM juz_surah_ranges');
         await _seedJuzRanges();
+      }
+      if (from < 4 && to >= 4) {
+        // Item 2.1 (v4, Sprint 2): Groups feature — new tables for
+        // recurring group scheduling, plus per-student attendance (a
+        // group session has multiple students, each with an independent
+        // status; a single `attendanceStatus` column on Sessions can no
+        // longer represent that).
+        //
+        // 🔴 Highest-risk migration in the whole plan (see
+        // docs/IMPLEMENTATION_PLAN.md القسم ب). SQLite has no
+        // ALTER COLUMN, so making Sessions.studentId nullable requires a
+        // full table recreation (m.alterTable/TableMigration).
+        // attendanceStatus MUST be copied into session_attendances
+        // BEFORE that recreation runs: the recreation rebuilds the table
+        // to match the new Dart schema, which no longer declares
+        // attendanceStatus at all, so the column (and its data) is gone
+        // the moment the old table is dropped.
+        await transaction(() async {
+          await m.createTable(groups);
+          await m.createTable(groupMembers);
+          await m.createTable(groupScheduleSlots);
+          await m.createTable(scheduleExceptions);
+          await m.createTable(sessionAttendances);
+
+          await customStatement('''
+            INSERT INTO session_attendances (session_id, student_id, attendance_status, created_at)
+            SELECT id, student_id, attendance_status, created_at FROM sessions
+          ''');
+
+          await m.alterTable(TableMigration(
+            sessions,
+            newColumns: [sessions.groupId, sessions.sessionType, sessions.occurrenceDate],
+          ));
+        });
       }
     },
     beforeOpen: (details) async {

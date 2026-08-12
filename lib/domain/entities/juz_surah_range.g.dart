@@ -6,8 +6,8 @@ part of 'juz_surah_range.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$JuzSurahRangeImpl _$$JuzSurahRangeImplFromJson(Map<String, dynamic> json) =>
-    _$JuzSurahRangeImpl(
+_JuzSurahRange _$JuzSurahRangeFromJson(Map<String, dynamic> json) =>
+    _JuzSurahRange(
       id: (json['id'] as num?)?.toInt() ?? 0,
       juzNumber: (json['juzNumber'] as num).toInt(),
       surahId: (json['surahId'] as num).toInt(),
@@ -15,7 +15,7 @@ _$JuzSurahRangeImpl _$$JuzSurahRangeImplFromJson(Map<String, dynamic> json) =>
       toAyah: (json['toAyah'] as num).toInt(),
     );
 
-Map<String, dynamic> _$$JuzSurahRangeImplToJson(_$JuzSurahRangeImpl instance) =>
+Map<String, dynamic> _$JuzSurahRangeToJson(_JuzSurahRange instance) =>
     <String, dynamic>{
       'id': instance.id,
       'juzNumber': instance.juzNumber,

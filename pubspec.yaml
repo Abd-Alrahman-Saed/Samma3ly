@@ -20,14 +20,18 @@ dependencies:
   go_router: ^14.2.0
 
   # Database
-  drift: ^2.19.0
+  # Pinned exactly (not ^) to match drift_dev below — a drift_dev 2.34.0 /
+  # drift 2.34.3 mismatch broke `drift_dev schema dump` (drift_dev's
+  # schema-verification tooling references a GeneratedDatabase API that
+  # moved under drift's "drift3_preview" experimental surface in 2.34.1+).
+  drift: 2.34.0
   sqlite3_flutter_libs: ^0.5.0
-  sqlite3: ^2.4.0
+  sqlite3: ^3.0.0
   path_provider: ^2.1.3
   path: ^1.9.0
 
   # Code generation
-  freezed_annotation: ^2.4.1
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.9.0
 
   # UI
@@ -53,10 +57,17 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.2
   build_runner: ^2.4.9
-  drift_dev: ^2.19.0
-  freezed: ^2.5.2
-  json_serializable: ^6.8.0
-  riverpod_lint: ^2.3.12
+  drift_dev: 2.34.0
+  freezed: ^3.2.5
+  json_serializable: ^6.14.1
+  # riverpod_lint was never wired into analysis_options.yaml (no
+  # custom_lint plugin entry there), so it wasn't actually active — just
+  # a declared, inert dev_dependency. Removed rather than kept pinned:
+  # its analyzer ^7.0.0 ceiling was the last blocker preventing
+  # freezed/json_serializable/drift_dev from resolving to versions that
+  # support the Dart SDK's newer syntax (analyzer 7.6.0 doesn't know how
+  # to serialize a "dot shorthand invocation" AST node, which crashed
+  # build_runner while resolving lib/app.dart's dependency graph).
 
 flutter:
   uses-material-design: true

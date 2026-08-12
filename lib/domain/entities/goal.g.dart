@@ -6,7 +6,7 @@ part of 'goal.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$GoalImpl _$$GoalImplFromJson(Map<String, dynamic> json) => _$GoalImpl(
+_Goal _$GoalFromJson(Map<String, dynamic> json) => _Goal(
       id: (json['id'] as num?)?.toInt() ?? 0,
       studentId: (json['studentId'] as num).toInt(),
       title: json['title'] as String,
@@ -23,8 +23,7 @@ _$GoalImpl _$$GoalImplFromJson(Map<String, dynamic> json) => _$GoalImpl(
           : DateTime.parse(json['createdAt'] as String),
     );
 
-Map<String, dynamic> _$$GoalImplToJson(_$GoalImpl instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$GoalToJson(_Goal instance) => <String, dynamic>{
       'id': instance.id,
       'studentId': instance.studentId,
       'title': instance.title,

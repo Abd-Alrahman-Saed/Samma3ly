@@ -70,13 +70,18 @@ void main() {
     required int studentId,
     DateTime? date,
     String attendanceStatus = 'حاضر',
-  }) {
-    return db.into(db.sessions).insert(SessionsCompanion(
+  }) async {
+    final sessionId = await db.into(db.sessions).insert(SessionsCompanion(
           studentId: Value(studentId),
           date: Value(date ?? DateTime(2026, 1, 1)),
           time: const Value('18:00'),
+        ));
+    await db.into(db.sessionAttendances).insert(SessionAttendancesCompanion(
+          sessionId: Value(sessionId),
+          studentId: Value(studentId),
           attendanceStatus: Value(attendanceStatus),
         ));
+    return sessionId;
   }
 
   Future<void> insertMemorization({
@@ -364,6 +369,10 @@ void main() {
                 studentId: Value(id),
                 date: Value(DateTime(2026, 1, 1 + i)),
                 time: const Value('18:00'),
+              ));
+          await countedDb.into(countedDb.sessionAttendances).insert(SessionAttendancesCompanion(
+                sessionId: Value(sessionId),
+                studentId: Value(id),
                 attendanceStatus: const Value('حاضر'),
               ));
           await countedDb.into(countedDb.sessionMemorizations).insert(SessionMemorizationsCompanion(
@@ -413,6 +422,10 @@ void main() {
               studentId: Value(id),
               date: Value(DateTime(2026, 1, 1 + i)),
               time: const Value('18:00'),
+            ));
+        await countedDb.into(countedDb.sessionAttendances).insert(SessionAttendancesCompanion(
+              sessionId: Value(sessionId),
+              studentId: Value(id),
               attendanceStatus: const Value('حاضر'),
             ));
         await countedDb.into(countedDb.sessionMemorizations).insert(SessionMemorizationsCompanion(

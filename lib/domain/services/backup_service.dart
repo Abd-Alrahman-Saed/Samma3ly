@@ -49,6 +49,7 @@ class BackupService {
       juzRanges: await _juzRangeDao.getAll(),
       students: await _studentDao.getAll(),
       sessions: await _sessionDao.getAll(),
+      sessionAttendances: await _sessionDao.getAllAttendances(),
       memorizations: await _getAllMemorizations(),
       revisions: await _getAllRevisions(),
       evaluations: await _getAllEvaluations(),
@@ -65,12 +66,33 @@ class BackupService {
   Future<void> restore(String filePath) async {
     final file = File(filePath);
     final json = await file.readAsString();
-    final data = BackupData.fromJson(jsonDecode(json));
+    final rawJson = jsonDecode(json) as Map<String, dynamic>;
+    final data = BackupData.fromJson(rawJson);
+
+    // Backward compatibility: a backup made before v4 (Sprint 2) has no
+    // 'sessionAttendances' key at all — its attendance data lives as a
+    // literal 'attendanceStatus' field on each session instead (the
+    // column Sessions used to have). Recover it from the raw JSON so
+    // restoring an old backup doesn't silently drop attendance data.
+    final legacyAttendances = <({int sessionId, int studentId, String status})>[];
+    if (rawJson['sessionAttendances'] == null) {
+      for (final raw in (rawJson['sessions'] as List? ?? const [])) {
+        final s = raw as Map<String, dynamic>;
+        final legacyStatus = s['attendanceStatus'] as String?;
+        final studentId = s['studentId'] as int?;
+        if (legacyStatus != null && studentId != null) {
+          legacyAttendances.add((sessionId: s['id'] as int, studentId: studentId, status: legacyStatus));
+        }
+      }
+    }
 
     // Clear all data (respect FK constraints - delete in reverse dependency order)
     await _db.delete(_db.sessionEvaluations).go();
     await _db.delete(_db.sessionRevisions).go();
     await _db.delete(_db.sessionMemorizations).go();
+    // Sprint 2 (v4): session_attendances references sessions — must be
+    // cleared before sessions itself or the FK constraint below rejects it.
+    await _db.delete(_db.sessionAttendances).go();
     await _db.delete(_db.memorizedRanges).go();
     await _db.delete(_db.goals).go();
     await _db.delete(_db.schedules).go();
@@ -128,11 +150,29 @@ class BackupService {
       await _db.into(_db.sessions).insert(SessionsCompanion(
         id: Value(s.id),
         studentId: Value(s.studentId),
+        groupId: Value(s.groupId),
+        sessionType: Value(s.sessionType),
+        occurrenceDate: Value(s.occurrenceDate),
         date: Value(s.date),
         time: Value(s.time),
-        attendanceStatus: Value(s.attendanceStatus),
         notes: Value(s.notes),
         createdAt: Value(s.createdAt),
+      ));
+    }
+    for (final a in data.sessionAttendances) {
+      await _db.into(_db.sessionAttendances).insert(SessionAttendancesCompanion(
+        id: Value(a.id),
+        sessionId: Value(a.sessionId),
+        studentId: Value(a.studentId),
+        attendanceStatus: Value(a.attendanceStatus),
+        createdAt: Value(a.createdAt),
+      ));
+    }
+    for (final legacy in legacyAttendances) {
+      await _db.into(_db.sessionAttendances).insert(SessionAttendancesCompanion.insert(
+        sessionId: legacy.sessionId,
+        studentId: legacy.studentId,
+        attendanceStatus: Value(legacy.status),
       ));
     }
     for (final m in data.memorizations) {
@@ -247,6 +287,7 @@ class BackupData {
   final List<JuzSurahRange> juzRanges;
   final List<Student> students;
   final List<Session> sessions;
+  final List<SessionAttendance> sessionAttendances;
   final List<SessionMemorization> memorizations;
   final List<SessionRevision> revisions;
   final List<SessionEvaluation> evaluations;
@@ -260,6 +301,7 @@ class BackupData {
     required this.juzRanges,
     required this.students,
     required this.sessions,
+    required this.sessionAttendances,
     required this.memorizations,
     required this.revisions,
     required this.evaluations,
@@ -274,6 +316,7 @@ class BackupData {
         'juzRanges': juzRanges.map((e) => _juzRangeToJson(e)).toList(),
         'students': students.map((e) => _studentToJson(e)).toList(),
         'sessions': sessions.map((e) => _sessionToJson(e)).toList(),
+        'sessionAttendances': sessionAttendances.map((e) => _sessionAttendanceToJson(e)).toList(),
         'memorizations': memorizations.map((e) => _memorizationToJson(e)).toList(),
         'revisions': revisions.map((e) => _revisionToJson(e)).toList(),
         'evaluations': evaluations.map((e) => _evaluationToJson(e)).toList(),
@@ -291,6 +334,12 @@ class BackupData {
             (json['students'] as List).map((e) => _studentFromJson(e)).toList(),
         sessions:
             (json['sessions'] as List).map((e) => _sessionFromJson(e)).toList(),
+        // غير موجود في نسخ احتياطية أُنشئت قبل v4 (Sprint 2) — قائمة فارغة
+        // افتراضياً بدل ما تفشل الاستعادة على نسخة قديمة.
+        sessionAttendances: (json['sessionAttendances'] as List?)
+                ?.map((e) => _sessionAttendanceFromJson(e))
+                .toList() ??
+            const [],
         memorizations: (json['memorizations'] as List)
             .map((e) => _memorizationFromJson(e))
             .toList(),
@@ -387,22 +436,46 @@ class BackupData {
       );
 
   // ---- Session ----
+  // attendanceStatus removed from this table in v4 (Sprint 2) — see
+  // SessionAttendance below. groupId/sessionType/occurrenceDate added
+  // then too; restore() falls back sensibly if they're absent from an
+  // older backup file (see _sessionFromJson).
   static Map<String, dynamic> _sessionToJson(Session e) => {
         'id': e.id,
         'studentId': e.studentId,
+        'groupId': e.groupId,
+        'sessionType': e.sessionType,
+        'occurrenceDate': e.occurrenceDate?.toIso8601String(),
         'date': e.date.toIso8601String(),
         'time': e.time,
-        'attendanceStatus': e.attendanceStatus,
         'notes': e.notes,
         'createdAt': e.createdAt.toIso8601String(),
       };
   static Session _sessionFromJson(Map<String, dynamic> m) => Session(
         id: m['id'] as int,
-        studentId: m['studentId'] as int,
+        studentId: m['studentId'] as int?,
+        groupId: m['groupId'] as int?,
+        sessionType: m['sessionType'] as String? ?? 'فردي',
+        occurrenceDate: m['occurrenceDate'] == null ? null : DateTime.parse(m['occurrenceDate'] as String),
         date: DateTime.parse(m['date'] as String),
         time: m['time'] as String,
-        attendanceStatus: m['attendanceStatus'] as String,
         notes: m['notes'] as String?,
+        createdAt: DateTime.parse(m['createdAt'] as String),
+      );
+
+  // ---- SessionAttendance ----
+  static Map<String, dynamic> _sessionAttendanceToJson(SessionAttendance e) => {
+        'id': e.id,
+        'sessionId': e.sessionId,
+        'studentId': e.studentId,
+        'attendanceStatus': e.attendanceStatus,
+        'createdAt': e.createdAt.toIso8601String(),
+      };
+  static SessionAttendance _sessionAttendanceFromJson(Map<String, dynamic> m) => SessionAttendance(
+        id: m['id'] as int,
+        sessionId: m['sessionId'] as int,
+        studentId: m['studentId'] as int,
+        attendanceStatus: m['attendanceStatus'] as String,
         createdAt: DateTime.parse(m['createdAt'] as String),
       );
 

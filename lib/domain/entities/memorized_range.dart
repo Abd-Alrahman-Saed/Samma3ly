@@ -4,7 +4,7 @@ part 'memorized_range.freezed.dart';
 part 'memorized_range.g.dart';
 
 @freezed
-class MemorizedRange with _$MemorizedRange {
+abstract class MemorizedRange with _$MemorizedRange {
   const factory MemorizedRange({
     @Default(0) int id,
     required int studentId,

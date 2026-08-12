@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,137 +9,86 @@ part of 'dashboard_data.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
-DashboardData _$DashboardDataFromJson(Map<String, dynamic> json) {
-  return _DashboardData.fromJson(json);
-}
 
 /// @nodoc
 mixin _$DashboardData {
-  int get totalStudents => throw _privateConstructorUsedError;
-  int get todaySessions => throw _privateConstructorUsedError;
-  int get upcomingSessions => throw _privateConstructorUsedError;
-  double get averageAttendance => throw _privateConstructorUsedError;
-  int get totalPagesMemorized => throw _privateConstructorUsedError;
-  int get totalSurahsCompleted => throw _privateConstructorUsedError;
-  int get totalSessionsEver => throw _privateConstructorUsedError;
-  int get totalTeachers => throw _privateConstructorUsedError;
-  List<DashboardTopStudent> get topStudents =>
-      throw _privateConstructorUsedError;
-  List<WeeklyAttendanceData> get weeklyAttendance =>
-      throw _privateConstructorUsedError;
-
-  /// Serializes this DashboardData to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  int get totalStudents;
+  int get todaySessions;
+  int get upcomingSessions;
+  double get averageAttendance;
+  int get totalPagesMemorized;
+  int get totalSurahsCompleted;
+  int get totalSessionsEver;
+  int get totalTeachers;
+  List<DashboardTopStudent> get topStudents;
+  List<WeeklyAttendanceData> get weeklyAttendance;
 
   /// Create a copy of DashboardData
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $DashboardDataCopyWith<DashboardData> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $DashboardDataCopyWith<$Res> {
-  factory $DashboardDataCopyWith(
-          DashboardData value, $Res Function(DashboardData) then) =
-      _$DashboardDataCopyWithImpl<$Res, DashboardData>;
-  @useResult
-  $Res call(
-      {int totalStudents,
-      int todaySessions,
-      int upcomingSessions,
-      double averageAttendance,
-      int totalPagesMemorized,
-      int totalSurahsCompleted,
-      int totalSessionsEver,
-      int totalTeachers,
-      List<DashboardTopStudent> topStudents,
-      List<WeeklyAttendanceData> weeklyAttendance});
-}
-
-/// @nodoc
-class _$DashboardDataCopyWithImpl<$Res, $Val extends DashboardData>
-    implements $DashboardDataCopyWith<$Res> {
-  _$DashboardDataCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of DashboardData
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
+  $DashboardDataCopyWith<DashboardData> get copyWith =>
+      _$DashboardDataCopyWithImpl<DashboardData>(
+          this as DashboardData, _$identity);
+
+  /// Serializes this DashboardData to a JSON map.
+  Map<String, dynamic> toJson();
+
   @override
-  $Res call({
-    Object? totalStudents = null,
-    Object? todaySessions = null,
-    Object? upcomingSessions = null,
-    Object? averageAttendance = null,
-    Object? totalPagesMemorized = null,
-    Object? totalSurahsCompleted = null,
-    Object? totalSessionsEver = null,
-    Object? totalTeachers = null,
-    Object? topStudents = null,
-    Object? weeklyAttendance = null,
-  }) {
-    return _then(_value.copyWith(
-      totalStudents: null == totalStudents
-          ? _value.totalStudents
-          : totalStudents // ignore: cast_nullable_to_non_nullable
-              as int,
-      todaySessions: null == todaySessions
-          ? _value.todaySessions
-          : todaySessions // ignore: cast_nullable_to_non_nullable
-              as int,
-      upcomingSessions: null == upcomingSessions
-          ? _value.upcomingSessions
-          : upcomingSessions // ignore: cast_nullable_to_non_nullable
-              as int,
-      averageAttendance: null == averageAttendance
-          ? _value.averageAttendance
-          : averageAttendance // ignore: cast_nullable_to_non_nullable
-              as double,
-      totalPagesMemorized: null == totalPagesMemorized
-          ? _value.totalPagesMemorized
-          : totalPagesMemorized // ignore: cast_nullable_to_non_nullable
-              as int,
-      totalSurahsCompleted: null == totalSurahsCompleted
-          ? _value.totalSurahsCompleted
-          : totalSurahsCompleted // ignore: cast_nullable_to_non_nullable
-              as int,
-      totalSessionsEver: null == totalSessionsEver
-          ? _value.totalSessionsEver
-          : totalSessionsEver // ignore: cast_nullable_to_non_nullable
-              as int,
-      totalTeachers: null == totalTeachers
-          ? _value.totalTeachers
-          : totalTeachers // ignore: cast_nullable_to_non_nullable
-              as int,
-      topStudents: null == topStudents
-          ? _value.topStudents
-          : topStudents // ignore: cast_nullable_to_non_nullable
-              as List<DashboardTopStudent>,
-      weeklyAttendance: null == weeklyAttendance
-          ? _value.weeklyAttendance
-          : weeklyAttendance // ignore: cast_nullable_to_non_nullable
-              as List<WeeklyAttendanceData>,
-    ) as $Val);
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is DashboardData &&
+            (identical(other.totalStudents, totalStudents) ||
+                other.totalStudents == totalStudents) &&
+            (identical(other.todaySessions, todaySessions) ||
+                other.todaySessions == todaySessions) &&
+            (identical(other.upcomingSessions, upcomingSessions) ||
+                other.upcomingSessions == upcomingSessions) &&
+            (identical(other.averageAttendance, averageAttendance) ||
+                other.averageAttendance == averageAttendance) &&
+            (identical(other.totalPagesMemorized, totalPagesMemorized) ||
+                other.totalPagesMemorized == totalPagesMemorized) &&
+            (identical(other.totalSurahsCompleted, totalSurahsCompleted) ||
+                other.totalSurahsCompleted == totalSurahsCompleted) &&
+            (identical(other.totalSessionsEver, totalSessionsEver) ||
+                other.totalSessionsEver == totalSessionsEver) &&
+            (identical(other.totalTeachers, totalTeachers) ||
+                other.totalTeachers == totalTeachers) &&
+            const DeepCollectionEquality()
+                .equals(other.topStudents, topStudents) &&
+            const DeepCollectionEquality()
+                .equals(other.weeklyAttendance, weeklyAttendance));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      totalStudents,
+      todaySessions,
+      upcomingSessions,
+      averageAttendance,
+      totalPagesMemorized,
+      totalSurahsCompleted,
+      totalSessionsEver,
+      totalTeachers,
+      const DeepCollectionEquality().hash(topStudents),
+      const DeepCollectionEquality().hash(weeklyAttendance));
+
+  @override
+  String toString() {
+    return 'DashboardData(totalStudents: $totalStudents, todaySessions: $todaySessions, upcomingSessions: $upcomingSessions, averageAttendance: $averageAttendance, totalPagesMemorized: $totalPagesMemorized, totalSurahsCompleted: $totalSurahsCompleted, totalSessionsEver: $totalSessionsEver, totalTeachers: $totalTeachers, topStudents: $topStudents, weeklyAttendance: $weeklyAttendance)';
   }
 }
 
 /// @nodoc
-abstract class _$$DashboardDataImplCopyWith<$Res>
-    implements $DashboardDataCopyWith<$Res> {
-  factory _$$DashboardDataImplCopyWith(
-          _$DashboardDataImpl value, $Res Function(_$DashboardDataImpl) then) =
-      __$$DashboardDataImplCopyWithImpl<$Res>;
-  @override
+abstract mixin class $DashboardDataCopyWith<$Res> {
+  factory $DashboardDataCopyWith(
+          DashboardData value, $Res Function(DashboardData) _then) =
+      _$DashboardDataCopyWithImpl;
   @useResult
   $Res call(
       {int totalStudents,
@@ -155,12 +104,12 @@ abstract class _$$DashboardDataImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$DashboardDataImplCopyWithImpl<$Res>
-    extends _$DashboardDataCopyWithImpl<$Res, _$DashboardDataImpl>
-    implements _$$DashboardDataImplCopyWith<$Res> {
-  __$$DashboardDataImplCopyWithImpl(
-      _$DashboardDataImpl _value, $Res Function(_$DashboardDataImpl) _then)
-      : super(_value, _then);
+class _$DashboardDataCopyWithImpl<$Res>
+    implements $DashboardDataCopyWith<$Res> {
+  _$DashboardDataCopyWithImpl(this._self, this._then);
+
+  final DashboardData _self;
+  final $Res Function(DashboardData) _then;
 
   /// Create a copy of DashboardData
   /// with the given fields replaced by the non-null parameter values.
@@ -178,55 +127,275 @@ class __$$DashboardDataImplCopyWithImpl<$Res>
     Object? topStudents = null,
     Object? weeklyAttendance = null,
   }) {
-    return _then(_$DashboardDataImpl(
+    return _then(_self.copyWith(
       totalStudents: null == totalStudents
-          ? _value.totalStudents
+          ? _self.totalStudents
           : totalStudents // ignore: cast_nullable_to_non_nullable
               as int,
       todaySessions: null == todaySessions
-          ? _value.todaySessions
+          ? _self.todaySessions
           : todaySessions // ignore: cast_nullable_to_non_nullable
               as int,
       upcomingSessions: null == upcomingSessions
-          ? _value.upcomingSessions
+          ? _self.upcomingSessions
           : upcomingSessions // ignore: cast_nullable_to_non_nullable
               as int,
       averageAttendance: null == averageAttendance
-          ? _value.averageAttendance
+          ? _self.averageAttendance
           : averageAttendance // ignore: cast_nullable_to_non_nullable
               as double,
       totalPagesMemorized: null == totalPagesMemorized
-          ? _value.totalPagesMemorized
+          ? _self.totalPagesMemorized
           : totalPagesMemorized // ignore: cast_nullable_to_non_nullable
               as int,
       totalSurahsCompleted: null == totalSurahsCompleted
-          ? _value.totalSurahsCompleted
+          ? _self.totalSurahsCompleted
           : totalSurahsCompleted // ignore: cast_nullable_to_non_nullable
               as int,
       totalSessionsEver: null == totalSessionsEver
-          ? _value.totalSessionsEver
+          ? _self.totalSessionsEver
           : totalSessionsEver // ignore: cast_nullable_to_non_nullable
               as int,
       totalTeachers: null == totalTeachers
-          ? _value.totalTeachers
+          ? _self.totalTeachers
           : totalTeachers // ignore: cast_nullable_to_non_nullable
               as int,
       topStudents: null == topStudents
-          ? _value._topStudents
+          ? _self.topStudents
           : topStudents // ignore: cast_nullable_to_non_nullable
               as List<DashboardTopStudent>,
       weeklyAttendance: null == weeklyAttendance
-          ? _value._weeklyAttendance
+          ? _self.weeklyAttendance
           : weeklyAttendance // ignore: cast_nullable_to_non_nullable
               as List<WeeklyAttendanceData>,
     ));
   }
 }
 
+/// Adds pattern-matching-related methods to [DashboardData].
+extension DashboardDataPatterns on DashboardData {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_DashboardData value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _DashboardData() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_DashboardData value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _DashboardData():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_DashboardData value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _DashboardData() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            int totalStudents,
+            int todaySessions,
+            int upcomingSessions,
+            double averageAttendance,
+            int totalPagesMemorized,
+            int totalSurahsCompleted,
+            int totalSessionsEver,
+            int totalTeachers,
+            List<DashboardTopStudent> topStudents,
+            List<WeeklyAttendanceData> weeklyAttendance)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _DashboardData() when $default != null:
+        return $default(
+            _that.totalStudents,
+            _that.todaySessions,
+            _that.upcomingSessions,
+            _that.averageAttendance,
+            _that.totalPagesMemorized,
+            _that.totalSurahsCompleted,
+            _that.totalSessionsEver,
+            _that.totalTeachers,
+            _that.topStudents,
+            _that.weeklyAttendance);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            int totalStudents,
+            int todaySessions,
+            int upcomingSessions,
+            double averageAttendance,
+            int totalPagesMemorized,
+            int totalSurahsCompleted,
+            int totalSessionsEver,
+            int totalTeachers,
+            List<DashboardTopStudent> topStudents,
+            List<WeeklyAttendanceData> weeklyAttendance)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _DashboardData():
+        return $default(
+            _that.totalStudents,
+            _that.todaySessions,
+            _that.upcomingSessions,
+            _that.averageAttendance,
+            _that.totalPagesMemorized,
+            _that.totalSurahsCompleted,
+            _that.totalSessionsEver,
+            _that.totalTeachers,
+            _that.topStudents,
+            _that.weeklyAttendance);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            int totalStudents,
+            int todaySessions,
+            int upcomingSessions,
+            double averageAttendance,
+            int totalPagesMemorized,
+            int totalSurahsCompleted,
+            int totalSessionsEver,
+            int totalTeachers,
+            List<DashboardTopStudent> topStudents,
+            List<WeeklyAttendanceData> weeklyAttendance)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _DashboardData() when $default != null:
+        return $default(
+            _that.totalStudents,
+            _that.todaySessions,
+            _that.upcomingSessions,
+            _that.averageAttendance,
+            _that.totalPagesMemorized,
+            _that.totalSurahsCompleted,
+            _that.totalSessionsEver,
+            _that.totalTeachers,
+            _that.topStudents,
+            _that.weeklyAttendance);
+      case _:
+        return null;
+    }
+  }
+}
+
 /// @nodoc
 @JsonSerializable()
-class _$DashboardDataImpl implements _DashboardData {
-  const _$DashboardDataImpl(
+class _DashboardData implements DashboardData {
+  const _DashboardData(
       {this.totalStudents = 0,
       this.todaySessions = 0,
       this.upcomingSessions = 0,
@@ -241,9 +410,8 @@ class _$DashboardDataImpl implements _DashboardData {
           const <WeeklyAttendanceData>[]})
       : _topStudents = topStudents,
         _weeklyAttendance = weeklyAttendance;
-
-  factory _$DashboardDataImpl.fromJson(Map<String, dynamic> json) =>
-      _$$DashboardDataImplFromJson(json);
+  factory _DashboardData.fromJson(Map<String, dynamic> json) =>
+      _$DashboardDataFromJson(json);
 
   @override
   @JsonKey()
@@ -288,16 +456,26 @@ class _$DashboardDataImpl implements _DashboardData {
     return EqualUnmodifiableListView(_weeklyAttendance);
   }
 
+  /// Create a copy of DashboardData
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'DashboardData(totalStudents: $totalStudents, todaySessions: $todaySessions, upcomingSessions: $upcomingSessions, averageAttendance: $averageAttendance, totalPagesMemorized: $totalPagesMemorized, totalSurahsCompleted: $totalSurahsCompleted, totalSessionsEver: $totalSessionsEver, totalTeachers: $totalTeachers, topStudents: $topStudents, weeklyAttendance: $weeklyAttendance)';
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$DashboardDataCopyWith<_DashboardData> get copyWith =>
+      __$DashboardDataCopyWithImpl<_DashboardData>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$DashboardDataToJson(
+      this,
+    );
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$DashboardDataImpl &&
+            other is _DashboardData &&
             (identical(other.totalStudents, totalStudents) ||
                 other.totalStudents == totalStudents) &&
             (identical(other.todaySessions, todaySessions) ||
@@ -335,205 +513,124 @@ class _$DashboardDataImpl implements _DashboardData {
       const DeepCollectionEquality().hash(_topStudents),
       const DeepCollectionEquality().hash(_weeklyAttendance));
 
-  /// Create a copy of DashboardData
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
-  _$$DashboardDataImplCopyWith<_$DashboardDataImpl> get copyWith =>
-      __$$DashboardDataImplCopyWithImpl<_$DashboardDataImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$DashboardDataImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _DashboardData implements DashboardData {
-  const factory _DashboardData(
-      {final int totalStudents,
-      final int todaySessions,
-      final int upcomingSessions,
-      final double averageAttendance,
-      final int totalPagesMemorized,
-      final int totalSurahsCompleted,
-      final int totalSessionsEver,
-      final int totalTeachers,
-      final List<DashboardTopStudent> topStudents,
-      final List<WeeklyAttendanceData> weeklyAttendance}) = _$DashboardDataImpl;
-
-  factory _DashboardData.fromJson(Map<String, dynamic> json) =
-      _$DashboardDataImpl.fromJson;
-
-  @override
-  int get totalStudents;
-  @override
-  int get todaySessions;
-  @override
-  int get upcomingSessions;
-  @override
-  double get averageAttendance;
-  @override
-  int get totalPagesMemorized;
-  @override
-  int get totalSurahsCompleted;
-  @override
-  int get totalSessionsEver;
-  @override
-  int get totalTeachers;
-  @override
-  List<DashboardTopStudent> get topStudents;
-  @override
-  List<WeeklyAttendanceData> get weeklyAttendance;
-
-  /// Create a copy of DashboardData
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$DashboardDataImplCopyWith<_$DashboardDataImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-DashboardTopStudent _$DashboardTopStudentFromJson(Map<String, dynamic> json) {
-  return _DashboardTopStudent.fromJson(json);
-}
-
-/// @nodoc
-mixin _$DashboardTopStudent {
-  int get studentId => throw _privateConstructorUsedError;
-  String get studentName => throw _privateConstructorUsedError;
-  double get averageScore => throw _privateConstructorUsedError;
-
-  /// Serializes this DashboardTopStudent to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of DashboardTopStudent
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $DashboardTopStudentCopyWith<DashboardTopStudent> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $DashboardTopStudentCopyWith<$Res> {
-  factory $DashboardTopStudentCopyWith(
-          DashboardTopStudent value, $Res Function(DashboardTopStudent) then) =
-      _$DashboardTopStudentCopyWithImpl<$Res, DashboardTopStudent>;
-  @useResult
-  $Res call({int studentId, String studentName, double averageScore});
-}
-
-/// @nodoc
-class _$DashboardTopStudentCopyWithImpl<$Res, $Val extends DashboardTopStudent>
-    implements $DashboardTopStudentCopyWith<$Res> {
-  _$DashboardTopStudentCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of DashboardTopStudent
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? studentId = null,
-    Object? studentName = null,
-    Object? averageScore = null,
-  }) {
-    return _then(_value.copyWith(
-      studentId: null == studentId
-          ? _value.studentId
-          : studentId // ignore: cast_nullable_to_non_nullable
-              as int,
-      studentName: null == studentName
-          ? _value.studentName
-          : studentName // ignore: cast_nullable_to_non_nullable
-              as String,
-      averageScore: null == averageScore
-          ? _value.averageScore
-          : averageScore // ignore: cast_nullable_to_non_nullable
-              as double,
-    ) as $Val);
+  String toString() {
+    return 'DashboardData(totalStudents: $totalStudents, todaySessions: $todaySessions, upcomingSessions: $upcomingSessions, averageAttendance: $averageAttendance, totalPagesMemorized: $totalPagesMemorized, totalSurahsCompleted: $totalSurahsCompleted, totalSessionsEver: $totalSessionsEver, totalTeachers: $totalTeachers, topStudents: $topStudents, weeklyAttendance: $weeklyAttendance)';
   }
 }
 
 /// @nodoc
-abstract class _$$DashboardTopStudentImplCopyWith<$Res>
-    implements $DashboardTopStudentCopyWith<$Res> {
-  factory _$$DashboardTopStudentImplCopyWith(_$DashboardTopStudentImpl value,
-          $Res Function(_$DashboardTopStudentImpl) then) =
-      __$$DashboardTopStudentImplCopyWithImpl<$Res>;
+abstract mixin class _$DashboardDataCopyWith<$Res>
+    implements $DashboardDataCopyWith<$Res> {
+  factory _$DashboardDataCopyWith(
+          _DashboardData value, $Res Function(_DashboardData) _then) =
+      __$DashboardDataCopyWithImpl;
   @override
   @useResult
-  $Res call({int studentId, String studentName, double averageScore});
+  $Res call(
+      {int totalStudents,
+      int todaySessions,
+      int upcomingSessions,
+      double averageAttendance,
+      int totalPagesMemorized,
+      int totalSurahsCompleted,
+      int totalSessionsEver,
+      int totalTeachers,
+      List<DashboardTopStudent> topStudents,
+      List<WeeklyAttendanceData> weeklyAttendance});
 }
 
 /// @nodoc
-class __$$DashboardTopStudentImplCopyWithImpl<$Res>
-    extends _$DashboardTopStudentCopyWithImpl<$Res, _$DashboardTopStudentImpl>
-    implements _$$DashboardTopStudentImplCopyWith<$Res> {
-  __$$DashboardTopStudentImplCopyWithImpl(_$DashboardTopStudentImpl _value,
-      $Res Function(_$DashboardTopStudentImpl) _then)
-      : super(_value, _then);
+class __$DashboardDataCopyWithImpl<$Res>
+    implements _$DashboardDataCopyWith<$Res> {
+  __$DashboardDataCopyWithImpl(this._self, this._then);
 
-  /// Create a copy of DashboardTopStudent
+  final _DashboardData _self;
+  final $Res Function(_DashboardData) _then;
+
+  /// Create a copy of DashboardData
   /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
   @override
+  @pragma('vm:prefer-inline')
   $Res call({
-    Object? studentId = null,
-    Object? studentName = null,
-    Object? averageScore = null,
+    Object? totalStudents = null,
+    Object? todaySessions = null,
+    Object? upcomingSessions = null,
+    Object? averageAttendance = null,
+    Object? totalPagesMemorized = null,
+    Object? totalSurahsCompleted = null,
+    Object? totalSessionsEver = null,
+    Object? totalTeachers = null,
+    Object? topStudents = null,
+    Object? weeklyAttendance = null,
   }) {
-    return _then(_$DashboardTopStudentImpl(
-      studentId: null == studentId
-          ? _value.studentId
-          : studentId // ignore: cast_nullable_to_non_nullable
+    return _then(_DashboardData(
+      totalStudents: null == totalStudents
+          ? _self.totalStudents
+          : totalStudents // ignore: cast_nullable_to_non_nullable
               as int,
-      studentName: null == studentName
-          ? _value.studentName
-          : studentName // ignore: cast_nullable_to_non_nullable
-              as String,
-      averageScore: null == averageScore
-          ? _value.averageScore
-          : averageScore // ignore: cast_nullable_to_non_nullable
+      todaySessions: null == todaySessions
+          ? _self.todaySessions
+          : todaySessions // ignore: cast_nullable_to_non_nullable
+              as int,
+      upcomingSessions: null == upcomingSessions
+          ? _self.upcomingSessions
+          : upcomingSessions // ignore: cast_nullable_to_non_nullable
+              as int,
+      averageAttendance: null == averageAttendance
+          ? _self.averageAttendance
+          : averageAttendance // ignore: cast_nullable_to_non_nullable
               as double,
+      totalPagesMemorized: null == totalPagesMemorized
+          ? _self.totalPagesMemorized
+          : totalPagesMemorized // ignore: cast_nullable_to_non_nullable
+              as int,
+      totalSurahsCompleted: null == totalSurahsCompleted
+          ? _self.totalSurahsCompleted
+          : totalSurahsCompleted // ignore: cast_nullable_to_non_nullable
+              as int,
+      totalSessionsEver: null == totalSessionsEver
+          ? _self.totalSessionsEver
+          : totalSessionsEver // ignore: cast_nullable_to_non_nullable
+              as int,
+      totalTeachers: null == totalTeachers
+          ? _self.totalTeachers
+          : totalTeachers // ignore: cast_nullable_to_non_nullable
+              as int,
+      topStudents: null == topStudents
+          ? _self._topStudents
+          : topStudents // ignore: cast_nullable_to_non_nullable
+              as List<DashboardTopStudent>,
+      weeklyAttendance: null == weeklyAttendance
+          ? _self._weeklyAttendance
+          : weeklyAttendance // ignore: cast_nullable_to_non_nullable
+              as List<WeeklyAttendanceData>,
     ));
   }
 }
 
 /// @nodoc
-@JsonSerializable()
-class _$DashboardTopStudentImpl implements _DashboardTopStudent {
-  const _$DashboardTopStudentImpl(
-      {required this.studentId,
-      required this.studentName,
-      required this.averageScore});
+mixin _$DashboardTopStudent {
+  int get studentId;
+  String get studentName;
+  double get averageScore;
 
-  factory _$DashboardTopStudentImpl.fromJson(Map<String, dynamic> json) =>
-      _$$DashboardTopStudentImplFromJson(json);
+  /// Create a copy of DashboardTopStudent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $DashboardTopStudentCopyWith<DashboardTopStudent> get copyWith =>
+      _$DashboardTopStudentCopyWithImpl<DashboardTopStudent>(
+          this as DashboardTopStudent, _$identity);
 
-  @override
-  final int studentId;
-  @override
-  final String studentName;
-  @override
-  final double averageScore;
-
-  @override
-  String toString() {
-    return 'DashboardTopStudent(studentId: $studentId, studentName: $studentName, averageScore: $averageScore)';
-  }
+  /// Serializes this DashboardTopStudent to a JSON map.
+  Map<String, dynamic> toJson();
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$DashboardTopStudentImpl &&
+            other is DashboardTopStudent &&
             (identical(other.studentId, studentId) ||
                 other.studentId == studentId) &&
             (identical(other.studentName, studentName) ||
@@ -547,171 +644,338 @@ class _$DashboardTopStudentImpl implements _DashboardTopStudent {
   int get hashCode =>
       Object.hash(runtimeType, studentId, studentName, averageScore);
 
-  /// Create a copy of DashboardTopStudent
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
-  _$$DashboardTopStudentImplCopyWith<_$DashboardTopStudentImpl> get copyWith =>
-      __$$DashboardTopStudentImplCopyWithImpl<_$DashboardTopStudentImpl>(
-          this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$DashboardTopStudentImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _DashboardTopStudent implements DashboardTopStudent {
-  const factory _DashboardTopStudent(
-      {required final int studentId,
-      required final String studentName,
-      required final double averageScore}) = _$DashboardTopStudentImpl;
-
-  factory _DashboardTopStudent.fromJson(Map<String, dynamic> json) =
-      _$DashboardTopStudentImpl.fromJson;
-
-  @override
-  int get studentId;
-  @override
-  String get studentName;
-  @override
-  double get averageScore;
-
-  /// Create a copy of DashboardTopStudent
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$DashboardTopStudentImplCopyWith<_$DashboardTopStudentImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-WeeklyAttendanceData _$WeeklyAttendanceDataFromJson(Map<String, dynamic> json) {
-  return _WeeklyAttendanceData.fromJson(json);
-}
-
-/// @nodoc
-mixin _$WeeklyAttendanceData {
-  DateTime get date => throw _privateConstructorUsedError;
-  double get percent => throw _privateConstructorUsedError;
-
-  /// Serializes this WeeklyAttendanceData to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of WeeklyAttendanceData
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $WeeklyAttendanceDataCopyWith<WeeklyAttendanceData> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $WeeklyAttendanceDataCopyWith<$Res> {
-  factory $WeeklyAttendanceDataCopyWith(WeeklyAttendanceData value,
-          $Res Function(WeeklyAttendanceData) then) =
-      _$WeeklyAttendanceDataCopyWithImpl<$Res, WeeklyAttendanceData>;
-  @useResult
-  $Res call({DateTime date, double percent});
-}
-
-/// @nodoc
-class _$WeeklyAttendanceDataCopyWithImpl<$Res,
-        $Val extends WeeklyAttendanceData>
-    implements $WeeklyAttendanceDataCopyWith<$Res> {
-  _$WeeklyAttendanceDataCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of WeeklyAttendanceData
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? date = null,
-    Object? percent = null,
-  }) {
-    return _then(_value.copyWith(
-      date: null == date
-          ? _value.date
-          : date // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      percent: null == percent
-          ? _value.percent
-          : percent // ignore: cast_nullable_to_non_nullable
-              as double,
-    ) as $Val);
+  String toString() {
+    return 'DashboardTopStudent(studentId: $studentId, studentName: $studentName, averageScore: $averageScore)';
   }
 }
 
 /// @nodoc
-abstract class _$$WeeklyAttendanceDataImplCopyWith<$Res>
-    implements $WeeklyAttendanceDataCopyWith<$Res> {
-  factory _$$WeeklyAttendanceDataImplCopyWith(_$WeeklyAttendanceDataImpl value,
-          $Res Function(_$WeeklyAttendanceDataImpl) then) =
-      __$$WeeklyAttendanceDataImplCopyWithImpl<$Res>;
-  @override
+abstract mixin class $DashboardTopStudentCopyWith<$Res> {
+  factory $DashboardTopStudentCopyWith(
+          DashboardTopStudent value, $Res Function(DashboardTopStudent) _then) =
+      _$DashboardTopStudentCopyWithImpl;
   @useResult
-  $Res call({DateTime date, double percent});
+  $Res call({int studentId, String studentName, double averageScore});
 }
 
 /// @nodoc
-class __$$WeeklyAttendanceDataImplCopyWithImpl<$Res>
-    extends _$WeeklyAttendanceDataCopyWithImpl<$Res, _$WeeklyAttendanceDataImpl>
-    implements _$$WeeklyAttendanceDataImplCopyWith<$Res> {
-  __$$WeeklyAttendanceDataImplCopyWithImpl(_$WeeklyAttendanceDataImpl _value,
-      $Res Function(_$WeeklyAttendanceDataImpl) _then)
-      : super(_value, _then);
+class _$DashboardTopStudentCopyWithImpl<$Res>
+    implements $DashboardTopStudentCopyWith<$Res> {
+  _$DashboardTopStudentCopyWithImpl(this._self, this._then);
 
-  /// Create a copy of WeeklyAttendanceData
+  final DashboardTopStudent _self;
+  final $Res Function(DashboardTopStudent) _then;
+
+  /// Create a copy of DashboardTopStudent
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? date = null,
-    Object? percent = null,
+    Object? studentId = null,
+    Object? studentName = null,
+    Object? averageScore = null,
   }) {
-    return _then(_$WeeklyAttendanceDataImpl(
-      date: null == date
-          ? _value.date
-          : date // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      percent: null == percent
-          ? _value.percent
-          : percent // ignore: cast_nullable_to_non_nullable
+    return _then(_self.copyWith(
+      studentId: null == studentId
+          ? _self.studentId
+          : studentId // ignore: cast_nullable_to_non_nullable
+              as int,
+      studentName: null == studentName
+          ? _self.studentName
+          : studentName // ignore: cast_nullable_to_non_nullable
+              as String,
+      averageScore: null == averageScore
+          ? _self.averageScore
+          : averageScore // ignore: cast_nullable_to_non_nullable
               as double,
     ));
   }
 }
 
+/// Adds pattern-matching-related methods to [DashboardTopStudent].
+extension DashboardTopStudentPatterns on DashboardTopStudent {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_DashboardTopStudent value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _DashboardTopStudent() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_DashboardTopStudent value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _DashboardTopStudent():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_DashboardTopStudent value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _DashboardTopStudent() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(int studentId, String studentName, double averageScore)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _DashboardTopStudent() when $default != null:
+        return $default(_that.studentId, _that.studentName, _that.averageScore);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(int studentId, String studentName, double averageScore)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _DashboardTopStudent():
+        return $default(_that.studentId, _that.studentName, _that.averageScore);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(int studentId, String studentName, double averageScore)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _DashboardTopStudent() when $default != null:
+        return $default(_that.studentId, _that.studentName, _that.averageScore);
+      case _:
+        return null;
+    }
+  }
+}
+
 /// @nodoc
 @JsonSerializable()
-class _$WeeklyAttendanceDataImpl implements _WeeklyAttendanceData {
-  const _$WeeklyAttendanceDataImpl({required this.date, this.percent = 0.0});
-
-  factory _$WeeklyAttendanceDataImpl.fromJson(Map<String, dynamic> json) =>
-      _$$WeeklyAttendanceDataImplFromJson(json);
-
-  @override
-  final DateTime date;
-  @override
-  @JsonKey()
-  final double percent;
+class _DashboardTopStudent implements DashboardTopStudent {
+  const _DashboardTopStudent(
+      {required this.studentId,
+      required this.studentName,
+      required this.averageScore});
+  factory _DashboardTopStudent.fromJson(Map<String, dynamic> json) =>
+      _$DashboardTopStudentFromJson(json);
 
   @override
-  String toString() {
-    return 'WeeklyAttendanceData(date: $date, percent: $percent)';
+  final int studentId;
+  @override
+  final String studentName;
+  @override
+  final double averageScore;
+
+  /// Create a copy of DashboardTopStudent
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$DashboardTopStudentCopyWith<_DashboardTopStudent> get copyWith =>
+      __$DashboardTopStudentCopyWithImpl<_DashboardTopStudent>(
+          this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$DashboardTopStudentToJson(
+      this,
+    );
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$WeeklyAttendanceDataImpl &&
+            other is _DashboardTopStudent &&
+            (identical(other.studentId, studentId) ||
+                other.studentId == studentId) &&
+            (identical(other.studentName, studentName) ||
+                other.studentName == studentName) &&
+            (identical(other.averageScore, averageScore) ||
+                other.averageScore == averageScore));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, studentId, studentName, averageScore);
+
+  @override
+  String toString() {
+    return 'DashboardTopStudent(studentId: $studentId, studentName: $studentName, averageScore: $averageScore)';
+  }
+}
+
+/// @nodoc
+abstract mixin class _$DashboardTopStudentCopyWith<$Res>
+    implements $DashboardTopStudentCopyWith<$Res> {
+  factory _$DashboardTopStudentCopyWith(_DashboardTopStudent value,
+          $Res Function(_DashboardTopStudent) _then) =
+      __$DashboardTopStudentCopyWithImpl;
+  @override
+  @useResult
+  $Res call({int studentId, String studentName, double averageScore});
+}
+
+/// @nodoc
+class __$DashboardTopStudentCopyWithImpl<$Res>
+    implements _$DashboardTopStudentCopyWith<$Res> {
+  __$DashboardTopStudentCopyWithImpl(this._self, this._then);
+
+  final _DashboardTopStudent _self;
+  final $Res Function(_DashboardTopStudent) _then;
+
+  /// Create a copy of DashboardTopStudent
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? studentId = null,
+    Object? studentName = null,
+    Object? averageScore = null,
+  }) {
+    return _then(_DashboardTopStudent(
+      studentId: null == studentId
+          ? _self.studentId
+          : studentId // ignore: cast_nullable_to_non_nullable
+              as int,
+      studentName: null == studentName
+          ? _self.studentName
+          : studentName // ignore: cast_nullable_to_non_nullable
+              as String,
+      averageScore: null == averageScore
+          ? _self.averageScore
+          : averageScore // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+/// @nodoc
+mixin _$WeeklyAttendanceData {
+  DateTime get date;
+  double get percent;
+
+  /// Create a copy of WeeklyAttendanceData
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $WeeklyAttendanceDataCopyWith<WeeklyAttendanceData> get copyWith =>
+      _$WeeklyAttendanceDataCopyWithImpl<WeeklyAttendanceData>(
+          this as WeeklyAttendanceData, _$identity);
+
+  /// Serializes this WeeklyAttendanceData to a JSON map.
+  Map<String, dynamic> toJson();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is WeeklyAttendanceData &&
             (identical(other.date, date) || other.date == date) &&
             (identical(other.percent, percent) || other.percent == percent));
   }
@@ -720,41 +984,293 @@ class _$WeeklyAttendanceDataImpl implements _WeeklyAttendanceData {
   @override
   int get hashCode => Object.hash(runtimeType, date, percent);
 
-  /// Create a copy of WeeklyAttendanceData
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
-  _$$WeeklyAttendanceDataImplCopyWith<_$WeeklyAttendanceDataImpl>
-      get copyWith =>
-          __$$WeeklyAttendanceDataImplCopyWithImpl<_$WeeklyAttendanceDataImpl>(
-              this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$WeeklyAttendanceDataImplToJson(
-      this,
-    );
+  String toString() {
+    return 'WeeklyAttendanceData(date: $date, percent: $percent)';
   }
 }
 
-abstract class _WeeklyAttendanceData implements WeeklyAttendanceData {
-  const factory _WeeklyAttendanceData(
-      {required final DateTime date,
-      final double percent}) = _$WeeklyAttendanceDataImpl;
+/// @nodoc
+abstract mixin class $WeeklyAttendanceDataCopyWith<$Res> {
+  factory $WeeklyAttendanceDataCopyWith(WeeklyAttendanceData value,
+          $Res Function(WeeklyAttendanceData) _then) =
+      _$WeeklyAttendanceDataCopyWithImpl;
+  @useResult
+  $Res call({DateTime date, double percent});
+}
 
-  factory _WeeklyAttendanceData.fromJson(Map<String, dynamic> json) =
-      _$WeeklyAttendanceDataImpl.fromJson;
+/// @nodoc
+class _$WeeklyAttendanceDataCopyWithImpl<$Res>
+    implements $WeeklyAttendanceDataCopyWith<$Res> {
+  _$WeeklyAttendanceDataCopyWithImpl(this._self, this._then);
+
+  final WeeklyAttendanceData _self;
+  final $Res Function(WeeklyAttendanceData) _then;
+
+  /// Create a copy of WeeklyAttendanceData
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? date = null,
+    Object? percent = null,
+  }) {
+    return _then(_self.copyWith(
+      date: null == date
+          ? _self.date
+          : date // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      percent: null == percent
+          ? _self.percent
+          : percent // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+/// Adds pattern-matching-related methods to [WeeklyAttendanceData].
+extension WeeklyAttendanceDataPatterns on WeeklyAttendanceData {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_WeeklyAttendanceData value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _WeeklyAttendanceData() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_WeeklyAttendanceData value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _WeeklyAttendanceData():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_WeeklyAttendanceData value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _WeeklyAttendanceData() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(DateTime date, double percent)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _WeeklyAttendanceData() when $default != null:
+        return $default(_that.date, _that.percent);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(DateTime date, double percent) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _WeeklyAttendanceData():
+        return $default(_that.date, _that.percent);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(DateTime date, double percent)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _WeeklyAttendanceData() when $default != null:
+        return $default(_that.date, _that.percent);
+      case _:
+        return null;
+    }
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _WeeklyAttendanceData implements WeeklyAttendanceData {
+  const _WeeklyAttendanceData({required this.date, this.percent = 0.0});
+  factory _WeeklyAttendanceData.fromJson(Map<String, dynamic> json) =>
+      _$WeeklyAttendanceDataFromJson(json);
 
   @override
-  DateTime get date;
+  final DateTime date;
   @override
-  double get percent;
+  @JsonKey()
+  final double percent;
 
   /// Create a copy of WeeklyAttendanceData
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$WeeklyAttendanceDataImplCopyWith<_$WeeklyAttendanceDataImpl>
-      get copyWith => throw _privateConstructorUsedError;
+  @pragma('vm:prefer-inline')
+  _$WeeklyAttendanceDataCopyWith<_WeeklyAttendanceData> get copyWith =>
+      __$WeeklyAttendanceDataCopyWithImpl<_WeeklyAttendanceData>(
+          this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$WeeklyAttendanceDataToJson(
+      this,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _WeeklyAttendanceData &&
+            (identical(other.date, date) || other.date == date) &&
+            (identical(other.percent, percent) || other.percent == percent));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, date, percent);
+
+  @override
+  String toString() {
+    return 'WeeklyAttendanceData(date: $date, percent: $percent)';
+  }
 }
+
+/// @nodoc
+abstract mixin class _$WeeklyAttendanceDataCopyWith<$Res>
+    implements $WeeklyAttendanceDataCopyWith<$Res> {
+  factory _$WeeklyAttendanceDataCopyWith(_WeeklyAttendanceData value,
+          $Res Function(_WeeklyAttendanceData) _then) =
+      __$WeeklyAttendanceDataCopyWithImpl;
+  @override
+  @useResult
+  $Res call({DateTime date, double percent});
+}
+
+/// @nodoc
+class __$WeeklyAttendanceDataCopyWithImpl<$Res>
+    implements _$WeeklyAttendanceDataCopyWith<$Res> {
+  __$WeeklyAttendanceDataCopyWithImpl(this._self, this._then);
+
+  final _WeeklyAttendanceData _self;
+  final $Res Function(_WeeklyAttendanceData) _then;
+
+  /// Create a copy of WeeklyAttendanceData
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? date = null,
+    Object? percent = null,
+  }) {
+    return _then(_WeeklyAttendanceData(
+      date: null == date
+          ? _self.date
+          : date // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      percent: null == percent
+          ? _self.percent
+          : percent // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+// dart format on

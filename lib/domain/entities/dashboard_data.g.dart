@@ -6,8 +6,8 @@ part of 'dashboard_data.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$DashboardDataImpl _$$DashboardDataImplFromJson(Map<String, dynamic> json) =>
-    _$DashboardDataImpl(
+_DashboardData _$DashboardDataFromJson(Map<String, dynamic> json) =>
+    _DashboardData(
       totalStudents: (json['totalStudents'] as num?)?.toInt() ?? 0,
       todaySessions: (json['todaySessions'] as num?)?.toInt() ?? 0,
       upcomingSessions: (json['upcomingSessions'] as num?)?.toInt() ?? 0,
@@ -29,7 +29,7 @@ _$DashboardDataImpl _$$DashboardDataImplFromJson(Map<String, dynamic> json) =>
           const <WeeklyAttendanceData>[],
     );
 
-Map<String, dynamic> _$$DashboardDataImplToJson(_$DashboardDataImpl instance) =>
+Map<String, dynamic> _$DashboardDataToJson(_DashboardData instance) =>
     <String, dynamic>{
       'totalStudents': instance.totalStudents,
       'todaySessions': instance.todaySessions,
@@ -43,31 +43,30 @@ Map<String, dynamic> _$$DashboardDataImplToJson(_$DashboardDataImpl instance) =>
       'weeklyAttendance': instance.weeklyAttendance,
     };
 
-_$DashboardTopStudentImpl _$$DashboardTopStudentImplFromJson(
-        Map<String, dynamic> json) =>
-    _$DashboardTopStudentImpl(
+_DashboardTopStudent _$DashboardTopStudentFromJson(Map<String, dynamic> json) =>
+    _DashboardTopStudent(
       studentId: (json['studentId'] as num).toInt(),
       studentName: json['studentName'] as String,
       averageScore: (json['averageScore'] as num).toDouble(),
     );
 
-Map<String, dynamic> _$$DashboardTopStudentImplToJson(
-        _$DashboardTopStudentImpl instance) =>
+Map<String, dynamic> _$DashboardTopStudentToJson(
+        _DashboardTopStudent instance) =>
     <String, dynamic>{
       'studentId': instance.studentId,
       'studentName': instance.studentName,
       'averageScore': instance.averageScore,
     };
 
-_$WeeklyAttendanceDataImpl _$$WeeklyAttendanceDataImplFromJson(
+_WeeklyAttendanceData _$WeeklyAttendanceDataFromJson(
         Map<String, dynamic> json) =>
-    _$WeeklyAttendanceDataImpl(
+    _WeeklyAttendanceData(
       date: DateTime.parse(json['date'] as String),
       percent: (json['percent'] as num?)?.toDouble() ?? 0.0,
     );
 
-Map<String, dynamic> _$$WeeklyAttendanceDataImplToJson(
-        _$WeeklyAttendanceDataImpl instance) =>
+Map<String, dynamic> _$WeeklyAttendanceDataToJson(
+        _WeeklyAttendanceData instance) =>
     <String, dynamic>{
       'date': instance.date.toIso8601String(),
       'percent': instance.percent,

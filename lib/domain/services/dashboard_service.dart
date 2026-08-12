@@ -34,7 +34,17 @@ class DashboardService {
 
     final allSessions = await _sessionDao.getAll();
     final allSessionsCount = allSessions.length;
-    final presentSessions = allSessions.where((s) => s.attendanceStatus == AttendanceStatus.present.arabic).length;
+
+    // Attendance moved off Sessions in v4 (Sprint 2) — fetch every
+    // attendance row once and look sessions up in memory (an individual
+    // session has exactly one row) rather than querying per-session,
+    // matching the no-N+1 discipline established in Sprint 0 (0.5/0.6).
+    final attendanceBySessionId = <int, String>{
+      for (final a in await _sessionDao.getAllAttendances()) a.sessionId: a.attendanceStatus,
+    };
+    bool isPresent(dynamic s) => attendanceBySessionId[s.id] == AttendanceStatus.present.arabic;
+
+    final presentSessions = allSessions.where(isPresent).length;
     final avgAttendance = allSessionsCount > 0
         ? (presentSessions / allSessionsCount * 100).toStringAsFixed(1)
         : '0.0';
@@ -42,7 +52,7 @@ class DashboardService {
     // Pages memorized (total ayahs / 20)
     int totalAyahs = 0;
     for (final s in allSessions) {
-      if (s.attendanceStatus == AttendanceStatus.present.arabic) {
+      if (isPresent(s)) {
         final mem = await _sessionDao.getMemorizationBySession(s.id);
         if (mem != null) {
           totalAyahs += (mem.toAyah - mem.fromAyah + 1);
@@ -58,13 +68,13 @@ class DashboardService {
     // Top 5 students by average evaluation score
     final studentScores = <int, List<double>>{};
     for (final s in allSessions) {
-      if (s.attendanceStatus == AttendanceStatus.present.arabic) {
+      if (isPresent(s) && s.studentId != null) {
         final eval = await _sessionDao.getEvaluationBySession(s.id);
         if (eval != null) {
           final score =
               (eval.memorizationScore + eval.tajweedScore + eval.fluencyScore) /
                   3;
-          studentScores.putIfAbsent(s.studentId, () => []).add(score);
+          studentScores.putIfAbsent(s.studentId as int, () => []).add(score);
         }
       }
     }
@@ -97,7 +107,7 @@ class DashboardService {
           s.date.year == day.year &&
           s.date.month == day.month &&
           s.date.day == day.day).toList();
-      final present = daySessions.where((s) => s.attendanceStatus == AttendanceStatus.present.arabic).length;
+      final present = daySessions.where(isPresent).length;
       final total = daySessions.length;
       final pct =
           total > 0 ? double.parse((present / total * 100).toStringAsFixed(1)) : 0.0;

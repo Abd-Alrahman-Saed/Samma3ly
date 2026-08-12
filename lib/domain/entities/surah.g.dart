@@ -6,15 +6,14 @@ part of 'surah.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$SurahImpl _$$SurahImplFromJson(Map<String, dynamic> json) => _$SurahImpl(
+_Surah _$SurahFromJson(Map<String, dynamic> json) => _Surah(
       id: (json['id'] as num?)?.toInt() ?? 0,
       number: (json['number'] as num).toInt(),
       name: json['name'] as String,
       ayahCount: (json['ayahCount'] as num).toInt(),
     );
 
-Map<String, dynamic> _$$SurahImplToJson(_$SurahImpl instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$SurahToJson(_Surah instance) => <String, dynamic>{
       'id': instance.id,
       'number': instance.number,
       'name': instance.name,

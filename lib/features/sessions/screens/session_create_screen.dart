@@ -64,9 +64,12 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
     if (session != null && mounted) {
       _selectedDate = session.date;
       _selectedTime = TimeOfDay(hour: int.parse(session.time.split(':')[0]), minute: int.parse(session.time.split(':')[1]));
-      _attendanceStatus = session.attendanceStatus;
       _notesController.text = session.notes ?? '';
       _studentId = session.studentId;
+      if (session.studentId != null) {
+        final attendance = await dao.getAttendance(session.id, session.studentId!);
+        if (attendance != null) _attendanceStatus = attendance.attendanceStatus;
+      }
 
       final memorization = await dao.getMemorizationBySession(widget.sessionId!);
       if (memorization != null) {
@@ -144,9 +147,9 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
           studentId: Value(_studentId!),
           date: Value(_selectedDate),
           time: Value(timeStr),
-          attendanceStatus: Value(_attendanceStatus),
           notes: Value(_notesController.text.trim().isEmpty ? null : _notesController.text.trim()),
         ));
+        await sessionDao.upsertAttendance(widget.sessionId!, _studentId!, _attendanceStatus);
 
         if (_memSurahId != null) {
           await sessionDao.upsertMemorization(SessionMemorizationsCompanion(
@@ -181,9 +184,9 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
           studentId: Value(_studentId!),
           date: Value(_selectedDate),
           time: Value(timeStr),
-          attendanceStatus: Value(_attendanceStatus),
           notes: Value(_notesController.text.trim().isEmpty ? null : _notesController.text.trim()),
         ));
+        await sessionDao.upsertAttendance(sessionId, _studentId!, _attendanceStatus);
 
         if (_memSurahId != null) {
           await sessionDao.upsertMemorization(SessionMemorizationsCompanion(

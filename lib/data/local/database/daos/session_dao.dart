@@ -4,10 +4,11 @@ import '../tables/sessions_table.dart';
 import '../tables/session_memorizations_table.dart';
 import '../tables/session_revisions_table.dart';
 import '../tables/session_evaluations_table.dart';
+import '../tables/session_attendances_table.dart';
 
 part 'session_dao.g.dart';
 
-@DriftAccessor(tables: [Sessions, SessionMemorizations, SessionRevisions, SessionEvaluations])
+@DriftAccessor(tables: [Sessions, SessionMemorizations, SessionRevisions, SessionEvaluations, SessionAttendances])
 class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   SessionDao(AppDatabase db) : super(db);
 
@@ -37,6 +38,20 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
     ).get();
   }
 
+  /// Count of [studentId]'s sessions whose attendance (in
+  /// `SessionAttendances`, since v4/Sprint 2) matches [attendanceStatus].
+  Future<int> countByStudentAndAttendance(int studentId, String attendanceStatus) {
+    final query = select(sessions).join([
+      innerJoin(
+        sessionAttendances,
+        sessionAttendances.sessionId.equalsExp(sessions.id) & sessionAttendances.studentId.equals(studentId),
+      ),
+    ])
+      ..where(sessions.studentId.equals(studentId))
+      ..where(sessionAttendances.attendanceStatus.equals(attendanceStatus));
+    return query.get().then((rows) => rows.length);
+  }
+
   // Memorization
   Future<SessionMemorization?> getMemorizationBySession(int sessionId) =>
       (select(sessionMemorizations)..where((t) => t.sessionId.equals(sessionId))).getSingleOrNull();
@@ -62,19 +77,67 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   /// used to live in `ProgressService` (Sprint 0, item 0.5).
   ///
   /// Pass [attendanceStatus] to filter sessions by attendance (e.g. only
-  /// present sessions), matching what `ProgressService` needs.
+  /// present sessions), matching what `ProgressService` needs. Since v4
+  /// (Sprint 2), attendance lives in `SessionAttendances` — filtered here
+  /// via `(sessionId, studentId)` so a group session's other attendees
+  /// can't leak into this student's filter.
   Future<List<SessionMemorization>> getMemorizationsForStudent(
     int studentId, {
     String? attendanceStatus,
   }) {
     final query = select(sessionMemorizations).join([
       innerJoin(sessions, sessions.id.equalsExp(sessionMemorizations.sessionId)),
+      if (attendanceStatus != null)
+        innerJoin(
+          sessionAttendances,
+          sessionAttendances.sessionId.equalsExp(sessions.id) & sessionAttendances.studentId.equals(studentId),
+        ),
     ]);
     query.where(sessions.studentId.equals(studentId));
     if (attendanceStatus != null) {
-      query.where(sessions.attendanceStatus.equals(attendanceStatus));
+      query.where(sessionAttendances.attendanceStatus.equals(attendanceStatus));
     }
     return query.map((row) => row.readTable(sessionMemorizations)).get();
+  }
+
+  // Attendance (SessionAttendances) — one row per (session, student).
+  // Sprint 2 (v4): moved off Sessions.attendanceStatus so a group session
+  // can carry an independent status per attendee.
+  Future<SessionAttendance?> getAttendance(int sessionId, int studentId) =>
+      (select(sessionAttendances)
+            ..where((t) => t.sessionId.equals(sessionId) & t.studentId.equals(studentId)))
+          .getSingleOrNull();
+
+  Future<List<SessionAttendance>> getAttendancesForSession(int sessionId) =>
+      (select(sessionAttendances)..where((t) => t.sessionId.equals(sessionId))).get();
+
+  /// All attendance rows — used by [BackupService] to round-trip attendance
+  /// data (Sessions no longer carries it directly).
+  Future<List<SessionAttendance>> getAllAttendances() => select(sessionAttendances).get();
+
+  Future<int> insertAttendance(SessionAttendancesCompanion entry) =>
+      into(sessionAttendances).insert(entry);
+
+  Future<bool> updateAttendance(SessionAttendancesCompanion entry) =>
+      update(sessionAttendances).replace(entry);
+
+  Future<void> upsertAttendance(int sessionId, int studentId, String attendanceStatus) async {
+    final existing = await getAttendance(sessionId, studentId);
+    if (existing != null) {
+      await updateAttendance(SessionAttendancesCompanion(
+        id: Value(existing.id),
+        sessionId: Value(sessionId),
+        studentId: Value(studentId),
+        attendanceStatus: Value(attendanceStatus),
+        createdAt: Value(existing.createdAt),
+      ));
+    } else {
+      await insertAttendance(SessionAttendancesCompanion.insert(
+        sessionId: sessionId,
+        studentId: studentId,
+        attendanceStatus: Value(attendanceStatus),
+      ));
+    }
   }
 
   // Revision

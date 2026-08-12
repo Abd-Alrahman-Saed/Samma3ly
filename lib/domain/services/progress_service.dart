@@ -33,9 +33,12 @@ class ProgressService {
     final student = await _studentDao.getById(studentId);
     if (student == null) return;
 
-    final allSessions = await _sessionDao.getAll(studentId: studentId);
-    final presentSessions =
-        allSessions.where((s) => s.attendanceStatus == AttendanceStatus.present.arabic).toList();
+    // Attendance moved off Sessions in v4 (Sprint 2) — count via
+    // SessionAttendances directly instead of filtering raw Session rows.
+    final presentSessionsCount = await _sessionDao.countByStudentAndAttendance(
+      studentId,
+      AttendanceStatus.present.arabic,
+    );
 
     // Single joined query instead of one getMemorizationBySession() call per
     // session (Sprint 0, item 0.5 — was the main N+1 offender here).
@@ -64,7 +67,7 @@ class ProgressService {
 
     final completedJuz = await _calculateCompletedJuz(memorizations);
 
-    final totalSessions = presentSessions.length;
+    final totalSessions = presentSessionsCount;
     final hasProgress = totalSessions > 0;
     final hasAdvanced = completedJuz >= 5;
     final distinctSurahs = memorizations.map((m) => m.surahId).toSet().length;
