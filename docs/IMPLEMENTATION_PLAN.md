@@ -389,7 +389,7 @@ Redesign.dc.html` حرفياً — راجع [DESIGN_SPEC.md](DESIGN_SPEC.md) ل�
 |---|---|---|---|
 | 2.1 | schema v4 + migration (تحذيرات القسم ب) | v1→v2→v3→v4 مختبَرة متتالية على بيانات حقيقية | ✅ منجَز — راجع الملاحظة في القسم ب أعلاه |
 | 2.2 | `RecurrenceService.expand()` + اختبارات وحدة | التوقيت الصيفي · `effectiveFrom/To` · الاستثناءات · حدود الشهر | ✅ منجَز |
-| 2.3 | تعيين مواقيت الصلاة (`adhan`) + `anchorType` | «بعد المغرب +١٥د» يحسب وقتاً صحيحاً لكل يوم | 🔲 |
+| 2.3 | تعيين مواقيت الصلاة (`adhan`) + `anchorType` | «بعد المغرب +١٥د» يحسب وقتاً صحيحاً لكل يوم | ✅ منجَز |
 | 2.4 | Repositories + Providers للمجموعات | حدود الطبقات محفوظة — صفر `drift` في `features/` | 🔲 |
 | 2.5 | شاشات: قائمة · إنشاء · تفاصيل (٤ تبويبات) | على `TextTheme` وrموز الحركة | 🔲 |
 | 2.6 | محرّر الجدول الأسبوعي | تعديل الموعد لا يغيّر جلسات ماضية | 🔲 |
@@ -417,6 +417,28 @@ Drift مباشرة، بنفس نمط `MemorizedRangeService`) وقائمة `Sche
   عبر التوقيت الصيفي، الاستثناءات بأنواعها، التعيين بالصلاة، حالات دفاعية)
   بما فيها اختبار بوابة الخروج الحرفي (٣ مواعيد أسبوعية × ٨ أسابيع = ٢٤
   موعداً). كل اختبارات المشروع: ٧١/٧١ ناجحة.
+
+**ملاحظة تنفيذ 2.3:** إضافة حزمة `adhan: ^2.0.0` (تُحل بنجاح مع Dart
+3.12.2) + `AdhanPrayerTimeResolver` (`lib/domain/services/adhan_prayer_time_resolver.dart`)
+اللي تُنفِّذ واجهة `PrayerTimeResolver` من بند 2.2 فعلياً.
+- **إعدادات قابلة للتعديل (تخفيف الخطر R7)**: `PrayerSettings` مُخزَّنة عبر
+  `SharedPreferences` بنفس نمط `themeModeProvider` (`prayerSettingsProvider`
+  في `lib/features/settings/providers/prayer_settings_provider.dart`) —
+  طريقة الحساب (١٣ طريقة من `adhan.CalculationMethod`)، المذهب (لحساب
+  العصر)، وموقع (خط عرض/طول، افتراضياً القاهرة). قسم جديد «مواقيت الصلاة»
+  في شاشة الإعدادات يعرض حواراً لتعديلها. الإزاحة الدقيقة لكل حلقة على حدة
+  (تعويض فارق التوقيت عن مسجد بعينه) تبقى `offsetMinutes` الموجودة أصلاً في
+  `GroupScheduleSlots` منذ بند 2.1 — لا حقل إزاحة إضافي منفصل.
+- **enums جديدة**: `core/enums/prayer_name.dart` (الصلوات الخمس — تُستخدَم
+  كقيمة `GroupScheduleSlots.prayerName` بدل نص حر)، `prayer_calculation_method.dart`،
+  `prayer_madhab.dart` — كلاهما يُغلِّف enum مكافئ من الحزمة الخارجية
+  بدل تسريبه مباشرة، حتى لا تنكسر القيم المحفوظة لو غيّرت `adhan` تسمياتها.
+- **الاختبارات**: `test/domain/services/adhan_prayer_time_resolver_test.dart`
+  (ترتيب الصلوات، ثبات التاريخ، حدود منطقية لوقت المغرب في القاهرة، اختلاف
+  الوقت المحسوب صيفاً/شتاءً ويومياً، أثر تغيير طريقة الحساب/المذهب، تكامل
+  فعلي مع `RecurrenceService.expand()`) و`test/features/settings/providers/prayer_settings_provider_test.dart`
+  (القيم الافتراضية، الحفظ/التحميل عبر `SharedPreferences`). كل اختبارات
+  المشروع: ٨٥/٨٥ ناجحة.
 
 ---
 

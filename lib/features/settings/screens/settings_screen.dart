@@ -12,6 +12,9 @@ import 'package:quran_mobile/core/widgets/loading_overlay.dart';
 import 'package:quran_mobile/core/utils/date_utils.dart';
 import 'package:quran_mobile/features/auth/providers/auth_provider.dart';
 import 'package:quran_mobile/features/dashboard/providers/dashboard_provider.dart';
+import 'package:quran_mobile/core/enums/prayer_calculation_method.dart';
+import 'package:quran_mobile/core/enums/prayer_madhab.dart';
+import 'package:quran_mobile/features/settings/providers/prayer_settings_provider.dart';
 import 'package:quran_mobile/features/settings/providers/settings_provider.dart';
 import 'package:quran_mobile/features/settings/providers/theme_mode_provider.dart';
 import 'package:quran_mobile/providers.dart';
@@ -25,6 +28,7 @@ class SettingsScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final isAdmin = user?.role == 'Admin';
     final themeMode = ref.watch(themeModeProvider);
+    final prayerSettings = ref.watch(prayerSettingsProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -46,6 +50,29 @@ class SettingsScreen extends ConsumerWidget {
                     value: themeMode,
                     onChanged: (v) => ref.read(themeModeProvider.notifier).setThemeMode(v),
                   ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            const _SectionLabel('مواقيت الصلاة'),
+            const SizedBox(height: 8),
+            _RowContainer(
+              onTap: () => _showPrayerSettingsDialog(context, ref),
+              child: Row(
+                children: [
+                  const AppIcon(AppIcons.clock, size: 17, color: AppColors.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('طريقة الحساب والموقع', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                        const SizedBox(height: 2),
+                        Text(prayerSettings.calculationMethod.arabicLabel, style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, color: AppColors.textSecondary)),
+                      ],
+                    ),
+                  ),
+                  const AppIcon(AppIcons.chevronLeft, size: 15, color: AppColors.textMuted),
                 ],
               ),
             ),
@@ -201,6 +228,85 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Item 2.3 (risk R7): lets the teacher pick the calculation method closest
+/// to their mosque, and the location it's computed for, instead of the app
+/// silently assuming one. Per-slot `offsetMinutes` (item 2.1 schema) is the
+/// finer-grained knob for "our mosque's Maghrib call is ~3 minutes later".
+Future<void> _showPrayerSettingsDialog(BuildContext context, WidgetRef ref) async {
+  final settings = ref.read(prayerSettingsProvider);
+  final latController = TextEditingController(text: settings.latitude.toStringAsFixed(4));
+  final lngController = TextEditingController(text: settings.longitude.toStringAsFixed(4));
+  var method = settings.calculationMethod;
+  var madhab = settings.madhab;
+
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => AlertDialog(
+        title: const Text('مواقيت الصلاة'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('طريقة الحساب', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w600)),
+              DropdownButton<PrayerCalculationMethod>(
+                value: method,
+                isExpanded: true,
+                items: [for (final m in PrayerCalculationMethod.values) DropdownMenuItem(value: m, child: Text(m.arabicLabel))],
+                onChanged: (v) {
+                  if (v != null) setState(() => method = v);
+                },
+              ),
+              const SizedBox(height: 12),
+              const Text('المذهب (لحساب وقت العصر)', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w600)),
+              DropdownButton<PrayerMadhab>(
+                value: madhab,
+                isExpanded: true,
+                items: [for (final m in PrayerMadhab.values) DropdownMenuItem(value: m, child: Text(m.arabicLabel))],
+                onChanged: (v) {
+                  if (v != null) setState(() => madhab = v);
+                },
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: latController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                decoration: const InputDecoration(labelText: 'خط العرض (Latitude)'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: lngController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                decoration: const InputDecoration(labelText: 'خط الطول (Longitude)'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إلغاء')),
+          TextButton(
+            onPressed: () async {
+              final notifier = ref.read(prayerSettingsProvider.notifier);
+              await notifier.setCalculationMethod(method);
+              await notifier.setMadhab(madhab);
+              final lat = double.tryParse(latController.text.trim());
+              final lng = double.tryParse(lngController.text.trim());
+              if (lat != null && lng != null) {
+                await notifier.setLocation(latitude: lat, longitude: lng);
+              }
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('حفظ'),
+          ),
+        ],
+      ),
+    ),
+  );
+  latController.dispose();
+  lngController.dispose();
 }
 
 Future<void> _shareBackup(File file) async {

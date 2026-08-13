@@ -52,6 +52,9 @@ dependencies:
   shared_preferences: ^2.5.5
   flutter_svg: ^2.3.0
 
+  # Prayer-time calculation (item 2.3 — anchorType = 'مرتبط بصلاة')
+  adhan: ^2.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
