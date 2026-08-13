@@ -13,6 +13,9 @@ import 'package:quran_mobile/features/sessions/screens/session_list_screen.dart'
 import 'package:quran_mobile/features/sessions/screens/session_create_screen.dart';
 import 'package:quran_mobile/features/schedules/screens/schedule_list_screen.dart';
 import 'package:quran_mobile/features/goals/screens/goal_list_screen.dart';
+import 'package:quran_mobile/features/groups/screens/group_list_screen.dart';
+import 'package:quran_mobile/features/groups/screens/group_create_screen.dart';
+import 'package:quran_mobile/features/groups/screens/group_detail_screen.dart';
 import 'package:quran_mobile/features/memorization/screens/memorization_screen.dart';
 import 'package:quran_mobile/features/memorization/screens/review_queue_screen.dart';
 import 'package:quran_mobile/features/reports/screens/reports_screen.dart';
@@ -126,6 +129,34 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/schedules',
             name: 'schedulesList',
             builder: (_, __) => const ScheduleListScreen(),
+          ),
+          GoRoute(
+            path: '/groups',
+            name: 'groupsList',
+            builder: (_, __) => const GroupListScreen(),
+            routes: [
+              GoRoute(
+                path: 'create',
+                name: 'groupCreate',
+                builder: (_, __) => const GroupCreateScreen(),
+              ),
+              GoRoute(
+                path: ':id',
+                name: 'groupDetails',
+                builder: (_, state) => GroupDetailScreen(
+                  groupId: int.parse(state.pathParameters['id']!),
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    name: 'groupEdit',
+                    builder: (_, state) => GroupCreateScreen(
+                      groupId: int.parse(state.pathParameters['id']!),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           GoRoute(
             path: '/goals',
