@@ -3,7 +3,7 @@ import 'package:quran_mobile/domain/entities/group.dart';
 import 'package:quran_mobile/domain/entities/group_member.dart';
 import 'package:quran_mobile/domain/entities/group_schedule_slot.dart';
 import 'package:quran_mobile/domain/entities/schedule_exception.dart';
-import 'package:quran_mobile/domain/services/recurrence_service.dart';
+import 'package:quran_mobile/domain/services/group_session_service.dart';
 import 'package:quran_mobile/features/settings/providers/prayer_settings_provider.dart';
 import 'package:quran_mobile/providers.dart';
 
@@ -57,18 +57,20 @@ final slotExceptionsProvider = FutureProvider.family.autoDispose<List<ScheduleEx
   return await repo.getExceptions(slotId);
 });
 
-/// Occurrences for a group within [from, to] — see
-/// [GroupScheduleRepository.expandOccurrences] (item 2.4). Resolves prayer
-/// times via `prayerTimeResolverProvider` (item 2.3) so prayer-anchored
-/// slots work without the caller wiring anything extra.
+/// Occurrences for a group within [from, to], merged with any already-
+/// materialized `Sessions` rows (item 2.7) — see
+/// [GroupSessionService.upcomingOccurrences]. Resolves prayer times via
+/// `prayerTimeResolverProvider` (item 2.3) so prayer-anchored slots work
+/// without the caller wiring anything extra. Pure read: never materializes
+/// anything itself (item 2.7's exit gate — viewing must not write).
 typedef GroupOccurrencesQuery = ({int groupId, DateTime from, DateTime to});
 
 final groupOccurrencesProvider =
-    FutureProvider.family.autoDispose<List<RecurrenceOccurrence>, GroupOccurrencesQuery>((ref, query) async {
+    FutureProvider.family.autoDispose<List<GroupOccurrence>, GroupOccurrencesQuery>((ref, query) async {
   ref.watch(groupRefreshProvider);
-  final repo = ref.watch(groupScheduleRepositoryProvider);
+  final service = ref.watch(groupSessionServiceProvider);
   final resolver = ref.watch(prayerTimeResolverProvider);
-  return await repo.expandOccurrences(
+  return await service.upcomingOccurrences(
     groupId: query.groupId,
     from: query.from,
     to: query.to,

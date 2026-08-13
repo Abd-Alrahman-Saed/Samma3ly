@@ -38,6 +38,28 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
     ).get();
   }
 
+  /// The already-materialized session for one recurring occurrence, if any
+  /// — used by materialize-on-write (item 2.7) to check before inserting,
+  /// so re-opening the same occurrence twice never creates a duplicate row.
+  Future<Session?> getByGroupAndOccurrenceDate(int groupId, DateTime occurrenceDate) =>
+      (select(sessions)
+            ..where((t) => t.groupId.equals(groupId) & t.occurrenceDate.equals(occurrenceDate)))
+          .getSingleOrNull();
+
+  /// Batch variant of [getByGroupAndOccurrenceDate] — one query for every
+  /// materialized session of a group in a date range, instead of one query
+  /// per occurrence (N+1 avoidance, Sprint 0 item 0.5). Used to tell which
+  /// of a group's *virtual* recurring occurrences already have a real row.
+  Future<List<Session>> getMaterializedByGroup(int groupId, DateTime from, DateTime to) {
+    return (select(sessions)
+      ..where((t) =>
+          t.groupId.equals(groupId) &
+          t.occurrenceDate.isNotNull() &
+          t.occurrenceDate.isBiggerOrEqualValue(from) &
+          t.occurrenceDate.isSmallerOrEqualValue(to))
+    ).get();
+  }
+
   /// Count of [studentId]'s sessions whose attendance (in
   /// `SessionAttendances`, since v4/Sprint 2) matches [attendanceStatus].
   Future<int> countByStudentAndAttendance(int studentId, String attendanceStatus) {

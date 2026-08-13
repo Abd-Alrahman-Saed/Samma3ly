@@ -14,6 +14,7 @@ import 'package:quran_mobile/domain/services/progress_service.dart';
 import 'package:quran_mobile/domain/services/memorized_range_service.dart';
 import 'package:quran_mobile/domain/services/dashboard_service.dart';
 import 'package:quran_mobile/domain/services/backup_service.dart';
+import 'package:quran_mobile/domain/services/group_session_service.dart';
 import 'package:quran_mobile/data/repositories/auth_repository_impl.dart';
 import 'package:quran_mobile/data/repositories/student_repository_impl.dart';
 import 'package:quran_mobile/data/repositories/session_repository_impl.dart';
@@ -104,6 +105,10 @@ final groupRepositoryProvider = Provider<GroupRepository>(
 
 final groupScheduleRepositoryProvider = Provider<GroupScheduleRepository>(
   (ref) => GroupScheduleRepositoryImpl(ref.watch(groupDaoProvider)),
+);
+
+final groupSessionServiceProvider = Provider<GroupSessionService>(
+  (ref) => GroupSessionService(ref.watch(groupScheduleRepositoryProvider), ref.watch(sessionDaoProvider)),
 );
 
 final backupServiceProvider = Provider<BackupService>((ref) => BackupService(

@@ -14,7 +14,7 @@ import 'package:quran_mobile/domain/entities/group.dart';
 import 'package:quran_mobile/domain/entities/group_member.dart';
 import 'package:quran_mobile/domain/entities/group_schedule_slot.dart';
 import 'package:quran_mobile/domain/entities/student.dart';
-import 'package:quran_mobile/domain/services/recurrence_service.dart';
+import 'package:quran_mobile/domain/services/group_session_service.dart';
 import 'package:quran_mobile/features/groups/providers/group_provider.dart';
 import 'package:quran_mobile/features/groups/screens/group_schedule_slot_sheet.dart';
 import 'package:quran_mobile/features/students/providers/student_provider.dart';
@@ -325,22 +325,37 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
 
 // ── تبويب الجدول الأسبوعي ────────────────────────────────────────────────
 
+const _weekdayOrder = [
+  DateTime.monday, DateTime.tuesday, DateTime.wednesday, DateTime.thursday,
+  DateTime.friday, DateTime.saturday, DateTime.sunday,
+];
+
+const _weekdayLabels = {
+  DateTime.monday: 'الاثنين', DateTime.tuesday: 'الثلاثاء', DateTime.wednesday: 'الأربعاء',
+  DateTime.thursday: 'الخميس', DateTime.friday: 'الجمعة', DateTime.saturday: 'السبت', DateTime.sunday: 'الأحد',
+};
+
+/// Item 2.6 — a genuine *weekly* view (slots grouped under their weekday,
+/// Monday→Sunday) built on top of item 2.5's functional CRUD form
+/// (`GroupScheduleSlotSheet`), not a replacement for it.
+///
+/// The invariant this item is graded on ("editing a slot must not
+/// retroactively change past sessions") is enforced one layer down, in
+/// `GroupSessionService` (item 2.7): editing here only ever writes to
+/// `group_schedule_slots`, never to `sessions` — a materialized session's
+/// own date/time always wins over whatever the current slot rule would
+/// recompute for that date. See group_session_service.dart.
 class _ScheduleTab extends ConsumerWidget {
   final int groupId;
   const _ScheduleTab({required this.groupId});
 
-  String _summarize(GroupScheduleSlot slot) {
-    const weekdayLabels = {
-      DateTime.monday: 'الاثنين', DateTime.tuesday: 'الثلاثاء', DateTime.wednesday: 'الأربعاء',
-      DateTime.thursday: 'الخميس', DateTime.friday: 'الجمعة', DateTime.saturday: 'السبت', DateTime.sunday: 'الأحد',
-    };
-    final day = weekdayLabels[slot.weekday] ?? '';
+  String _timeLabel(GroupScheduleSlot slot) {
     if (AnchorType.fromArabic(slot.anchorType) == AnchorType.fixedTime) {
-      return '$day — الساعة ${slot.fixedTime ?? '؟'}';
+      return 'الساعة ${slot.fixedTime ?? '؟'}';
     }
     final offset = slot.offsetMinutes;
     final offsetText = offset == 0 ? '' : (offset > 0 ? ' +$offset د' : ' $offset د');
-    return '$day — ${slot.prayerName ?? '؟'}$offsetText';
+    return '${slot.prayerName ?? '؟'}$offsetText';
   }
 
   @override
@@ -371,40 +386,63 @@ class _ScheduleTab extends ConsumerWidget {
                     card: true,
                   );
                 }
+                final byWeekday = <int, List<GroupScheduleSlot>>{};
+                for (final s in slots) {
+                  (byWeekday[s.weekday] ??= []).add(s);
+                }
+                final activeDays = _weekdayOrder.where(byWeekday.containsKey).toList();
                 return ListView.builder(
-                  itemCount: slots.length,
-                  itemBuilder: (_, i) {
-                    final slot = slots[i];
+                  itemCount: activeDays.length,
+                  itemBuilder: (_, dayIndex) {
+                    final weekday = activeDays[dayIndex];
+                    final daySlots = byWeekday[weekday]!;
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Material(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(14),
-                          onTap: () => GroupScheduleSlotSheet.show(context, groupId: groupId, existing: slot),
-                          child: Container(
-                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.cardBorder)),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                            child: Row(
-                              children: [
-                                const AppIcon(AppIcons.clock, size: 16, color: AppColors.primary),
-                                const SizedBox(width: 10),
-                                Expanded(child: Text(_summarize(slot), style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
-                                IconButton(
-                                  tooltip: 'حذف الموعد',
-                                  onPressed: () async {
-                                    final confirmed = await confirmDelete(context, message: 'هل تريد حذف هذا الموعد الأسبوعي؟');
-                                    if (!confirmed) return;
-                                    await ref.read(groupScheduleRepositoryProvider).deleteSlot(slot.id);
-                                    ref.read(groupRefreshProvider.notifier).state++;
-                                  },
-                                  icon: const AppIcon(AppIcons.trash, size: 15, color: AppColors.deleteIcon),
-                                ),
-                              ],
-                            ),
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
+                              const SizedBox(width: 8),
+                              Text(_weekdayLabels[weekday]!, style: Theme.of(context).textTheme.titleSmall),
+                            ],
                           ),
-                        ),
+                          const SizedBox(height: 6),
+                          for (final slot in daySlots)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Material(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(14),
+                                  onTap: () => GroupScheduleSlotSheet.show(context, groupId: groupId, existing: slot),
+                                  child: Container(
+                                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.cardBorder)),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                    child: Row(
+                                      children: [
+                                        const AppIcon(AppIcons.clock, size: 16, color: AppColors.primary),
+                                        const SizedBox(width: 10),
+                                        Expanded(child: Text(_timeLabel(slot), style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
+                                        IconButton(
+                                          tooltip: 'حذف الموعد',
+                                          onPressed: () async {
+                                            final confirmed = await confirmDelete(context, message: 'هل تريد حذف هذا الموعد الأسبوعي؟');
+                                            if (!confirmed) return;
+                                            await ref.read(groupScheduleRepositoryProvider).deleteSlot(slot.id);
+                                            ref.read(groupRefreshProvider.notifier).state++;
+                                          },
+                                          icon: const AppIcon(AppIcons.trash, size: 15, color: AppColors.deleteIcon),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     );
                   },
@@ -447,7 +485,7 @@ class _UpcomingTab extends ConsumerWidget {
           return ListView.builder(
             itemCount: occurrences.length,
             itemBuilder: (_, i) {
-              final RecurrenceOccurrence o = occurrences[i];
+              final GroupOccurrence o = occurrences[i];
               final hour = o.dateTime.hour.toString().padLeft(2, '0');
               final minute = o.dateTime.minute.toString().padLeft(2, '0');
               return Padding(
@@ -467,9 +505,29 @@ class _UpcomingTab extends ConsumerWidget {
                       ),
                       if (o.isRescheduled)
                         Container(
+                          margin: const EdgeInsets.only(left: 6),
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(color: AppColors.streakBg, borderRadius: BorderRadius.circular(999)),
                           child: const Text('مُعاد جدولته', style: TextStyle(fontFamily: 'Cairo', fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.streakIconFg)),
+                        ),
+                      if (o.isMaterialized)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(color: const Color(0xFFE9F3EF), borderRadius: BorderRadius.circular(999)),
+                          child: const Text('مُسجَّلة', style: TextStyle(fontFamily: 'Cairo', fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                        )
+                      else
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                          onPressed: () async {
+                            await ref.read(groupSessionServiceProvider).materializeOccurrence(
+                                  groupId: groupId,
+                                  occurrenceDate: o.date,
+                                  dateTime: o.dateTime,
+                                );
+                            ref.read(groupRefreshProvider.notifier).state++;
+                          },
+                          child: const Text('تسجيل الحضور', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w700)),
                         ),
                     ],
                   ),
