@@ -390,7 +390,7 @@ Redesign.dc.html` حرفياً — راجع [DESIGN_SPEC.md](DESIGN_SPEC.md) ل�
 | 2.1 | schema v4 + migration (تحذيرات القسم ب) | v1→v2→v3→v4 مختبَرة متتالية على بيانات حقيقية | ✅ منجَز — راجع الملاحظة في القسم ب أعلاه |
 | 2.2 | `RecurrenceService.expand()` + اختبارات وحدة | التوقيت الصيفي · `effectiveFrom/To` · الاستثناءات · حدود الشهر | ✅ منجَز |
 | 2.3 | تعيين مواقيت الصلاة (`adhan`) + `anchorType` | «بعد المغرب +١٥د» يحسب وقتاً صحيحاً لكل يوم | ✅ منجَز |
-| 2.4 | Repositories + Providers للمجموعات | حدود الطبقات محفوظة — صفر `drift` في `features/` | 🔲 |
+| 2.4 | Repositories + Providers للمجموعات | حدود الطبقات محفوظة — صفر `drift` في `features/` | ✅ منجَز |
 | 2.5 | شاشات: قائمة · إنشاء · تفاصيل (٤ تبويبات) | على `TextTheme` وrموز الحركة | 🔲 |
 | 2.6 | محرّر الجدول الأسبوعي | تعديل الموعد لا يغيّر جلسات ماضية | 🔲 |
 | 2.7 | Materialize-on-write | فتح حلقة بلا تسجيل لا يُنشئ صفاً | 🔲 |
@@ -439,6 +439,40 @@ Drift مباشرة، بنفس نمط `MemorizedRangeService`) وقائمة `Sche
   فعلي مع `RecurrenceService.expand()`) و`test/features/settings/providers/prayer_settings_provider_test.dart`
   (القيم الافتراضية، الحفظ/التحميل عبر `SharedPreferences`). كل اختبارات
   المشروع: ٨٥/٨٥ ناجحة.
+
+**ملاحظة تنفيذ 2.4:** `GroupRepository`/`GroupScheduleRepository` (واجهات
+في `domain/repositories/`، تنفيذ في `data/repositories/`) بنفس نمط
+`StudentRepository`/`SessionRepository` تماماً — بما في ذلك حيلة
+`hide Group`/`hide GroupScheduleSlot, ScheduleException` عند استيراد
+`app_database.dart` لتفادي تعارض الاسم مع كيانات `domain/entities/` الجديدة
+(`Group`، `GroupMember`، `GroupScheduleSlot`، `ScheduleException`) —
+نفس الأسلوب المستخدم أصلاً مع `Student`/`Session`.
+- **`GroupDao`** (`data/local/database/daos/group_dao.dart`) يجمع الجداول
+  الأربعة (Groups/GroupMembers/GroupScheduleSlots/ScheduleExceptions) في
+  DAO واحد — بنفس نمط `SessionDao`. `getMembersForGroups`/`getSlotsForGroups`/
+  `getExceptionsForSlots` كلها دفعية (batch) لا لكل صف على حدة (تفادي N+1،
+  بند 0.5).
+- **`GroupScheduleRepositoryImpl.expandOccurrences()`** يجلب مواعيد المجموعة
+  واستثناءاتها (دفعياً) من القاعدة الحقيقية ثم يمرّرها مباشرة إلى
+  `RecurrenceService.expandAll()` (بند 2.2) — تكامل حقيقي مُختبَر بقاعدة
+  بيانات فعلية (SQLite في الذاكرة)، وليس بديلاً وهمياً. `prayerTimeResolver`
+  يُمرَّر من المستدعي (`ref.watch(prayerTimeResolverProvider)` من طبقة
+  `features/`) لا كاعتماد داخل الـrepository — هذا يبقي `GroupScheduleRepository`
+  غير معتمِد على إعدادات `features/settings` إطلاقاً.
+- **حدود الطبقات**: `lib/providers.dart` يربط `groupDaoProvider` →
+  `groupRepositoryProvider`/`groupScheduleRepositoryProvider` بنفس نمط باقي
+  الـrepositories. كل الكود الجديد في هذا البند (repositories + providers +
+  الكيانات) صفر استيراد drift خارج `data/`. ⚠️ ملاحظة جانبية (خارج نطاق هذا
+  البند تحديداً): بعض شاشات/مزوّدات **قديمة** من قبل Sprint 2
+  (`session_create_screen.dart`، `student_provider.dart`، إلخ) تستورد
+  `drift`/`app_database.dart` مباشرة بالفعل — دَين تقني موجود مسبقاً، لم
+  يُنشئه ولم يُصلحه هذا البند، ويحتاج مهمة تنظيف منفصلة.
+- **الاختبارات**: `test/data/repositories/group_repository_impl_test.dart`
+  و`group_schedule_repository_impl_test.dart` (١٨ اختباراً) — CRUD كامل
+  للمجموعات/الأعضاء/المواعيد/الاستثناءات، الحذف المتتالي اليدوي (استثناءات
+  ← مواعيد ← أعضاء ← المجموعة، لترتيب المفاتيح الأجنبية)، ودمج فعلي مع
+  `RecurrenceService` بقاعدة بيانات SQLite حقيقية (لا Mock). كل اختبارات
+  المشروع: ١٠٣/١٠٣ ناجحة.
 
 ---
 
