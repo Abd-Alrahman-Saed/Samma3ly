@@ -8,6 +8,7 @@ import 'package:quran_mobile/core/utils/date_utils.dart';
 import 'package:quran_mobile/core/widgets/app_form_field.dart';
 import 'package:quran_mobile/core/widgets/app_snackbar.dart';
 import 'package:quran_mobile/domain/entities/group_schedule_slot.dart';
+import 'package:quran_mobile/features/groups/notifications/group_notification_scheduler.dart';
 import 'package:quran_mobile/features/groups/providers/group_provider.dart';
 import 'package:quran_mobile/providers.dart';
 
@@ -109,8 +110,9 @@ class _SlotSheetContentState extends ConsumerState<_SlotSheetContent> {
       } else {
         await repo.createSlot(slot);
       }
+      ref.read(groupRefreshProvider.notifier).state++;
+      await rescheduleGroupNotifications(ref, widget.groupId);
       if (mounted) {
-        ref.read(groupRefreshProvider.notifier).state++;
         AppSnackbar.success(context, widget.existing != null ? 'تم تحديث الموعد' : 'تم إضافة الموعد');
         Navigator.of(context).pop();
       }

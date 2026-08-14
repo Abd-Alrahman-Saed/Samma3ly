@@ -17,6 +17,7 @@ import 'package:quran_mobile/core/widgets/surah_dropdown.dart';
 import 'package:quran_mobile/data/local/database/app_database.dart' hide MemorizedRange;
 import 'package:quran_mobile/domain/entities/memorized_range.dart';
 import 'package:quran_mobile/features/memorization/providers/memorization_provider.dart';
+import 'package:quran_mobile/features/settings/providers/notification_settings_provider.dart';
 import 'package:quran_mobile/features/students/providers/student_provider.dart';
 import 'package:quran_mobile/providers.dart';
 
@@ -105,11 +106,14 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
       final student = await ref.read(studentByIdProvider(widget.studentId).future);
       final surahs = await ref.read(surahListProvider.future);
       final surahName = surahs.firstWhereOrNull((s) => s.id == surahId)?.name ?? 'السورة';
+      final notificationSettings = ref.read(notificationSettingsProvider);
       await NotificationService.instance.scheduleReviewReminder(
         rangeId: rangeId,
         reviewDate: nextReview,
         studentName: student?.fullName ?? 'الطالب',
         surahName: surahName,
+        hour: notificationSettings.reviewReminderHour,
+        minute: notificationSettings.reviewReminderMinute,
       );
 
       final wasEdit = _editId != null;

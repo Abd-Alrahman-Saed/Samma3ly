@@ -15,6 +15,7 @@ import 'package:quran_mobile/domain/entities/group_member.dart';
 import 'package:quran_mobile/domain/entities/group_schedule_slot.dart';
 import 'package:quran_mobile/domain/entities/student.dart';
 import 'package:quran_mobile/domain/services/group_session_service.dart';
+import 'package:quran_mobile/features/groups/notifications/group_notification_scheduler.dart';
 import 'package:quran_mobile/features/groups/providers/group_provider.dart';
 import 'package:quran_mobile/features/groups/screens/group_schedule_slot_sheet.dart';
 import 'package:quran_mobile/features/students/providers/student_provider.dart';
@@ -36,6 +37,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> with Sing
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    // Item 3.5 — re-sync this group's upcoming-session reminders whenever
+    // its detail screen is opened, in case the schedule changed since the
+    // last sync (e.g. edited from a different session/device).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) rescheduleGroupNotifications(ref, widget.groupId);
+    });
   }
 
   @override
@@ -52,6 +59,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> with Sing
     if (!confirmed) return;
     await ref.read(groupRepositoryProvider).delete(group.id);
     ref.read(groupRefreshProvider.notifier).state++;
+    await cancelGroupNotifications(group.id);
     if (mounted) context.pop();
   }
 
@@ -433,6 +441,7 @@ class _ScheduleTab extends ConsumerWidget {
                                             if (!confirmed) return;
                                             await ref.read(groupScheduleRepositoryProvider).deleteSlot(slot.id);
                                             ref.read(groupRefreshProvider.notifier).state++;
+                                            await rescheduleGroupNotifications(ref, groupId);
                                           },
                                           icon: const AppIcon(AppIcons.trash, size: 15, color: AppColors.deleteIcon),
                                         ),

@@ -14,6 +14,7 @@ import 'package:quran_mobile/features/auth/providers/auth_provider.dart';
 import 'package:quran_mobile/features/dashboard/providers/dashboard_provider.dart';
 import 'package:quran_mobile/core/enums/prayer_calculation_method.dart';
 import 'package:quran_mobile/core/enums/prayer_madhab.dart';
+import 'package:quran_mobile/features/settings/providers/notification_settings_provider.dart';
 import 'package:quran_mobile/features/settings/providers/prayer_settings_provider.dart';
 import 'package:quran_mobile/features/settings/providers/settings_provider.dart';
 import 'package:quran_mobile/features/settings/providers/theme_mode_provider.dart';
@@ -29,6 +30,7 @@ class SettingsScreen extends ConsumerWidget {
     final isAdmin = user?.role == 'Admin';
     final themeMode = ref.watch(themeModeProvider);
     final prayerSettings = ref.watch(prayerSettingsProvider);
+    final notificationSettings = ref.watch(notificationSettingsProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -69,6 +71,32 @@ class SettingsScreen extends ConsumerWidget {
                         const Text('طريقة الحساب والموقع', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                         const SizedBox(height: 2),
                         Text(prayerSettings.calculationMethod.arabicLabel, style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, color: AppColors.textSecondary)),
+                      ],
+                    ),
+                  ),
+                  const AppIcon(AppIcons.chevronLeft, size: 15, color: AppColors.textMuted),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            const _SectionLabel('الإشعارات'),
+            const SizedBox(height: 8),
+            _RowContainer(
+              onTap: () => _showNotificationSettingsDialog(context, ref),
+              child: Row(
+                children: [
+                  const AppIcon(AppIcons.calendarCheck, size: 17, color: AppColors.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('توقيت التذكيرات', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                        const SizedBox(height: 2),
+                        Text(
+                          'المراجعة الساعة ${notificationSettings.reviewReminderHour.toString().padLeft(2, '0')}:${notificationSettings.reviewReminderMinute.toString().padLeft(2, '0')} · الحلقات قبلها بـ${notificationSettings.groupSessionLeadMinutes} د',
+                          style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, color: AppColors.textSecondary),
+                        ),
                       ],
                     ),
                   ),
@@ -307,6 +335,63 @@ Future<void> _showPrayerSettingsDialog(BuildContext context, WidgetRef ref) asyn
   );
   latController.dispose();
   lngController.dispose();
+}
+
+/// Item 3.5: replaces two previously-hardcoded notification times — the
+/// memorization-review reminder (was a literal 9:00) and group-session
+/// reminders (didn't exist before this item; now fire `leadMinutes` before
+/// the occurrence's real computed time, item 2.2/2.3).
+Future<void> _showNotificationSettingsDialog(BuildContext context, WidgetRef ref) async {
+  final settings = ref.read(notificationSettingsProvider);
+  var reviewTime = TimeOfDay(hour: settings.reviewReminderHour, minute: settings.reviewReminderMinute);
+  var leadMinutes = settings.groupSessionLeadMinutes;
+  const leadOptions = [5, 10, 15, 30, 45, 60];
+
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => AlertDialog(
+        title: const Text('توقيت التذكيرات'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('تذكير مراجعة الحفظ اليومي', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
+            OutlinedButton(
+              onPressed: () async {
+                final picked = await showTimePicker(context: ctx, initialTime: reviewTime);
+                if (picked != null) setState(() => reviewTime = picked);
+              },
+              child: Text(reviewTime.format(ctx)),
+            ),
+            const SizedBox(height: 14),
+            const Text('تذكير الحلقات — قبل الموعد بـ', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w600)),
+            DropdownButton<int>(
+              value: leadMinutes,
+              isExpanded: true,
+              items: [for (final m in leadOptions) DropdownMenuItem(value: m, child: Text('$m دقيقة'))],
+              onChanged: (v) {
+                if (v != null) setState(() => leadMinutes = v);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إلغاء')),
+          TextButton(
+            onPressed: () async {
+              final notifier = ref.read(notificationSettingsProvider.notifier);
+              await notifier.setReviewReminderTime(hour: reviewTime.hour, minute: reviewTime.minute);
+              await notifier.setGroupSessionLeadMinutes(leadMinutes);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('حفظ'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 Future<void> _shareBackup(File file) async {
