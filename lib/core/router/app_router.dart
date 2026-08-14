@@ -17,6 +17,7 @@ import 'package:quran_mobile/features/groups/screens/group_list_screen.dart';
 import 'package:quran_mobile/features/groups/screens/group_create_screen.dart';
 import 'package:quran_mobile/features/groups/screens/group_detail_screen.dart';
 import 'package:quran_mobile/features/groups/screens/group_live_session_screen.dart';
+import 'package:quran_mobile/features/calendar/screens/weekly_calendar_screen.dart';
 import 'package:quran_mobile/features/memorization/screens/memorization_screen.dart';
 import 'package:quran_mobile/features/memorization/screens/review_queue_screen.dart';
 import 'package:quran_mobile/features/reports/screens/reports_screen.dart';
@@ -171,6 +172,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/goals',
             name: 'goalsList',
             builder: (_, __) => const GoalListScreen(),
+          ),
+          GoRoute(
+            path: '/calendar',
+            name: 'weeklyCalendar',
+            builder: (_, __) => const WeeklyCalendarScreen(),
           ),
           GoRoute(
             path: '/reports',

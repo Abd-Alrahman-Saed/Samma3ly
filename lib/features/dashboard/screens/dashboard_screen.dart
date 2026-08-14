@@ -224,6 +224,15 @@ class _QuickLinks extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         _QuickLinkRow(
+          icon: AppIcons.calendarCheck,
+          iconBg: const Color(0xFFE9F3EF),
+          iconColor: AppColors.primary,
+          label: 'التقويم الأسبوعي',
+          count: null,
+          onTap: () => context.goNamed('weeklyCalendar'),
+        ),
+        const SizedBox(height: 8),
+        _QuickLinkRow(
           icon: AppIcons.flag,
           iconBg: const Color(0xFFE9F3EF),
           iconColor: AppColors.primary,

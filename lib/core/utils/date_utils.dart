@@ -32,10 +32,19 @@ class AppDateUtils {
     return formatter.format(date);
   }
 
+  /// The most recent Sunday on or before today (weeks in this app start on
+  /// Sunday). `DateTime.weekday` is Monday=1..Sunday=7, so `weekday % 7`
+  /// gives days-since-last-Sunday directly (Sunday itself -> 0).
+  ///
+  /// Was previously `day - (weekday - DateTime.sunday)`, i.e. `day - weekday
+  /// + 7` — that computes the *next* Sunday, not the current week's start
+  /// (e.g. on a Wednesday it lands 4 days in the future). Never had a
+  /// caller before item 3.6's weekly calendar screen, so the bug was never
+  /// exercised until now — found and fixed in the same change that adds
+  /// the first real usage.
   static DateTime get weekStart {
     final now = DateTime.now();
-    final weekday = now.weekday;
-    return DateTime(now.year, now.month, now.day - (weekday - DateTime.sunday));
+    return DateTime(now.year, now.month, now.day - (now.weekday % 7));
   }
 
   static DateTime get weekEnd => weekStart.add(const Duration(days: 7));
