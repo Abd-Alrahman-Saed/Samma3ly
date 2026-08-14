@@ -3276,6 +3276,85 @@ class $SessionAttendancesTable extends SessionAttendances
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('حاضر'));
+  static const VerificationMeta _memorizationSurahIdMeta =
+      const VerificationMeta('memorizationSurahId');
+  @override
+  late final GeneratedColumn<int> memorizationSurahId = GeneratedColumn<int>(
+      'memorization_surah_id', aliasedName, true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES surahs (id)'));
+  static const VerificationMeta _memorizationFromAyahMeta =
+      const VerificationMeta('memorizationFromAyah');
+  @override
+  late final GeneratedColumn<int> memorizationFromAyah = GeneratedColumn<int>(
+      'memorization_from_ayah', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _memorizationToAyahMeta =
+      const VerificationMeta('memorizationToAyah');
+  @override
+  late final GeneratedColumn<int> memorizationToAyah = GeneratedColumn<int>(
+      'memorization_to_ayah', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _revisionSurahIdMeta =
+      const VerificationMeta('revisionSurahId');
+  @override
+  late final GeneratedColumn<int> revisionSurahId = GeneratedColumn<int>(
+      'revision_surah_id', aliasedName, true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES surahs (id)'));
+  static const VerificationMeta _revisionFromAyahMeta =
+      const VerificationMeta('revisionFromAyah');
+  @override
+  late final GeneratedColumn<int> revisionFromAyah = GeneratedColumn<int>(
+      'revision_from_ayah', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _revisionToAyahMeta =
+      const VerificationMeta('revisionToAyah');
+  @override
+  late final GeneratedColumn<int> revisionToAyah = GeneratedColumn<int>(
+      'revision_to_ayah', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _memorizationScoreMeta =
+      const VerificationMeta('memorizationScore');
+  @override
+  late final GeneratedColumn<double> memorizationScore =
+      GeneratedColumn<double>('memorization_score', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
+  static const VerificationMeta _tajweedScoreMeta =
+      const VerificationMeta('tajweedScore');
+  @override
+  late final GeneratedColumn<double> tajweedScore = GeneratedColumn<double>(
+      'tajweed_score', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _fluencyScoreMeta =
+      const VerificationMeta('fluencyScore');
+  @override
+  late final GeneratedColumn<double> fluencyScore = GeneratedColumn<double>(
+      'fluency_score', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _accuracyScoreMeta =
+      const VerificationMeta('accuracyScore');
+  @override
+  late final GeneratedColumn<double> accuracyScore = GeneratedColumn<double>(
+      'accuracy_score', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+      'notes', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -3285,8 +3364,24 @@ class $SessionAttendancesTable extends SessionAttendances
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, sessionId, studentId, attendanceStatus, createdAt];
+  List<GeneratedColumn> get $columns => [
+        id,
+        sessionId,
+        studentId,
+        attendanceStatus,
+        memorizationSurahId,
+        memorizationFromAyah,
+        memorizationToAyah,
+        revisionSurahId,
+        revisionFromAyah,
+        revisionToAyah,
+        memorizationScore,
+        tajweedScore,
+        fluencyScore,
+        accuracyScore,
+        notes,
+        createdAt
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3318,6 +3413,70 @@ class $SessionAttendancesTable extends SessionAttendances
           attendanceStatus.isAcceptableOrUnknown(
               data['attendance_status']!, _attendanceStatusMeta));
     }
+    if (data.containsKey('memorization_surah_id')) {
+      context.handle(
+          _memorizationSurahIdMeta,
+          memorizationSurahId.isAcceptableOrUnknown(
+              data['memorization_surah_id']!, _memorizationSurahIdMeta));
+    }
+    if (data.containsKey('memorization_from_ayah')) {
+      context.handle(
+          _memorizationFromAyahMeta,
+          memorizationFromAyah.isAcceptableOrUnknown(
+              data['memorization_from_ayah']!, _memorizationFromAyahMeta));
+    }
+    if (data.containsKey('memorization_to_ayah')) {
+      context.handle(
+          _memorizationToAyahMeta,
+          memorizationToAyah.isAcceptableOrUnknown(
+              data['memorization_to_ayah']!, _memorizationToAyahMeta));
+    }
+    if (data.containsKey('revision_surah_id')) {
+      context.handle(
+          _revisionSurahIdMeta,
+          revisionSurahId.isAcceptableOrUnknown(
+              data['revision_surah_id']!, _revisionSurahIdMeta));
+    }
+    if (data.containsKey('revision_from_ayah')) {
+      context.handle(
+          _revisionFromAyahMeta,
+          revisionFromAyah.isAcceptableOrUnknown(
+              data['revision_from_ayah']!, _revisionFromAyahMeta));
+    }
+    if (data.containsKey('revision_to_ayah')) {
+      context.handle(
+          _revisionToAyahMeta,
+          revisionToAyah.isAcceptableOrUnknown(
+              data['revision_to_ayah']!, _revisionToAyahMeta));
+    }
+    if (data.containsKey('memorization_score')) {
+      context.handle(
+          _memorizationScoreMeta,
+          memorizationScore.isAcceptableOrUnknown(
+              data['memorization_score']!, _memorizationScoreMeta));
+    }
+    if (data.containsKey('tajweed_score')) {
+      context.handle(
+          _tajweedScoreMeta,
+          tajweedScore.isAcceptableOrUnknown(
+              data['tajweed_score']!, _tajweedScoreMeta));
+    }
+    if (data.containsKey('fluency_score')) {
+      context.handle(
+          _fluencyScoreMeta,
+          fluencyScore.isAcceptableOrUnknown(
+              data['fluency_score']!, _fluencyScoreMeta));
+    }
+    if (data.containsKey('accuracy_score')) {
+      context.handle(
+          _accuracyScoreMeta,
+          accuracyScore.isAcceptableOrUnknown(
+              data['accuracy_score']!, _accuracyScoreMeta));
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+          _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -3343,6 +3502,28 @@ class $SessionAttendancesTable extends SessionAttendances
           .read(DriftSqlType.int, data['${effectivePrefix}student_id'])!,
       attendanceStatus: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}attendance_status'])!,
+      memorizationSurahId: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}memorization_surah_id']),
+      memorizationFromAyah: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}memorization_from_ayah']),
+      memorizationToAyah: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}memorization_to_ayah']),
+      revisionSurahId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}revision_surah_id']),
+      revisionFromAyah: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}revision_from_ayah']),
+      revisionToAyah: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}revision_to_ayah']),
+      memorizationScore: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}memorization_score'])!,
+      tajweedScore: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}tajweed_score'])!,
+      fluencyScore: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}fluency_score'])!,
+      accuracyScore: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}accuracy_score'])!,
+      notes: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}notes']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
@@ -3360,12 +3541,34 @@ class SessionAttendance extends DataClass
   final int sessionId;
   final int studentId;
   final String attendanceStatus;
+  final int? memorizationSurahId;
+  final int? memorizationFromAyah;
+  final int? memorizationToAyah;
+  final int? revisionSurahId;
+  final int? revisionFromAyah;
+  final int? revisionToAyah;
+  final double memorizationScore;
+  final double tajweedScore;
+  final double fluencyScore;
+  final double accuracyScore;
+  final String? notes;
   final DateTime createdAt;
   const SessionAttendance(
       {required this.id,
       required this.sessionId,
       required this.studentId,
       required this.attendanceStatus,
+      this.memorizationSurahId,
+      this.memorizationFromAyah,
+      this.memorizationToAyah,
+      this.revisionSurahId,
+      this.revisionFromAyah,
+      this.revisionToAyah,
+      required this.memorizationScore,
+      required this.tajweedScore,
+      required this.fluencyScore,
+      required this.accuracyScore,
+      this.notes,
       required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3374,6 +3577,31 @@ class SessionAttendance extends DataClass
     map['session_id'] = Variable<int>(sessionId);
     map['student_id'] = Variable<int>(studentId);
     map['attendance_status'] = Variable<String>(attendanceStatus);
+    if (!nullToAbsent || memorizationSurahId != null) {
+      map['memorization_surah_id'] = Variable<int>(memorizationSurahId);
+    }
+    if (!nullToAbsent || memorizationFromAyah != null) {
+      map['memorization_from_ayah'] = Variable<int>(memorizationFromAyah);
+    }
+    if (!nullToAbsent || memorizationToAyah != null) {
+      map['memorization_to_ayah'] = Variable<int>(memorizationToAyah);
+    }
+    if (!nullToAbsent || revisionSurahId != null) {
+      map['revision_surah_id'] = Variable<int>(revisionSurahId);
+    }
+    if (!nullToAbsent || revisionFromAyah != null) {
+      map['revision_from_ayah'] = Variable<int>(revisionFromAyah);
+    }
+    if (!nullToAbsent || revisionToAyah != null) {
+      map['revision_to_ayah'] = Variable<int>(revisionToAyah);
+    }
+    map['memorization_score'] = Variable<double>(memorizationScore);
+    map['tajweed_score'] = Variable<double>(tajweedScore);
+    map['fluency_score'] = Variable<double>(fluencyScore);
+    map['accuracy_score'] = Variable<double>(accuracyScore);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -3384,6 +3612,30 @@ class SessionAttendance extends DataClass
       sessionId: Value(sessionId),
       studentId: Value(studentId),
       attendanceStatus: Value(attendanceStatus),
+      memorizationSurahId: memorizationSurahId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(memorizationSurahId),
+      memorizationFromAyah: memorizationFromAyah == null && nullToAbsent
+          ? const Value.absent()
+          : Value(memorizationFromAyah),
+      memorizationToAyah: memorizationToAyah == null && nullToAbsent
+          ? const Value.absent()
+          : Value(memorizationToAyah),
+      revisionSurahId: revisionSurahId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(revisionSurahId),
+      revisionFromAyah: revisionFromAyah == null && nullToAbsent
+          ? const Value.absent()
+          : Value(revisionFromAyah),
+      revisionToAyah: revisionToAyah == null && nullToAbsent
+          ? const Value.absent()
+          : Value(revisionToAyah),
+      memorizationScore: Value(memorizationScore),
+      tajweedScore: Value(tajweedScore),
+      fluencyScore: Value(fluencyScore),
+      accuracyScore: Value(accuracyScore),
+      notes:
+          notes == null && nullToAbsent ? const Value.absent() : Value(notes),
       createdAt: Value(createdAt),
     );
   }
@@ -3396,6 +3648,19 @@ class SessionAttendance extends DataClass
       sessionId: serializer.fromJson<int>(json['sessionId']),
       studentId: serializer.fromJson<int>(json['studentId']),
       attendanceStatus: serializer.fromJson<String>(json['attendanceStatus']),
+      memorizationSurahId:
+          serializer.fromJson<int?>(json['memorizationSurahId']),
+      memorizationFromAyah:
+          serializer.fromJson<int?>(json['memorizationFromAyah']),
+      memorizationToAyah: serializer.fromJson<int?>(json['memorizationToAyah']),
+      revisionSurahId: serializer.fromJson<int?>(json['revisionSurahId']),
+      revisionFromAyah: serializer.fromJson<int?>(json['revisionFromAyah']),
+      revisionToAyah: serializer.fromJson<int?>(json['revisionToAyah']),
+      memorizationScore: serializer.fromJson<double>(json['memorizationScore']),
+      tajweedScore: serializer.fromJson<double>(json['tajweedScore']),
+      fluencyScore: serializer.fromJson<double>(json['fluencyScore']),
+      accuracyScore: serializer.fromJson<double>(json['accuracyScore']),
+      notes: serializer.fromJson<String?>(json['notes']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -3407,6 +3672,17 @@ class SessionAttendance extends DataClass
       'sessionId': serializer.toJson<int>(sessionId),
       'studentId': serializer.toJson<int>(studentId),
       'attendanceStatus': serializer.toJson<String>(attendanceStatus),
+      'memorizationSurahId': serializer.toJson<int?>(memorizationSurahId),
+      'memorizationFromAyah': serializer.toJson<int?>(memorizationFromAyah),
+      'memorizationToAyah': serializer.toJson<int?>(memorizationToAyah),
+      'revisionSurahId': serializer.toJson<int?>(revisionSurahId),
+      'revisionFromAyah': serializer.toJson<int?>(revisionFromAyah),
+      'revisionToAyah': serializer.toJson<int?>(revisionToAyah),
+      'memorizationScore': serializer.toJson<double>(memorizationScore),
+      'tajweedScore': serializer.toJson<double>(tajweedScore),
+      'fluencyScore': serializer.toJson<double>(fluencyScore),
+      'accuracyScore': serializer.toJson<double>(accuracyScore),
+      'notes': serializer.toJson<String?>(notes),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -3416,12 +3692,45 @@ class SessionAttendance extends DataClass
           int? sessionId,
           int? studentId,
           String? attendanceStatus,
+          Value<int?> memorizationSurahId = const Value.absent(),
+          Value<int?> memorizationFromAyah = const Value.absent(),
+          Value<int?> memorizationToAyah = const Value.absent(),
+          Value<int?> revisionSurahId = const Value.absent(),
+          Value<int?> revisionFromAyah = const Value.absent(),
+          Value<int?> revisionToAyah = const Value.absent(),
+          double? memorizationScore,
+          double? tajweedScore,
+          double? fluencyScore,
+          double? accuracyScore,
+          Value<String?> notes = const Value.absent(),
           DateTime? createdAt}) =>
       SessionAttendance(
         id: id ?? this.id,
         sessionId: sessionId ?? this.sessionId,
         studentId: studentId ?? this.studentId,
         attendanceStatus: attendanceStatus ?? this.attendanceStatus,
+        memorizationSurahId: memorizationSurahId.present
+            ? memorizationSurahId.value
+            : this.memorizationSurahId,
+        memorizationFromAyah: memorizationFromAyah.present
+            ? memorizationFromAyah.value
+            : this.memorizationFromAyah,
+        memorizationToAyah: memorizationToAyah.present
+            ? memorizationToAyah.value
+            : this.memorizationToAyah,
+        revisionSurahId: revisionSurahId.present
+            ? revisionSurahId.value
+            : this.revisionSurahId,
+        revisionFromAyah: revisionFromAyah.present
+            ? revisionFromAyah.value
+            : this.revisionFromAyah,
+        revisionToAyah:
+            revisionToAyah.present ? revisionToAyah.value : this.revisionToAyah,
+        memorizationScore: memorizationScore ?? this.memorizationScore,
+        tajweedScore: tajweedScore ?? this.tajweedScore,
+        fluencyScore: fluencyScore ?? this.fluencyScore,
+        accuracyScore: accuracyScore ?? this.accuracyScore,
+        notes: notes.present ? notes.value : this.notes,
         createdAt: createdAt ?? this.createdAt,
       );
   SessionAttendance copyWithCompanion(SessionAttendancesCompanion data) {
@@ -3432,6 +3741,37 @@ class SessionAttendance extends DataClass
       attendanceStatus: data.attendanceStatus.present
           ? data.attendanceStatus.value
           : this.attendanceStatus,
+      memorizationSurahId: data.memorizationSurahId.present
+          ? data.memorizationSurahId.value
+          : this.memorizationSurahId,
+      memorizationFromAyah: data.memorizationFromAyah.present
+          ? data.memorizationFromAyah.value
+          : this.memorizationFromAyah,
+      memorizationToAyah: data.memorizationToAyah.present
+          ? data.memorizationToAyah.value
+          : this.memorizationToAyah,
+      revisionSurahId: data.revisionSurahId.present
+          ? data.revisionSurahId.value
+          : this.revisionSurahId,
+      revisionFromAyah: data.revisionFromAyah.present
+          ? data.revisionFromAyah.value
+          : this.revisionFromAyah,
+      revisionToAyah: data.revisionToAyah.present
+          ? data.revisionToAyah.value
+          : this.revisionToAyah,
+      memorizationScore: data.memorizationScore.present
+          ? data.memorizationScore.value
+          : this.memorizationScore,
+      tajweedScore: data.tajweedScore.present
+          ? data.tajweedScore.value
+          : this.tajweedScore,
+      fluencyScore: data.fluencyScore.present
+          ? data.fluencyScore.value
+          : this.fluencyScore,
+      accuracyScore: data.accuracyScore.present
+          ? data.accuracyScore.value
+          : this.accuracyScore,
+      notes: data.notes.present ? data.notes.value : this.notes,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -3443,14 +3783,40 @@ class SessionAttendance extends DataClass
           ..write('sessionId: $sessionId, ')
           ..write('studentId: $studentId, ')
           ..write('attendanceStatus: $attendanceStatus, ')
+          ..write('memorizationSurahId: $memorizationSurahId, ')
+          ..write('memorizationFromAyah: $memorizationFromAyah, ')
+          ..write('memorizationToAyah: $memorizationToAyah, ')
+          ..write('revisionSurahId: $revisionSurahId, ')
+          ..write('revisionFromAyah: $revisionFromAyah, ')
+          ..write('revisionToAyah: $revisionToAyah, ')
+          ..write('memorizationScore: $memorizationScore, ')
+          ..write('tajweedScore: $tajweedScore, ')
+          ..write('fluencyScore: $fluencyScore, ')
+          ..write('accuracyScore: $accuracyScore, ')
+          ..write('notes: $notes, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, sessionId, studentId, attendanceStatus, createdAt);
+  int get hashCode => Object.hash(
+      id,
+      sessionId,
+      studentId,
+      attendanceStatus,
+      memorizationSurahId,
+      memorizationFromAyah,
+      memorizationToAyah,
+      revisionSurahId,
+      revisionFromAyah,
+      revisionToAyah,
+      memorizationScore,
+      tajweedScore,
+      fluencyScore,
+      accuracyScore,
+      notes,
+      createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3459,6 +3825,17 @@ class SessionAttendance extends DataClass
           other.sessionId == this.sessionId &&
           other.studentId == this.studentId &&
           other.attendanceStatus == this.attendanceStatus &&
+          other.memorizationSurahId == this.memorizationSurahId &&
+          other.memorizationFromAyah == this.memorizationFromAyah &&
+          other.memorizationToAyah == this.memorizationToAyah &&
+          other.revisionSurahId == this.revisionSurahId &&
+          other.revisionFromAyah == this.revisionFromAyah &&
+          other.revisionToAyah == this.revisionToAyah &&
+          other.memorizationScore == this.memorizationScore &&
+          other.tajweedScore == this.tajweedScore &&
+          other.fluencyScore == this.fluencyScore &&
+          other.accuracyScore == this.accuracyScore &&
+          other.notes == this.notes &&
           other.createdAt == this.createdAt);
 }
 
@@ -3467,12 +3844,34 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
   final Value<int> sessionId;
   final Value<int> studentId;
   final Value<String> attendanceStatus;
+  final Value<int?> memorizationSurahId;
+  final Value<int?> memorizationFromAyah;
+  final Value<int?> memorizationToAyah;
+  final Value<int?> revisionSurahId;
+  final Value<int?> revisionFromAyah;
+  final Value<int?> revisionToAyah;
+  final Value<double> memorizationScore;
+  final Value<double> tajweedScore;
+  final Value<double> fluencyScore;
+  final Value<double> accuracyScore;
+  final Value<String?> notes;
   final Value<DateTime> createdAt;
   const SessionAttendancesCompanion({
     this.id = const Value.absent(),
     this.sessionId = const Value.absent(),
     this.studentId = const Value.absent(),
     this.attendanceStatus = const Value.absent(),
+    this.memorizationSurahId = const Value.absent(),
+    this.memorizationFromAyah = const Value.absent(),
+    this.memorizationToAyah = const Value.absent(),
+    this.revisionSurahId = const Value.absent(),
+    this.revisionFromAyah = const Value.absent(),
+    this.revisionToAyah = const Value.absent(),
+    this.memorizationScore = const Value.absent(),
+    this.tajweedScore = const Value.absent(),
+    this.fluencyScore = const Value.absent(),
+    this.accuracyScore = const Value.absent(),
+    this.notes = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   SessionAttendancesCompanion.insert({
@@ -3480,6 +3879,17 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
     required int sessionId,
     required int studentId,
     this.attendanceStatus = const Value.absent(),
+    this.memorizationSurahId = const Value.absent(),
+    this.memorizationFromAyah = const Value.absent(),
+    this.memorizationToAyah = const Value.absent(),
+    this.revisionSurahId = const Value.absent(),
+    this.revisionFromAyah = const Value.absent(),
+    this.revisionToAyah = const Value.absent(),
+    this.memorizationScore = const Value.absent(),
+    this.tajweedScore = const Value.absent(),
+    this.fluencyScore = const Value.absent(),
+    this.accuracyScore = const Value.absent(),
+    this.notes = const Value.absent(),
     this.createdAt = const Value.absent(),
   })  : sessionId = Value(sessionId),
         studentId = Value(studentId);
@@ -3488,6 +3898,17 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
     Expression<int>? sessionId,
     Expression<int>? studentId,
     Expression<String>? attendanceStatus,
+    Expression<int>? memorizationSurahId,
+    Expression<int>? memorizationFromAyah,
+    Expression<int>? memorizationToAyah,
+    Expression<int>? revisionSurahId,
+    Expression<int>? revisionFromAyah,
+    Expression<int>? revisionToAyah,
+    Expression<double>? memorizationScore,
+    Expression<double>? tajweedScore,
+    Expression<double>? fluencyScore,
+    Expression<double>? accuracyScore,
+    Expression<String>? notes,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -3495,6 +3916,20 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
       if (sessionId != null) 'session_id': sessionId,
       if (studentId != null) 'student_id': studentId,
       if (attendanceStatus != null) 'attendance_status': attendanceStatus,
+      if (memorizationSurahId != null)
+        'memorization_surah_id': memorizationSurahId,
+      if (memorizationFromAyah != null)
+        'memorization_from_ayah': memorizationFromAyah,
+      if (memorizationToAyah != null)
+        'memorization_to_ayah': memorizationToAyah,
+      if (revisionSurahId != null) 'revision_surah_id': revisionSurahId,
+      if (revisionFromAyah != null) 'revision_from_ayah': revisionFromAyah,
+      if (revisionToAyah != null) 'revision_to_ayah': revisionToAyah,
+      if (memorizationScore != null) 'memorization_score': memorizationScore,
+      if (tajweedScore != null) 'tajweed_score': tajweedScore,
+      if (fluencyScore != null) 'fluency_score': fluencyScore,
+      if (accuracyScore != null) 'accuracy_score': accuracyScore,
+      if (notes != null) 'notes': notes,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -3504,12 +3939,34 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
       Value<int>? sessionId,
       Value<int>? studentId,
       Value<String>? attendanceStatus,
+      Value<int?>? memorizationSurahId,
+      Value<int?>? memorizationFromAyah,
+      Value<int?>? memorizationToAyah,
+      Value<int?>? revisionSurahId,
+      Value<int?>? revisionFromAyah,
+      Value<int?>? revisionToAyah,
+      Value<double>? memorizationScore,
+      Value<double>? tajweedScore,
+      Value<double>? fluencyScore,
+      Value<double>? accuracyScore,
+      Value<String?>? notes,
       Value<DateTime>? createdAt}) {
     return SessionAttendancesCompanion(
       id: id ?? this.id,
       sessionId: sessionId ?? this.sessionId,
       studentId: studentId ?? this.studentId,
       attendanceStatus: attendanceStatus ?? this.attendanceStatus,
+      memorizationSurahId: memorizationSurahId ?? this.memorizationSurahId,
+      memorizationFromAyah: memorizationFromAyah ?? this.memorizationFromAyah,
+      memorizationToAyah: memorizationToAyah ?? this.memorizationToAyah,
+      revisionSurahId: revisionSurahId ?? this.revisionSurahId,
+      revisionFromAyah: revisionFromAyah ?? this.revisionFromAyah,
+      revisionToAyah: revisionToAyah ?? this.revisionToAyah,
+      memorizationScore: memorizationScore ?? this.memorizationScore,
+      tajweedScore: tajweedScore ?? this.tajweedScore,
+      fluencyScore: fluencyScore ?? this.fluencyScore,
+      accuracyScore: accuracyScore ?? this.accuracyScore,
+      notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -3529,6 +3986,39 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
     if (attendanceStatus.present) {
       map['attendance_status'] = Variable<String>(attendanceStatus.value);
     }
+    if (memorizationSurahId.present) {
+      map['memorization_surah_id'] = Variable<int>(memorizationSurahId.value);
+    }
+    if (memorizationFromAyah.present) {
+      map['memorization_from_ayah'] = Variable<int>(memorizationFromAyah.value);
+    }
+    if (memorizationToAyah.present) {
+      map['memorization_to_ayah'] = Variable<int>(memorizationToAyah.value);
+    }
+    if (revisionSurahId.present) {
+      map['revision_surah_id'] = Variable<int>(revisionSurahId.value);
+    }
+    if (revisionFromAyah.present) {
+      map['revision_from_ayah'] = Variable<int>(revisionFromAyah.value);
+    }
+    if (revisionToAyah.present) {
+      map['revision_to_ayah'] = Variable<int>(revisionToAyah.value);
+    }
+    if (memorizationScore.present) {
+      map['memorization_score'] = Variable<double>(memorizationScore.value);
+    }
+    if (tajweedScore.present) {
+      map['tajweed_score'] = Variable<double>(tajweedScore.value);
+    }
+    if (fluencyScore.present) {
+      map['fluency_score'] = Variable<double>(fluencyScore.value);
+    }
+    if (accuracyScore.present) {
+      map['accuracy_score'] = Variable<double>(accuracyScore.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -3542,6 +4032,17 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
           ..write('sessionId: $sessionId, ')
           ..write('studentId: $studentId, ')
           ..write('attendanceStatus: $attendanceStatus, ')
+          ..write('memorizationSurahId: $memorizationSurahId, ')
+          ..write('memorizationFromAyah: $memorizationFromAyah, ')
+          ..write('memorizationToAyah: $memorizationToAyah, ')
+          ..write('revisionSurahId: $revisionSurahId, ')
+          ..write('revisionFromAyah: $revisionFromAyah, ')
+          ..write('revisionToAyah: $revisionToAyah, ')
+          ..write('memorizationScore: $memorizationScore, ')
+          ..write('tajweedScore: $tajweedScore, ')
+          ..write('fluencyScore: $fluencyScore, ')
+          ..write('accuracyScore: $accuracyScore, ')
+          ..write('notes: $notes, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -10655,6 +11156,17 @@ typedef $$SessionAttendancesTableCreateCompanionBuilder
   required int sessionId,
   required int studentId,
   Value<String> attendanceStatus,
+  Value<int?> memorizationSurahId,
+  Value<int?> memorizationFromAyah,
+  Value<int?> memorizationToAyah,
+  Value<int?> revisionSurahId,
+  Value<int?> revisionFromAyah,
+  Value<int?> revisionToAyah,
+  Value<double> memorizationScore,
+  Value<double> tajweedScore,
+  Value<double> fluencyScore,
+  Value<double> accuracyScore,
+  Value<String?> notes,
   Value<DateTime> createdAt,
 });
 typedef $$SessionAttendancesTableUpdateCompanionBuilder
@@ -10663,6 +11175,17 @@ typedef $$SessionAttendancesTableUpdateCompanionBuilder
   Value<int> sessionId,
   Value<int> studentId,
   Value<String> attendanceStatus,
+  Value<int?> memorizationSurahId,
+  Value<int?> memorizationFromAyah,
+  Value<int?> memorizationToAyah,
+  Value<int?> revisionSurahId,
+  Value<int?> revisionFromAyah,
+  Value<int?> revisionToAyah,
+  Value<double> memorizationScore,
+  Value<double> tajweedScore,
+  Value<double> fluencyScore,
+  Value<double> accuracyScore,
+  Value<String?> notes,
   Value<DateTime> createdAt,
 });
 
@@ -10698,6 +11221,34 @@ final class $$SessionAttendancesTableReferences extends BaseReferences<
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: [item]));
   }
+
+  static $SurahsTable _memorizationSurahIdTable(_$AppDatabase db) => db.surahs
+      .createAlias('session_attendances__memorization_surah_id__surahs__id');
+
+  $$SurahsTableProcessedTableManager? get memorizationSurahId {
+    final $_column = $_itemColumn<int>('memorization_surah_id');
+    if ($_column == null) return null;
+    final manager = $$SurahsTableTableManager($_db, $_db.surahs)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_memorizationSurahIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $SurahsTable _revisionSurahIdTable(_$AppDatabase db) => db.surahs
+      .createAlias('session_attendances__revision_surah_id__surahs__id');
+
+  $$SurahsTableProcessedTableManager? get revisionSurahId {
+    final $_column = $_itemColumn<int>('revision_surah_id');
+    if ($_column == null) return null;
+    final manager = $$SurahsTableTableManager($_db, $_db.surahs)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_revisionSurahIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
 }
 
 class $$SessionAttendancesTableFilterComposer
@@ -10715,6 +11266,38 @@ class $$SessionAttendancesTableFilterComposer
   ColumnFilters<String> get attendanceStatus => $composableBuilder(
       column: $table.attendanceStatus,
       builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get memorizationFromAyah => $composableBuilder(
+      column: $table.memorizationFromAyah,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get memorizationToAyah => $composableBuilder(
+      column: $table.memorizationToAyah,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get revisionFromAyah => $composableBuilder(
+      column: $table.revisionFromAyah,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get revisionToAyah => $composableBuilder(
+      column: $table.revisionToAyah,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get memorizationScore => $composableBuilder(
+      column: $table.memorizationScore,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get tajweedScore => $composableBuilder(
+      column: $table.tajweedScore, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get fluencyScore => $composableBuilder(
+      column: $table.fluencyScore, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get accuracyScore => $composableBuilder(
+      column: $table.accuracyScore, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get notes => $composableBuilder(
+      column: $table.notes, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -10758,6 +11341,46 @@ class $$SessionAttendancesTableFilterComposer
             ));
     return composer;
   }
+
+  $$SurahsTableFilterComposer get memorizationSurahId {
+    final $$SurahsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.memorizationSurahId,
+        referencedTable: $db.surahs,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SurahsTableFilterComposer(
+              $db: $db,
+              $table: $db.surahs,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$SurahsTableFilterComposer get revisionSurahId {
+    final $$SurahsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.revisionSurahId,
+        referencedTable: $db.surahs,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SurahsTableFilterComposer(
+              $db: $db,
+              $table: $db.surahs,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 }
 
 class $$SessionAttendancesTableOrderingComposer
@@ -10775,6 +11398,41 @@ class $$SessionAttendancesTableOrderingComposer
   ColumnOrderings<String> get attendanceStatus => $composableBuilder(
       column: $table.attendanceStatus,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get memorizationFromAyah => $composableBuilder(
+      column: $table.memorizationFromAyah,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get memorizationToAyah => $composableBuilder(
+      column: $table.memorizationToAyah,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get revisionFromAyah => $composableBuilder(
+      column: $table.revisionFromAyah,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get revisionToAyah => $composableBuilder(
+      column: $table.revisionToAyah,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get memorizationScore => $composableBuilder(
+      column: $table.memorizationScore,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get tajweedScore => $composableBuilder(
+      column: $table.tajweedScore,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get fluencyScore => $composableBuilder(
+      column: $table.fluencyScore,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get accuracyScore => $composableBuilder(
+      column: $table.accuracyScore,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+      column: $table.notes, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
@@ -10818,6 +11476,46 @@ class $$SessionAttendancesTableOrderingComposer
             ));
     return composer;
   }
+
+  $$SurahsTableOrderingComposer get memorizationSurahId {
+    final $$SurahsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.memorizationSurahId,
+        referencedTable: $db.surahs,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SurahsTableOrderingComposer(
+              $db: $db,
+              $table: $db.surahs,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$SurahsTableOrderingComposer get revisionSurahId {
+    final $$SurahsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.revisionSurahId,
+        referencedTable: $db.surahs,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SurahsTableOrderingComposer(
+              $db: $db,
+              $table: $db.surahs,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 }
 
 class $$SessionAttendancesTableAnnotationComposer
@@ -10834,6 +11532,33 @@ class $$SessionAttendancesTableAnnotationComposer
 
   GeneratedColumn<String> get attendanceStatus => $composableBuilder(
       column: $table.attendanceStatus, builder: (column) => column);
+
+  GeneratedColumn<int> get memorizationFromAyah => $composableBuilder(
+      column: $table.memorizationFromAyah, builder: (column) => column);
+
+  GeneratedColumn<int> get memorizationToAyah => $composableBuilder(
+      column: $table.memorizationToAyah, builder: (column) => column);
+
+  GeneratedColumn<int> get revisionFromAyah => $composableBuilder(
+      column: $table.revisionFromAyah, builder: (column) => column);
+
+  GeneratedColumn<int> get revisionToAyah => $composableBuilder(
+      column: $table.revisionToAyah, builder: (column) => column);
+
+  GeneratedColumn<double> get memorizationScore => $composableBuilder(
+      column: $table.memorizationScore, builder: (column) => column);
+
+  GeneratedColumn<double> get tajweedScore => $composableBuilder(
+      column: $table.tajweedScore, builder: (column) => column);
+
+  GeneratedColumn<double> get fluencyScore => $composableBuilder(
+      column: $table.fluencyScore, builder: (column) => column);
+
+  GeneratedColumn<double> get accuracyScore => $composableBuilder(
+      column: $table.accuracyScore, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -10877,6 +11602,46 @@ class $$SessionAttendancesTableAnnotationComposer
             ));
     return composer;
   }
+
+  $$SurahsTableAnnotationComposer get memorizationSurahId {
+    final $$SurahsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.memorizationSurahId,
+        referencedTable: $db.surahs,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SurahsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.surahs,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$SurahsTableAnnotationComposer get revisionSurahId {
+    final $$SurahsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.revisionSurahId,
+        referencedTable: $db.surahs,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SurahsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.surahs,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 }
 
 class $$SessionAttendancesTableTableManager extends RootTableManager<
@@ -10890,7 +11655,11 @@ class $$SessionAttendancesTableTableManager extends RootTableManager<
     $$SessionAttendancesTableUpdateCompanionBuilder,
     (SessionAttendance, $$SessionAttendancesTableReferences),
     SessionAttendance,
-    PrefetchHooks Function({bool sessionId, bool studentId})> {
+    PrefetchHooks Function(
+        {bool sessionId,
+        bool studentId,
+        bool memorizationSurahId,
+        bool revisionSurahId})> {
   $$SessionAttendancesTableTableManager(
       _$AppDatabase db, $SessionAttendancesTable table)
       : super(TableManagerState(
@@ -10908,6 +11677,17 @@ class $$SessionAttendancesTableTableManager extends RootTableManager<
             Value<int> sessionId = const Value.absent(),
             Value<int> studentId = const Value.absent(),
             Value<String> attendanceStatus = const Value.absent(),
+            Value<int?> memorizationSurahId = const Value.absent(),
+            Value<int?> memorizationFromAyah = const Value.absent(),
+            Value<int?> memorizationToAyah = const Value.absent(),
+            Value<int?> revisionSurahId = const Value.absent(),
+            Value<int?> revisionFromAyah = const Value.absent(),
+            Value<int?> revisionToAyah = const Value.absent(),
+            Value<double> memorizationScore = const Value.absent(),
+            Value<double> tajweedScore = const Value.absent(),
+            Value<double> fluencyScore = const Value.absent(),
+            Value<double> accuracyScore = const Value.absent(),
+            Value<String?> notes = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
               SessionAttendancesCompanion(
@@ -10915,6 +11695,17 @@ class $$SessionAttendancesTableTableManager extends RootTableManager<
             sessionId: sessionId,
             studentId: studentId,
             attendanceStatus: attendanceStatus,
+            memorizationSurahId: memorizationSurahId,
+            memorizationFromAyah: memorizationFromAyah,
+            memorizationToAyah: memorizationToAyah,
+            revisionSurahId: revisionSurahId,
+            revisionFromAyah: revisionFromAyah,
+            revisionToAyah: revisionToAyah,
+            memorizationScore: memorizationScore,
+            tajweedScore: tajweedScore,
+            fluencyScore: fluencyScore,
+            accuracyScore: accuracyScore,
+            notes: notes,
             createdAt: createdAt,
           ),
           createCompanionCallback: ({
@@ -10922,6 +11713,17 @@ class $$SessionAttendancesTableTableManager extends RootTableManager<
             required int sessionId,
             required int studentId,
             Value<String> attendanceStatus = const Value.absent(),
+            Value<int?> memorizationSurahId = const Value.absent(),
+            Value<int?> memorizationFromAyah = const Value.absent(),
+            Value<int?> memorizationToAyah = const Value.absent(),
+            Value<int?> revisionSurahId = const Value.absent(),
+            Value<int?> revisionFromAyah = const Value.absent(),
+            Value<int?> revisionToAyah = const Value.absent(),
+            Value<double> memorizationScore = const Value.absent(),
+            Value<double> tajweedScore = const Value.absent(),
+            Value<double> fluencyScore = const Value.absent(),
+            Value<double> accuracyScore = const Value.absent(),
+            Value<String?> notes = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
               SessionAttendancesCompanion.insert(
@@ -10929,6 +11731,17 @@ class $$SessionAttendancesTableTableManager extends RootTableManager<
             sessionId: sessionId,
             studentId: studentId,
             attendanceStatus: attendanceStatus,
+            memorizationSurahId: memorizationSurahId,
+            memorizationFromAyah: memorizationFromAyah,
+            memorizationToAyah: memorizationToAyah,
+            revisionSurahId: revisionSurahId,
+            revisionFromAyah: revisionFromAyah,
+            revisionToAyah: revisionToAyah,
+            memorizationScore: memorizationScore,
+            tajweedScore: tajweedScore,
+            fluencyScore: fluencyScore,
+            accuracyScore: accuracyScore,
+            notes: notes,
             createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0
@@ -10937,7 +11750,11 @@ class $$SessionAttendancesTableTableManager extends RootTableManager<
                     $$SessionAttendancesTableReferences(db, table, e)
                   ))
               .toList(),
-          prefetchHooksCallback: ({sessionId = false, studentId = false}) {
+          prefetchHooksCallback: (
+              {sessionId = false,
+              studentId = false,
+              memorizationSurahId = false,
+              revisionSurahId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -10976,6 +11793,28 @@ class $$SessionAttendancesTableTableManager extends RootTableManager<
                         .id,
                   ) as T;
                 }
+                if (memorizationSurahId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.memorizationSurahId,
+                    referencedTable: $$SessionAttendancesTableReferences
+                        ._memorizationSurahIdTable(db),
+                    referencedColumn: $$SessionAttendancesTableReferences
+                        ._memorizationSurahIdTable(db)
+                        .id,
+                  ) as T;
+                }
+                if (revisionSurahId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.revisionSurahId,
+                    referencedTable: $$SessionAttendancesTableReferences
+                        ._revisionSurahIdTable(db),
+                    referencedColumn: $$SessionAttendancesTableReferences
+                        ._revisionSurahIdTable(db)
+                        .id,
+                  ) as T;
+                }
 
                 return state;
               },
@@ -10998,7 +11837,11 @@ typedef $$SessionAttendancesTableProcessedTableManager = ProcessedTableManager<
     $$SessionAttendancesTableUpdateCompanionBuilder,
     (SessionAttendance, $$SessionAttendancesTableReferences),
     SessionAttendance,
-    PrefetchHooks Function({bool sessionId, bool studentId})>;
+    PrefetchHooks Function(
+        {bool sessionId,
+        bool studentId,
+        bool memorizationSurahId,
+        bool revisionSurahId})>;
 typedef $$SchedulesTableCreateCompanionBuilder = SchedulesCompanion Function({
   Value<int> id,
   required int studentId,

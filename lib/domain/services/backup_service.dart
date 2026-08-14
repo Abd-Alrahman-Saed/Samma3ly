@@ -165,6 +165,17 @@ class BackupService {
         sessionId: Value(a.sessionId),
         studentId: Value(a.studentId),
         attendanceStatus: Value(a.attendanceStatus),
+        memorizationSurahId: Value(a.memorizationSurahId),
+        memorizationFromAyah: Value(a.memorizationFromAyah),
+        memorizationToAyah: Value(a.memorizationToAyah),
+        revisionSurahId: Value(a.revisionSurahId),
+        revisionFromAyah: Value(a.revisionFromAyah),
+        revisionToAyah: Value(a.revisionToAyah),
+        memorizationScore: Value(a.memorizationScore),
+        tajweedScore: Value(a.tajweedScore),
+        fluencyScore: Value(a.fluencyScore),
+        accuracyScore: Value(a.accuracyScore),
+        notes: Value(a.notes),
         createdAt: Value(a.createdAt),
       ));
     }
@@ -464,11 +475,26 @@ class BackupData {
       );
 
   // ---- SessionAttendance ----
+  // v5 (item 3.4) added the recitation fields below. A backup file made
+  // before v5 simply won't have these keys — `fromJson` treats every one
+  // of them as optional/nullable so restoring an old file still works
+  // (matching the legacy-attendance-status handling already in restore()).
   static Map<String, dynamic> _sessionAttendanceToJson(SessionAttendance e) => {
         'id': e.id,
         'sessionId': e.sessionId,
         'studentId': e.studentId,
         'attendanceStatus': e.attendanceStatus,
+        'memorizationSurahId': e.memorizationSurahId,
+        'memorizationFromAyah': e.memorizationFromAyah,
+        'memorizationToAyah': e.memorizationToAyah,
+        'revisionSurahId': e.revisionSurahId,
+        'revisionFromAyah': e.revisionFromAyah,
+        'revisionToAyah': e.revisionToAyah,
+        'memorizationScore': e.memorizationScore,
+        'tajweedScore': e.tajweedScore,
+        'fluencyScore': e.fluencyScore,
+        'accuracyScore': e.accuracyScore,
+        'notes': e.notes,
         'createdAt': e.createdAt.toIso8601String(),
       };
   static SessionAttendance _sessionAttendanceFromJson(Map<String, dynamic> m) => SessionAttendance(
@@ -476,6 +502,17 @@ class BackupData {
         sessionId: m['sessionId'] as int,
         studentId: m['studentId'] as int,
         attendanceStatus: m['attendanceStatus'] as String,
+        memorizationSurahId: m['memorizationSurahId'] as int?,
+        memorizationFromAyah: m['memorizationFromAyah'] as int?,
+        memorizationToAyah: m['memorizationToAyah'] as int?,
+        revisionSurahId: m['revisionSurahId'] as int?,
+        revisionFromAyah: m['revisionFromAyah'] as int?,
+        revisionToAyah: m['revisionToAyah'] as int?,
+        memorizationScore: (m['memorizationScore'] as num?)?.toDouble() ?? 0.0,
+        tajweedScore: (m['tajweedScore'] as num?)?.toDouble() ?? 0.0,
+        fluencyScore: (m['fluencyScore'] as num?)?.toDouble() ?? 0.0,
+        accuracyScore: (m['accuracyScore'] as num?)?.toDouble() ?? 0.0,
+        notes: m['notes'] as String?,
         createdAt: DateTime.parse(m['createdAt'] as String),
       );
 

@@ -53,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(QueryExecutor executor) : super(executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -128,6 +128,38 @@ class AppDatabase extends _$AppDatabase {
             newColumns: [sessions.groupId, sessions.sessionType, sessions.occurrenceDate],
           ));
         });
+      }
+      // 🔴 `from >= 4` here (not just `from < 5 && to >= 5`) is load-bearing
+      // — see the long comment above the v3→v4 test in test/migration_test.dart
+      // for the full writeup. Short version: `m.createTable(...)` (used by
+      // the v4 block above) always builds the table matching TODAY's live
+      // Dart class, not the shape it historically had at v4 — so for any
+      // upgrade path where `from < 4` (meaning the v4 block above runs in
+      // this same pass), session_attendances is created ALREADY containing
+      // these v5 columns, and re-running `addColumn` on them would crash
+      // with "duplicate column name" for a real user jumping several
+      // versions at once (e.g. from < 4 straight to 5). Only an existing
+      // v4 database (from >= 4, this block's actual target) genuinely
+      // lacks these columns and needs the ALTER.
+      if (from < 5 && to >= 5 && from >= 4) {
+        // Item 3.4 (v5, Sprint 3): per-student recitation fields on
+        // session_attendances (see the doc comment on SessionAttendances
+        // for why they live there and not on SessionMemorizations/
+        // SessionRevisions/SessionEvaluations). All-nullable-or-defaulted
+        // additive columns — SQLite handles these as plain
+        // `ALTER TABLE ADD COLUMN`, no table recreation needed (unlike
+        // v4's Sessions.studentId change).
+        await m.addColumn(sessionAttendances, sessionAttendances.memorizationSurahId);
+        await m.addColumn(sessionAttendances, sessionAttendances.memorizationFromAyah);
+        await m.addColumn(sessionAttendances, sessionAttendances.memorizationToAyah);
+        await m.addColumn(sessionAttendances, sessionAttendances.revisionSurahId);
+        await m.addColumn(sessionAttendances, sessionAttendances.revisionFromAyah);
+        await m.addColumn(sessionAttendances, sessionAttendances.revisionToAyah);
+        await m.addColumn(sessionAttendances, sessionAttendances.memorizationScore);
+        await m.addColumn(sessionAttendances, sessionAttendances.tajweedScore);
+        await m.addColumn(sessionAttendances, sessionAttendances.fluencyScore);
+        await m.addColumn(sessionAttendances, sessionAttendances.accuracyScore);
+        await m.addColumn(sessionAttendances, sessionAttendances.notes);
       }
     },
     beforeOpen: (details) async {

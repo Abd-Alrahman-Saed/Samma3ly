@@ -16,6 +16,7 @@ import 'package:quran_mobile/features/goals/screens/goal_list_screen.dart';
 import 'package:quran_mobile/features/groups/screens/group_list_screen.dart';
 import 'package:quran_mobile/features/groups/screens/group_create_screen.dart';
 import 'package:quran_mobile/features/groups/screens/group_detail_screen.dart';
+import 'package:quran_mobile/features/groups/screens/group_live_session_screen.dart';
 import 'package:quran_mobile/features/memorization/screens/memorization_screen.dart';
 import 'package:quran_mobile/features/memorization/screens/review_queue_screen.dart';
 import 'package:quran_mobile/features/reports/screens/reports_screen.dart';
@@ -152,6 +153,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     name: 'groupEdit',
                     builder: (_, state) => GroupCreateScreen(
                       groupId: int.parse(state.pathParameters['id']!),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'session/:sessionId',
+                    name: 'groupLiveSession',
+                    builder: (_, state) => GroupLiveSessionScreen(
+                      groupId: int.parse(state.pathParameters['id']!),
+                      sessionId: int.parse(state.pathParameters['sessionId']!),
                     ),
                   ),
                 ],

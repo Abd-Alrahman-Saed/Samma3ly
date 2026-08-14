@@ -162,6 +162,42 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
     }
   }
 
+  /// Sets [attendanceStatus] for every one of [studentIds] in one
+  /// transaction — item 3.2's "تحضير الكل" (mark-all) button. One DB round
+  /// trip per student is still N queries, but wrapping them in a single
+  /// transaction avoids N separate disk syncs, which is what actually
+  /// matters for the "<30s for 20 students" exit gate (mostly human tap
+  /// time, but this keeps the write itself instant).
+  Future<void> markAllAttendance(int sessionId, List<int> studentIds, String attendanceStatus) async {
+    await transaction(() async {
+      for (final studentId in studentIds) {
+        await upsertAttendance(sessionId, studentId, attendanceStatus);
+      }
+    });
+  }
+
+  /// Item 3.4 — per-student recitation fields (memorization/revision/
+  /// evaluation) inside `session_attendances`, added in v5. [entry] must
+  /// set `sessionId`/`studentId`; any recitation field left absent is
+  /// simply not touched. Never overwrites `attendanceStatus`, `id`, or
+  /// `createdAt` — those stay [upsertAttendance]'s and the original
+  /// insert's job respectively, so autosaving recitation fields can never
+  /// accidentally revert an attendance mark or reset the row's identity.
+  Future<void> upsertRecitation(SessionAttendancesCompanion entry) async {
+    final sessionId = entry.sessionId.value;
+    final studentId = entry.studentId.value;
+    final existing = await getAttendance(sessionId, studentId);
+    if (existing != null) {
+      await updateAttendance(entry.copyWith(
+        id: Value(existing.id),
+        attendanceStatus: Value(existing.attendanceStatus),
+        createdAt: Value(existing.createdAt),
+      ));
+    } else {
+      await insertAttendance(entry);
+    }
+  }
+
   // Revision
   Future<SessionRevision?> getRevisionBySession(int sessionId) =>
       (select(sessionRevisions)..where((t) => t.sessionId.equals(sessionId))).getSingleOrNull();

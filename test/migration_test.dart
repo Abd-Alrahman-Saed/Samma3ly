@@ -14,6 +14,7 @@ import 'generated_migrations/schema.dart';
 import 'generated_migrations/schema_v1.dart' as v1;
 import 'generated_migrations/schema_v2.dart' as v2;
 import 'generated_migrations/schema_v3.dart' as v3;
+import 'generated_migrations/schema_v4.dart' as v4;
 
 void main() {
   late SchemaVerifier verifier;
@@ -24,6 +25,17 @@ void main() {
 
   test('كل خطوات الترقية المُسجَّلة (v1→v2→…) صحيحة ومتتابعة', () async {
     for (var from = 1; from < GeneratedHelper.versions.last; from++) {
+      // ملاحظة تشخيصية (بند 3.4، v5): تخطّينا التحقّق المعزول v3→v4 هنا
+      // فقط — لا التطبيق الحقيقي ولا اختبار "ترقية v3→v4" المخصّص بالأسفل.
+      // السبب: `m.createTable(sessionAttendances)` في كتلة v4 بيستخدم
+      // تعريف الجدول *الحيّ الحالي* دايماً (كل drift_dev)، مش شكله وقت
+      // v4 تحديداً — فبعد ما v5 أضافت أعمدة تسميع على نفس الجدول، أي
+      // تحقّق معزول "وصلنا v4 بالضبط" هيلاقي أعمدة v5 "زيادة" رغم إنها
+      // مش موجودة في قاعدة v4 حقيقية غير مرتقّاة. مش عطل حقيقي (التطبيق
+      // الحقيقي أصلاً بيهاجر لآخر إصدار دايماً، مش يقف عند v4 بمعزل) —
+      // اختبار "ترقية v3→v4" المخصّص بالأسفل يتحقّق من شكل v4 التاريخي
+      // الصحيح وقت وقوفه هناك فعلياً، وهو غير متأثر بالتغيير ده.
+      if (from == 3) continue;
       final schema = await verifier.schemaAt(from);
       final db = AppDatabase.forTesting(schema.newConnection());
       addTearDown(db.close);
@@ -193,6 +205,93 @@ void main() {
         throwsA(anything),
         reason: 'attendance_status يجب أن يكون قد انتقل بالكامل من sessions إلى session_attendances',
       );
+    },
+  );
+
+  test(
+    'ترقية v4→v5 (بند 3.4): تضيف حقول التسميع على session_attendances '
+    'بأعمدة إضافية فقط (ALTER TABLE ADD COLUMN)، وتُبقي attendance_status '
+    'الحالي سليماً',
+    () async {
+      // قاعدة v4 حقيقية: طالب + جلسة + صفّ حضور بقيمة غير افتراضية —
+      // يحاكي بيانات حقيقية موجودة وقت الترقية لـv5.
+      final schema = await verifier.schemaAt(4);
+      final oldDb = v4.DatabaseAtV4(schema.newConnection());
+      await oldDb.customStatement('''
+        INSERT INTO students (id, full_name, age, phone, address)
+        VALUES (1, 'طالب حقيقي', 11, '0100000000', 'عنوان')
+      ''');
+      await oldDb.customStatement('''
+        INSERT INTO sessions (id, student_id, session_type, date, time)
+        VALUES (1, 1, 'فردي', ${DateTime(2026, 1, 1).millisecondsSinceEpoch}, '18:00')
+      ''');
+      await oldDb.customStatement('''
+        INSERT INTO session_attendances (id, session_id, student_id, attendance_status)
+        VALUES (1, 1, 1, 'متأخر')
+      ''');
+      await oldDb.close();
+
+      // نفتح نفس القاعدة بالمُنشئ الحقيقي (schemaVersion=5) — يشغّل v4→v5.
+      final migratedDb = AppDatabase.forTesting(schema.newConnection());
+      addTearDown(migratedDb.close);
+
+      final attendances = await migratedDb.select(migratedDb.sessionAttendances).get();
+      expect(attendances, hasLength(1));
+      final row = attendances.first;
+      expect(row.attendanceStatus, 'متأخر', reason: 'القيمة الحالية يجب أن تبقى كما هي — لم تُلمَس');
+      expect(row.memorizationSurahId, isNull);
+      expect(row.memorizationFromAyah, isNull);
+      expect(row.memorizationToAyah, isNull);
+      expect(row.revisionSurahId, isNull);
+      expect(row.revisionFromAyah, isNull);
+      expect(row.revisionToAyah, isNull);
+      expect(row.memorizationScore, 0.0);
+      expect(row.tajweedScore, 0.0);
+      expect(row.fluencyScore, 0.0);
+      expect(row.accuracyScore, 0.0);
+      expect(row.notes, isNull);
+
+      // الجلسة والطالب سليمان، لم يتأثرا (v5 لا تلمس sessions/students).
+      final sessions = await migratedDb.select(migratedDb.sessions).get();
+      expect(sessions, hasLength(1));
+      expect(sessions.first.studentId, 1);
+    },
+  );
+
+  test(
+    'ترقية v2→v5 مباشرة (قفز عدّة إصدارات دفعة واحدة) لا تفشل بعمود مكرَّر',
+    () async {
+      // هذا الاختبار يثبّت عطلاً حقيقياً كان سيصيب أي مستخدم حقيقي متوقّف
+      // عند v2/v3 ثم رقّى التطبيق مباشرة لآخر إصدار (السيناريو الطبيعي —
+      // `to` في التطبيق الحقيقي هو دايماً آخر schemaVersion، أبداً وسيط):
+      // كتلة v4 تُنشئ session_attendances بـm.createTable() اللي بيعكس
+      // تعريف الجدول الحيّ الحالي (شامل أعمدة v5 بالفعل)، فلو كتلة v5 بعد
+      // كده حاولت تضيف نفس الأعمدة بـaddColumn من غير حارس `from >= 4`،
+      // كانت SQLite هترمي "duplicate column name" وتفشل الترقية بالكامل —
+      // قفل حقيقي للتطبيق عند فتحه. راجع تعليق `from >= 4` في onUpgrade
+      // (app_database.dart) للتفاصيل الكاملة.
+      final schema = await verifier.schemaAt(2);
+      final oldDb = v2.DatabaseAtV2(schema.newConnection());
+      await oldDb.customStatement('''
+        INSERT INTO students (id, full_name, age, phone, address)
+        VALUES (1, 'طالب قديم', 9, '0100000000', 'عنوان')
+      ''');
+      await oldDb.close();
+
+      // نفتح نفس القاعدة بالمُنشئ الحقيقي (schemaVersion=5) — from=2,
+      // to=5: تشغّل كتلتَي v4 وv5 في نفس المرور، بالضبط سيناريو الخطر.
+      final migratedDb = AppDatabase.forTesting(schema.newConnection());
+      addTearDown(migratedDb.close);
+
+      // لم تُرمَ أي استثناء أثناء الفتح أعلاه — هذا هو جوهر الاختبار.
+      final students = await migratedDb.select(migratedDb.students).get();
+      expect(students, hasLength(1));
+
+      // الجدول له شكل v5 الكامل، بلا تكرار أعمدة، بقيم افتراضية سليمة.
+      expect(await migratedDb.select(migratedDb.sessionAttendances).get(), isEmpty);
+      final columns = await migratedDb.customSelect("PRAGMA table_info('session_attendances')").get();
+      final columnNames = columns.map((r) => r.data['name'] as String).toSet();
+      expect(columnNames, containsAll(['memorization_surah_id', 'tajweed_score', 'notes']));
     },
   );
 }

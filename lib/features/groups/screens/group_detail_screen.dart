@@ -462,6 +462,22 @@ class _UpcomingTab extends ConsumerWidget {
   final int groupId;
   const _UpcomingTab({required this.groupId});
 
+  /// Materializes (item 2.7 — idempotent, only writes if no row exists yet
+  /// for this date) then opens the live attendance screen (items 3.1-3.4).
+  /// An already-materialized occurrence skips straight to navigation.
+  Future<void> _openLiveSession(BuildContext context, WidgetRef ref, GroupOccurrence o) async {
+    final sessionId = o.sessionId ??
+        await ref.read(groupSessionServiceProvider).materializeOccurrence(
+              groupId: groupId,
+              occurrenceDate: o.date,
+              dateTime: o.dateTime,
+            );
+    ref.read(groupRefreshProvider.notifier).state++;
+    if (context.mounted) {
+      context.goNamed('groupLiveSession', pathParameters: {'id': '$groupId', 'sessionId': '$sessionId'});
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final now = DateTime.now();
@@ -490,46 +506,43 @@ class _UpcomingTab extends ConsumerWidget {
               final minute = o.dateTime.minute.toString().padLeft(2, '0');
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Container(
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.cardBorder)),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  child: Row(
-                    children: [
-                      AppIcon(o.isRescheduled ? AppIcons.calendarCheck : AppIcons.calendar, size: 16, color: AppColors.primary),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          '${AppDateUtils.formatDate(o.date)} — $hour:$minute',
-                          style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-                        ),
+                child: Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () => _openLiveSession(context, ref, o),
+                    child: Container(
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.cardBorder)),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      child: Row(
+                        children: [
+                          AppIcon(o.isRescheduled ? AppIcons.calendarCheck : AppIcons.calendar, size: 16, color: AppColors.primary),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              '${AppDateUtils.formatDate(o.date)} — $hour:$minute',
+                              style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                            ),
+                          ),
+                          if (o.isRescheduled)
+                            Container(
+                              margin: const EdgeInsets.only(left: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(color: AppColors.streakBg, borderRadius: BorderRadius.circular(999)),
+                              child: const Text('مُعاد جدولته', style: TextStyle(fontFamily: 'Cairo', fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.streakIconFg)),
+                            ),
+                          if (o.isMaterialized)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(color: const Color(0xFFE9F3EF), borderRadius: BorderRadius.circular(999)),
+                              child: const Text('مُسجَّلة', style: TextStyle(fontFamily: 'Cairo', fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                            )
+                          else
+                            const Text('تسجيل الحضور', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                        ],
                       ),
-                      if (o.isRescheduled)
-                        Container(
-                          margin: const EdgeInsets.only(left: 6),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(color: AppColors.streakBg, borderRadius: BorderRadius.circular(999)),
-                          child: const Text('مُعاد جدولته', style: TextStyle(fontFamily: 'Cairo', fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.streakIconFg)),
-                        ),
-                      if (o.isMaterialized)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(color: const Color(0xFFE9F3EF), borderRadius: BorderRadius.circular(999)),
-                          child: const Text('مُسجَّلة', style: TextStyle(fontFamily: 'Cairo', fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primary)),
-                        )
-                      else
-                        OutlinedButton(
-                          style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                          onPressed: () async {
-                            await ref.read(groupSessionServiceProvider).materializeOccurrence(
-                                  groupId: groupId,
-                                  occurrenceDate: o.date,
-                                  dateTime: o.dateTime,
-                                );
-                            ref.read(groupRefreshProvider.notifier).state++;
-                          },
-                          child: const Text('تسجيل الحضور', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w700)),
-                        ),
-                    ],
+                    ),
                   ),
                 ),
               );
