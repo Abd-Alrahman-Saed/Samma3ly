@@ -2,40 +2,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_mobile/domain/entities/user.dart';
 import 'package:quran_mobile/providers.dart';
 
+/// معلّم واحد بلا كلمة مرور: عند فتح التطبيق يُحمَّل سجل المعلّم تلقائياً
+/// إن وُجد (بلا أي خطوة "تسجيل دخول")، وإن لم يوجد بعد يُوجَّه المستخدم
+/// لشاشة الإعداد الأولي (اسم فقط) عبر `isLoggedInProvider` في app_router.
 final authStateProvider = StateNotifierProvider<AuthStateNotifier, AsyncValue<User?>>((ref) {
-  return AuthStateNotifier(ref);
+  return AuthStateNotifier(ref)..loadTeacher();
 });
 
 class AuthStateNotifier extends StateNotifier<AsyncValue<User?>> {
   final Ref _ref;
 
-  AuthStateNotifier(this._ref) : super(const AsyncData(null));
+  AuthStateNotifier(this._ref) : super(const AsyncLoading());
 
-  Future<bool> hasUsers() async {
-    final repo = _ref.read(authRepositoryProvider);
-    return await repo.anyUsersExist();
-  }
-
-  Future<User?> login(String username, String password) async {
+  Future<void> loadTeacher() async {
     final repo = _ref.read(authRepositoryProvider);
     state = const AsyncLoading();
     try {
-      final user = await repo.login(username, password);
-      state = AsyncData(user);
-      return user;
+      final teacher = await repo.getTeacher();
+      state = AsyncData(teacher);
     } catch (e, st) {
       state = AsyncError(e, st);
-      return null;
     }
   }
 
-  Future<void> createAdmin(String username, String password, String fullName) async {
+  Future<void> setupTeacher(String fullName) async {
     final repo = _ref.read(authRepositoryProvider);
-    await repo.createAdmin(username, password, fullName);
-  }
-
-  Future<void> logout() async {
-    state = const AsyncData(null);
+    final teacher = await repo.setupTeacher(fullName);
+    state = AsyncData(teacher);
   }
 }
 

@@ -2,7 +2,6 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_mobile/core/widgets/app_shell.dart';
 import 'package:quran_mobile/features/auth/providers/auth_provider.dart';
-import 'package:quran_mobile/features/auth/screens/login_screen.dart';
 import 'package:quran_mobile/features/auth/screens/setup_screen.dart';
 import 'package:quran_mobile/features/onboarding/screens/onboarding_screen.dart';
 import 'package:quran_mobile/features/dashboard/screens/dashboard_screen.dart';
@@ -34,21 +33,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       if (location == '/onboarding') return null;
 
-      if (location == '/login' || location == '/setup') {
+      if (location == '/setup') {
         if (isLoggedIn) return '/';
         return null;
       }
 
-      if (!isLoggedIn) return '/login';
+      if (!isLoggedIn) return '/setup';
 
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/login',
-        name: 'login',
-        builder: (_, __) => const LoginScreen(),
-      ),
       GoRoute(
         path: '/setup',
         name: 'setup',
@@ -57,7 +51,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding',
         name: 'onboarding',
-        builder: (_, state) => OnboardingScreen(nextRoute: state.uri.queryParameters['next'] ?? 'login'),
+        builder: (_, state) => OnboardingScreen(nextRoute: state.uri.queryParameters['next'] ?? 'dashboard'),
       ),
       ShellRoute(
         builder: (_, state, child) => AppShell(location: state.matchedLocation, child: child),

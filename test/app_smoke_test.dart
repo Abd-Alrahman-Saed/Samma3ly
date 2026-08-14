@@ -21,6 +21,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('الإعداد الأولي'), findsOneWidget);
+    expect(find.text('مرحباً بك'), findsOneWidget);
   });
 }

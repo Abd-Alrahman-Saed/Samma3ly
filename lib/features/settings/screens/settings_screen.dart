@@ -7,8 +7,6 @@ import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
 import 'package:quran_mobile/core/widgets/app_snackbar.dart';
 import 'package:quran_mobile/core/widgets/confirm_dialog.dart';
-import 'package:quran_mobile/core/widgets/error_banner.dart';
-import 'package:quran_mobile/core/widgets/loading_overlay.dart';
 import 'package:quran_mobile/core/utils/date_utils.dart';
 import 'package:quran_mobile/features/auth/providers/auth_provider.dart';
 import 'package:quran_mobile/features/dashboard/providers/dashboard_provider.dart';
@@ -16,7 +14,6 @@ import 'package:quran_mobile/core/enums/prayer_calculation_method.dart';
 import 'package:quran_mobile/core/enums/prayer_madhab.dart';
 import 'package:quran_mobile/features/settings/providers/notification_settings_provider.dart';
 import 'package:quran_mobile/features/settings/providers/prayer_settings_provider.dart';
-import 'package:quran_mobile/features/settings/providers/settings_provider.dart';
 import 'package:quran_mobile/features/settings/providers/theme_mode_provider.dart';
 import 'package:quran_mobile/providers.dart';
 
@@ -25,9 +22,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final usersAsync = ref.watch(allUsersProvider);
     final user = ref.watch(currentUserProvider);
-    final isAdmin = user?.role == 'Admin';
     final themeMode = ref.watch(themeModeProvider);
     final prayerSettings = ref.watch(prayerSettingsProvider);
     final notificationSettings = ref.watch(notificationSettingsProvider);
@@ -105,32 +100,9 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const _SectionLabel('المستخدمون'),
+            const _SectionLabel('الملف الشخصي'),
             const SizedBox(height: 8),
-            if (!isAdmin)
-              const _RowContainer(
-                child: Row(
-                  children: [
-                    AppIcon(AppIcons.person, size: 17, color: AppColors.textMuted),
-                    SizedBox(width: 12),
-                    Text('قائمة المستخدمين متاحة للمشرف فقط', style: TextStyle(fontFamily: 'Cairo', fontSize: 12.5, color: AppColors.textMuted)),
-                  ],
-                ),
-              )
-            else
-              usersAsync.when(
-                loading: () => const LoadingOverlay(),
-                error: (e, _) => ErrorBanner(message: e.toString()),
-                data: (users) => Column(
-                  children: [
-                    for (var i = 0; i < users.length; i++)
-                      Padding(
-                        padding: EdgeInsets.only(bottom: i == users.length - 1 ? 0 : 8),
-                        child: _TeacherRow(fullName: users[i].fullName, roleLabel: users[i].role == 'Admin' ? 'مشرف' : 'معلم'),
-                      ),
-                  ],
-                ),
-              ),
+            _TeacherRow(fullName: user?.fullName ?? ''),
             const SizedBox(height: 20),
             const _SectionLabel('النسخ الاحتياطي'),
             const SizedBox(height: 8),
@@ -141,9 +113,9 @@ class SettingsScreen extends ConsumerWidget {
                 children: [
                   _ActionRow(
                     icon: AppIcons.backup,
-                    iconColor: isAdmin ? AppColors.primary : AppColors.textMuted,
+                    iconColor: AppColors.primary,
                     label: 'إنشاء نسخة احتياطية',
-                    enabled: isAdmin,
+                    enabled: true,
                     onTap: () async {
                       try {
                         final backupService = ref.read(backupServiceProvider);
@@ -167,9 +139,9 @@ class SettingsScreen extends ConsumerWidget {
                   const Divider(height: 1),
                   _ActionRow(
                     icon: AppIcons.share,
-                    iconColor: isAdmin ? AppColors.primary : AppColors.textMuted,
+                    iconColor: AppColors.primary,
                     label: 'مشاركة نسخة احتياطية',
-                    enabled: isAdmin,
+                    enabled: true,
                     onTap: () async {
                       final dir = Directory('${Directory.current.path}/backups');
                       final picked = await _pickBackupFile(context, dir);
@@ -180,9 +152,9 @@ class SettingsScreen extends ConsumerWidget {
                   const Divider(height: 1),
                   _ActionRow(
                     icon: AppIcons.restore,
-                    iconColor: isAdmin ? const Color(0xFFD97706) : AppColors.textMuted,
+                    iconColor: const Color(0xFFD97706),
                     label: 'استعادة نسخة احتياطية',
-                    enabled: isAdmin,
+                    enabled: true,
                     onTap: () async {
                       final dir = Directory('${Directory.current.path}/backups');
                       final picked = await _pickBackupFile(context, dir);
@@ -225,30 +197,6 @@ class SettingsScreen extends ConsumerWidget {
                 label: 'دليل الاستخدام',
                 enabled: true,
                 onTap: () => context.goNamed('onboarding', queryParameters: {'next': 'dashboard'}),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const _SectionLabel('الحساب'),
-            const SizedBox(height: 8),
-            _RowContainer(
-              onTap: () async {
-                final confirmed = await showConfirmDialog(
-                  context,
-                  title: 'تأكيد تسجيل الخروج',
-                  message: 'هل أنت متأكد من تسجيل الخروج؟',
-                  confirmLabel: 'تسجيل الخروج',
-                );
-                if (confirmed && context.mounted) {
-                  ref.read(authStateProvider.notifier).logout();
-                  context.goNamed('login');
-                }
-              },
-              child: const Row(
-                children: [
-                  AppIcon(AppIcons.logout, size: 17, color: Color(0xFFC0392B)),
-                  SizedBox(width: 12),
-                  Text('تسجيل الخروج', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFFC0392B))),
-                ],
               ),
             ),
           ],
@@ -486,9 +434,8 @@ class _RowContainer extends StatelessWidget {
 
 class _TeacherRow extends StatelessWidget {
   final String fullName;
-  final String roleLabel;
 
-  const _TeacherRow({required this.fullName, required this.roleLabel});
+  const _TeacherRow({required this.fullName});
 
   @override
   Widget build(BuildContext context) {
@@ -503,14 +450,7 @@ class _TeacherRow extends StatelessWidget {
             child: const AppIcon(AppIcons.person, size: 17, color: AppColors.textSecondary),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(fullName, style: const TextStyle(fontFamily: 'Cairo', fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-              const SizedBox(height: 1),
-              Text(roleLabel, style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, color: AppColors.textSecondary)),
-            ],
-          ),
+          Text(fullName, style: const TextStyle(fontFamily: 'Cairo', fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
         ],
       ),
     );

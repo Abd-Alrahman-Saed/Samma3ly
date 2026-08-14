@@ -38,7 +38,7 @@ const _pages = [
 class OnboardingScreen extends StatefulWidget {
   final String nextRoute;
 
-  const OnboardingScreen({super.key, this.nextRoute = 'login'});
+  const OnboardingScreen({super.key, this.nextRoute = 'dashboard'});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();

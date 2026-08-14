@@ -8,6 +8,9 @@ import 'package:quran_mobile/core/widgets/app_logo_mark.dart';
 import 'package:quran_mobile/core/widgets/app_snackbar.dart';
 import 'package:quran_mobile/features/auth/providers/auth_provider.dart';
 
+/// شاشة الإعداد الأولي — تُعرض مرة واحدة فقط عند أول تشغيل للتطبيق. تطبيق
+/// شخصي لمعلّم واحد بلا كلمة مرور: الاسم فقط، ثم دخول مباشر بلا أي شاشة
+/// "تسجيل دخول" لاحقاً.
 class SetupScreen extends ConsumerStatefulWidget {
   const SetupScreen({super.key});
 
@@ -17,18 +20,11 @@ class SetupScreen extends ConsumerStatefulWidget {
 
 class _SetupScreenState extends ConsumerState<SetupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
   final _fullNameController = TextEditingController();
-  final _obscurePassword = true;
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
     _fullNameController.dispose();
     super.dispose();
   }
@@ -38,14 +34,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await ref.read(authStateProvider.notifier).createAdmin(
-        _usernameController.text.trim(),
-        _passwordController.text,
-        _fullNameController.text.trim(),
-      );
+      await ref.read(authStateProvider.notifier).setupTeacher(_fullNameController.text.trim());
       if (mounted) {
-        AppSnackbar.success(context, 'تم إنشاء حساب المشرف بنجاح');
-        context.goNamed('onboarding');
+        context.goNamed('onboarding', queryParameters: const {'next': 'dashboard'});
       }
     } catch (e) {
       if (mounted) {
@@ -69,40 +60,20 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const AppLogoMark(size: 54, radius: 14, icon: AppIcons.admin, iconSize: 26, showBadge: false),
+                  const AppLogoMark(size: 54, radius: 14, icon: AppIcons.person, iconSize: 26, showBadge: false),
                   const SizedBox(height: 14),
-                  const Text('الإعداد الأولي', style: TextStyle(fontFamily: 'Reem Kufi', fontSize: 20, color: AppColors.textPrimary)),
+                  const Text('مرحباً بك', style: TextStyle(fontFamily: 'Reem Kufi', fontSize: 20, color: AppColors.textPrimary)),
                   const SizedBox(height: 4),
-                  const Text('إنشاء حساب المشرف الأول', style: TextStyle(fontFamily: 'Cairo', fontSize: 12.5, color: AppColors.textSecondary)),
+                  const Text(
+                    'أدخل اسمك لبدء استخدام التطبيق',
+                    style: TextStyle(fontFamily: 'Cairo', fontSize: 12.5, color: AppColors.textSecondary),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 24),
                   AppFormField(
                     controller: _fullNameController,
-                    label: 'الاسم الكامل',
+                    label: 'الاسم',
                     validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال الاسم' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  AppFormField(
-                    controller: _usernameController,
-                    label: 'اسم المستخدم',
-                    validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال اسم المستخدم' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  AppFormField(
-                    controller: _passwordController,
-                    label: 'كلمة المرور',
-                    obscureText: _obscurePassword,
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'الرجاء إدخال كلمة المرور';
-                      if (v.length < 6) return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  AppFormField(
-                    controller: _confirmPasswordController,
-                    label: 'تأكيد كلمة المرور',
-                    obscureText: _obscurePassword,
-                    validator: (v) => v != _passwordController.text ? 'كلمة المرور غير متطابقة' : null,
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
@@ -111,12 +82,8 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                       onPressed: _isLoading ? null : _setup,
                       child: _isLoading
                           ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.onPrimary))
-                          : const Text('إنشاء الحساب'),
+                          : const Text('ابدأ'),
                     ),
-                  ),
-                  TextButton(
-                    onPressed: () => context.goNamed('login'),
-                    child: const Text('رجوع لتسجيل الدخول'),
                   ),
                 ],
               ),

@@ -17,22 +17,14 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._authService);
 
   @override
-  Future<bool> anyUsersExist() => _authService.anyUsersExist();
-
-  @override
-  Future<User?> login(String username, String password) async {
-    final u = await _authService.login(username, password);
+  Future<User?> getTeacher() async {
+    final u = await _authService.getTeacher();
     return u == null ? null : _toEntity(u);
   }
 
   @override
-  Future<User> createAdmin(String username, String password, String fullName) async {
-    return _toEntity(await _authService.createAdmin(username, password, fullName));
-  }
-
-  @override
-  Future<User> createTeacher(String username, String password, String fullName) async {
-    return _toEntity(await _authService.createTeacher(username, password, fullName));
+  Future<User> setupTeacher(String fullName) async {
+    return _toEntity(await _authService.setupTeacher(fullName));
   }
 
   @override
