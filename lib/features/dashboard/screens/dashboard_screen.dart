@@ -14,7 +14,6 @@ import 'package:quran_mobile/domain/entities/dashboard_data.dart';
 import 'package:quran_mobile/features/auth/providers/auth_provider.dart';
 import 'package:quran_mobile/features/dashboard/providers/dashboard_provider.dart';
 import 'package:quran_mobile/features/goals/providers/goal_provider.dart';
-import 'package:quran_mobile/features/groups/providers/group_provider.dart';
 import 'package:quran_mobile/features/memorization/providers/memorization_provider.dart';
 import 'package:quran_mobile/features/schedules/providers/schedule_provider.dart';
 import 'package:quran_mobile/features/sessions/providers/session_provider.dart';
@@ -210,19 +209,12 @@ class _QuickLinks extends ConsumerWidget {
     final activeGoals = ref.watch(activeGoalListProvider).valueOrNull?.length;
     final upcomingSchedules = ref.watch(upcomingScheduleListProvider).valueOrNull?.length;
     final dueReview = ref.watch(dueForReviewProvider).valueOrNull?.length;
-    final groupCount = ref.watch(groupCountProvider).valueOrNull;
 
+    // "الحلقات الجماعية" used to be a quick-link here — item 3.7 gave
+    // Groups its own bottom-nav tab, so a second Dashboard shortcut to the
+    // exact same screen would just be a duplicate path to it now.
     return Column(
       children: [
-        _QuickLinkRow(
-          icon: AppIcons.peopleTab,
-          iconBg: const Color(0xFFE9F3EF),
-          iconColor: AppColors.primary,
-          label: 'الحلقات الجماعية',
-          count: groupCount,
-          onTap: () => context.goNamed('groupsList'),
-        ),
-        const SizedBox(height: 8),
         _QuickLinkRow(
           icon: AppIcons.calendarCheck,
           iconBg: const Color(0xFFE9F3EF),

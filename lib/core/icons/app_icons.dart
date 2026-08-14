@@ -133,6 +133,12 @@ class AppIcons {
       '<circle cx="17" cy="18" r="2" fill="none" stroke="#000" stroke-width="1.9"/>';
 
   static const admin = person; // نفس أيقونة الشخص — شاشة الإعداد الأولي
+
+  // ثلاث نقاط أفقية — تبويب "المزيد" في الشريط السفلي (بند 3.7)
+  static const more =
+      '<circle cx="5" cy="12" r="1.9" fill="#000"/>'
+      '<circle cx="12" cy="12" r="1.9" fill="#000"/>'
+      '<circle cx="19" cy="12" r="1.9" fill="#000"/>';
 }
 
 /// Renders an [AppIcons] markup constant, tinted to [color] regardless of

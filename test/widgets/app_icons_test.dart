@@ -35,6 +35,7 @@ void main() {
     'chart': AppIcons.chart,
     'settings': AppIcons.settings,
     'admin': AppIcons.admin,
+    'more': AppIcons.more,
   };
 
   testWidgets('كل أيقونة في AppIcons تُرسم بلا استثناءات', (tester) async {

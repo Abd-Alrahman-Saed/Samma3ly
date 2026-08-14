@@ -18,6 +18,7 @@ import 'package:quran_mobile/features/groups/screens/group_create_screen.dart';
 import 'package:quran_mobile/features/groups/screens/group_detail_screen.dart';
 import 'package:quran_mobile/features/groups/screens/group_live_session_screen.dart';
 import 'package:quran_mobile/features/calendar/screens/weekly_calendar_screen.dart';
+import 'package:quran_mobile/features/more/screens/more_screen.dart';
 import 'package:quran_mobile/features/memorization/screens/memorization_screen.dart';
 import 'package:quran_mobile/features/memorization/screens/review_queue_screen.dart';
 import 'package:quran_mobile/features/reports/screens/reports_screen.dart';
@@ -192,6 +193,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: '/settings',
             name: 'settings',
             builder: (_, __) => const SettingsScreen(),
+          ),
+          GoRoute(
+            path: '/more',
+            name: 'more',
+            builder: (_, __) => const MoreScreen(),
           ),
         ],
       ),

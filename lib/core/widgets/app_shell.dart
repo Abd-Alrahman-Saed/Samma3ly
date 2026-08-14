@@ -3,6 +3,22 @@ import 'package:go_router/go_router.dart';
 import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
 
+/// Item 3.7 — which bottom-nav tab highlights for a given router location.
+/// Pure and separate from the widget so it's testable without pumping a
+/// full app: اليوم (Dashboard) / الحلقات (Groups) / الطلاب (Students) /
+/// التقارير (Reports) / المزيد (everything else — Sessions, Schedules,
+/// Goals, the weekly calendar, review queue, Settings). Previously these
+/// secondary screens had no shared home in the nav at all; now they all
+/// live under "المزيد" instead of being reachable only from a Dashboard
+/// link (the "no feature buried in the Dashboard" exit gate).
+int appShellTabIndex(String location) {
+  if (location.startsWith('/groups')) return 1;
+  if (location.startsWith('/students')) return 2;
+  if (location.startsWith('/reports')) return 3;
+  if (location == '/') return 0;
+  return 4;
+}
+
 /// Bottom navigation shell — exact visual match to the adopted design's
 /// nav bar (docs/DESIGN_SPEC.md): flat icon+label buttons, no pill
 /// indicator, no elevation, `#FFFFFF` background with a 1px top border.
@@ -15,25 +31,17 @@ class AppShell extends StatelessWidget {
 
   const AppShell({super.key, required this.child, required this.location});
 
-  int get _currentIndex {
-    if (location.startsWith('/students')) return 1;
-    if (location.startsWith('/sessions')) return 2;
-    if (location.startsWith('/reports')) return 3;
-    if (location.startsWith('/settings')) return 4;
-    return 0;
-  }
-
   static const _tabs = [
-    (icon: AppIcons.home, label: 'الرئيسية', route: 'dashboard'),
+    (icon: AppIcons.home, label: 'اليوم', route: 'dashboard'),
+    (icon: AppIcons.people, label: 'الحلقات', route: 'groupsList'),
     (icon: AppIcons.peopleTab, label: 'الطلاب', route: 'students'),
-    (icon: AppIcons.calendarCheck, label: 'الجلسات', route: 'sessionsList'),
     (icon: AppIcons.chart, label: 'التقارير', route: 'reports'),
-    (icon: AppIcons.settings, label: 'الإعدادات', route: 'settings'),
+    (icon: AppIcons.more, label: 'المزيد', route: 'more'),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final current = _currentIndex;
+    final current = appShellTabIndex(location);
     return Scaffold(
       body: child,
       bottomNavigationBar: Container(
