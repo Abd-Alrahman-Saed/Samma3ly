@@ -194,10 +194,17 @@ class _KpiGrid extends StatelessWidget {
       children: [
         KpiCard(icon: AppIcons.people, title: 'الطلاب', value: '${data.totalStudents}'),
         KpiCard(icon: AppIcons.calendarCheck, title: 'جلسات اليوم', value: '${data.todaySessions}'),
-        KpiCard(icon: AppIcons.clock, title: 'الجلسات القادمة', value: '${data.upcomingSessions}'),
+        // القسم ح.3: كانت تعدّ جدولات فردية فقط بلا حدّ زمني — الآن تعدّ
+        // كل جلسة (فردية + مواعيد الحلقات المتكرّرة) خلال 7 أيام قادمة
+        // (DashboardService)، والضغط عليها يفتح نفس القائمة فعلياً
+        // (التقويم الأسبوعي، بند 3.6) بدل أن تكون رقماً غير قابل للفتح.
+        KpiCard(
+          icon: AppIcons.clock,
+          title: 'جلسات الأسبوع',
+          value: '${data.upcomingSessions}',
+          onTap: () => context.goNamed('weeklyCalendar'),
+        ),
         KpiCard(icon: AppIcons.checkCircle, title: 'نسبة الحضور', value: '${data.averageAttendance.toStringAsFixed(0)}%'),
-        KpiCard(icon: AppIcons.book, title: 'الصفحات المحفوظة', value: '${data.totalPagesMemorized}'),
-        KpiCard(icon: AppIcons.star, title: 'السور المكتملة', value: '${data.totalSurahsCompleted}', iconColor: AppColors.accent),
       ],
     );
   }

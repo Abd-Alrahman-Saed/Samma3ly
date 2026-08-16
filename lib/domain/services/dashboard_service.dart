@@ -1,26 +1,26 @@
 import 'package:quran_mobile/core/enums/attendance_status.dart';
 import 'package:quran_mobile/core/enums/user_role.dart';
 import 'package:quran_mobile/domain/entities/dashboard_data.dart';
+import 'package:quran_mobile/domain/services/weekly_calendar_service.dart';
 import 'package:quran_mobile/data/local/database/daos/student_dao.dart';
 import 'package:quran_mobile/data/local/database/daos/session_dao.dart';
-import 'package:quran_mobile/data/local/database/daos/schedule_dao.dart';
 import 'package:quran_mobile/data/local/database/daos/user_dao.dart';
 
 class DashboardService {
   final StudentDao _studentDao;
   final SessionDao _sessionDao;
-  final ScheduleDao _scheduleDao;
   final UserDao _userDao;
+  final WeeklyCalendarService _weeklyCalendarService;
 
   DashboardService({
     required StudentDao studentDao,
     required SessionDao sessionDao,
-    required ScheduleDao scheduleDao,
     required UserDao userDao,
+    required WeeklyCalendarService weeklyCalendarService,
   })  : _studentDao = studentDao,
         _sessionDao = sessionDao,
-        _scheduleDao = scheduleDao,
-        _userDao = userDao;
+        _userDao = userDao,
+        _weeklyCalendarService = weeklyCalendarService;
 
   Future<DashboardData> getDashboardData() async {
     final now = DateTime.now();
@@ -29,8 +29,18 @@ class DashboardService {
     final totalStudents = await _studentDao.count();
     final todaySessions = await _sessionDao.countByDate(today);
 
-    final upcoming = await _scheduleDao.getUpcoming();
-    final upcomingSessions = upcoming.length;
+    // القسم ح.3 — "الجلسات القادمة" كانت تعدّ جدولات فردية فقط (Schedules)
+    // بلا حدّ زمني (كل المستقبل). المطلوب الآن: عدد الجلسات (فردية + مواعيد
+    // الحلقات المتكرّرة) خلال الأسبوع القادم فقط — بإعادة استخدام نفس
+    // WeeklyCalendarService اللي بيغذّي شاشة "التقويم الأسبوعي" (بند 3.6)،
+    // فالعدد هنا يطابق حرفياً ما سيراه المعلّم لو ضغط على البطاقة. resolver
+    // مواقيت الصلاة غير لازم هنا — بيغيّر توقيت العرض فقط، لا وجود/عدد
+    // المواعيد نفسها.
+    final weekEntries = await _weeklyCalendarService.getEntries(
+      from: today,
+      to: today.add(const Duration(days: 7)),
+    );
+    final upcomingSessions = weekEntries.length;
 
     final allSessions = await _sessionDao.getAll();
     final allSessionsCount = allSessions.length;

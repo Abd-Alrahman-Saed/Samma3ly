@@ -75,8 +75,8 @@ final juzQuarterProgressServiceProvider = Provider<JuzQuarterProgressService>(
 final dashboardServiceProvider = Provider<DashboardService>((ref) => DashboardService(
   studentDao: ref.watch(studentDaoProvider),
   sessionDao: ref.watch(sessionDaoProvider),
-  scheduleDao: ref.watch(scheduleDaoProvider),
   userDao: ref.watch(userDaoProvider),
+  weeklyCalendarService: ref.watch(weeklyCalendarServiceProvider),
 ));
 
 // Repositories
