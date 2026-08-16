@@ -26,7 +26,11 @@ import 'package:quran_mobile/providers.dart';
 /// app) and `confirmDismiss` always returning `false` — a swipe changes a
 /// status, it never removes the row. Rare statuses (متأخر/مستأذن) and a
 /// general accessible alternative to swiping are both a tap on the status
-/// chip, opening `_StatusPickerSheet`.
+/// chip, opening `_StatusPickerSheet`. Tapping the row itself (its main,
+/// largest touch target) opens the full recitation sheet — that's the
+/// actual point of a session: recording what was recited and rating it,
+/// not just presence. Attendance stays fast (swipe / status chip);
+/// recitation is what tapping a student is *for*.
 class GroupLiveSessionScreen extends ConsumerWidget {
   final int groupId;
   final int sessionId;
@@ -262,8 +266,7 @@ class _AttendanceRow extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
           child: InkWell(
-            onTap: onTap,
-            onLongPress: onOpenRecitation,
+            onTap: onOpenRecitation,
             borderRadius: BorderRadius.circular(14),
             child: Container(
               constraints: const BoxConstraints(minHeight: 56), // >= 44px touch-target rule
@@ -280,12 +283,12 @@ class _AttendanceRow extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: 'Cairo', fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
-                  IconButton(
-                    tooltip: 'تسجيل التسميع',
-                    onPressed: onOpenRecitation,
-                    icon: const AppIcon(AppIcons.book, size: 15, color: AppColors.textSecondary),
+                  GestureDetector(
+                    key: ValueKey('statusChip-$studentId'),
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onTap,
+                    child: _StatusChip(status: status),
                   ),
-                  _StatusChip(status: status),
                 ],
               ),
             ),

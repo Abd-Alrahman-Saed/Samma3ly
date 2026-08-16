@@ -123,7 +123,7 @@ void main() {
     await tester.pumpWidget(_harness(db, GroupLiveSessionScreen(groupId: groupId, sessionId: sessionId)));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('أحمد'));
+    await tester.tap(find.byKey(ValueKey('statusChip-$student1')));
     await tester.pumpAndSettle();
 
     expect(find.text('حالة الحضور'), findsOneWidget);
@@ -134,5 +134,19 @@ void main() {
     expect(tester.takeException(), isNull);
     final attendance = await sessionDao.getAttendance(sessionId, student1);
     expect(attendance?.attendanceStatus, 'مستأذن');
+  });
+
+  testWidgets('الضغط على صف الطالب (بعيداً عن شريحة الحالة) يفتح شاشة التسميع الكاملة', (tester) async {
+    await tester.pumpWidget(_harness(db, GroupLiveSessionScreen(groupId: groupId, sessionId: sessionId)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('أحمد'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    // GroupRecitationSheet's close button (item 3.4) — proves the full
+    // recitation sheet opened, not the attendance-status picker.
+    expect(find.byKey(const ValueKey('recitationSheetClose')), findsOneWidget);
+    expect(find.text('حالة الحضور'), findsNothing);
   });
 }
