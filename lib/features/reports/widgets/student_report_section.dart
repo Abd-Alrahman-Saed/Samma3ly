@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:quran_mobile/core/enums/attendance_status.dart';
 import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
+import 'package:quran_mobile/core/utils/date_utils.dart';
 import 'package:quran_mobile/core/widgets/error_banner.dart';
 import 'package:quran_mobile/core/widgets/loading_overlay.dart';
 import 'package:quran_mobile/core/widgets/session_card.dart';
+import 'package:quran_mobile/domain/entities/session.dart';
 import 'package:quran_mobile/domain/entities/student.dart';
 import 'package:quran_mobile/features/reports/providers/report_provider.dart';
 import 'package:quran_mobile/features/sessions/providers/session_provider.dart';
@@ -117,6 +120,11 @@ class _SelectedStudentReport extends ConsumerWidget {
             Expanded(
               child: Text(student.fullName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
             ),
+            IconButton(
+              tooltip: 'مشاركة تقرير الطالب',
+              onPressed: () => _share(student, sessions, total, attendancePct, avgScore),
+              icon: const AppIcon(AppIcons.share, size: 16, color: AppColors.textSecondary),
+            ),
             TextButton(onPressed: onChangeStudent, child: const Text('تغيير')),
           ],
         ),
@@ -154,6 +162,24 @@ class _SelectedStudentReport extends ConsumerWidget {
                 ),
               )),
       ],
+    );
+  }
+
+  Future<void> _share(Student student, List<Session> sessions, int total, double attendancePct, double avgScore) {
+    final buffer = StringBuffer()
+      ..writeln('تقرير الطالب: ${student.fullName}')
+      ..writeln('عدد الجلسات: $total')
+      ..writeln('نسبة الحضور: ${attendancePct.toStringAsFixed(0)}%')
+      ..writeln('متوسط التقييم: ${avgScore.toStringAsFixed(1)}/10');
+    if (sessions.isNotEmpty) {
+      buffer.writeln('\nآخر الجلسات:');
+      for (final s in sessions.take(5)) {
+        buffer.writeln('- ${AppDateUtils.formatDate(s.date)}: ${s.attendanceStatus}'
+            '${s.evaluation != null ? ' (${s.evaluation!.finalScore.toStringAsFixed(1)}/10)' : ''}');
+      }
+    }
+    return SharePlus.instance.share(
+      ShareParams(text: buffer.toString(), subject: 'تقرير الطالب: ${student.fullName}'),
     );
   }
 }

@@ -14,7 +14,6 @@ import 'package:quran_mobile/domain/entities/dashboard_data.dart';
 import 'package:quran_mobile/features/auth/providers/auth_provider.dart';
 import 'package:quran_mobile/features/dashboard/providers/dashboard_provider.dart';
 import 'package:quran_mobile/features/goals/providers/goal_provider.dart';
-import 'package:quran_mobile/features/memorization/providers/memorization_provider.dart';
 import 'package:quran_mobile/features/schedules/providers/schedule_provider.dart';
 import 'package:quran_mobile/features/sessions/providers/session_provider.dart';
 import 'package:quran_mobile/features/students/providers/student_provider.dart';
@@ -215,7 +214,6 @@ class _QuickLinks extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final activeGoals = ref.watch(activeGoalListProvider).valueOrNull?.length;
     final upcomingSchedules = ref.watch(upcomingScheduleListProvider).valueOrNull?.length;
-    final dueReview = ref.watch(dueForReviewProvider).valueOrNull?.length;
 
     // "الحلقات الجماعية" used to be a quick-link here — item 3.7 gave
     // Groups its own bottom-nav tab, so a second Dashboard shortcut to the
@@ -247,15 +245,6 @@ class _QuickLinks extends ConsumerWidget {
           label: 'الجداول القادمة',
           count: upcomingSchedules,
           onTap: () => context.goNamed('schedulesList'),
-        ),
-        const SizedBox(height: 8),
-        _QuickLinkRow(
-          icon: AppIcons.book,
-          iconBg: AppColors.dividerLight,
-          iconColor: AppColors.textSecondary,
-          label: 'قائمة المراجعة',
-          count: dueReview,
-          onTap: () => context.goNamed('reviewQueue'),
         ),
       ],
     );

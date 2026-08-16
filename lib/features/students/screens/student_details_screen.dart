@@ -162,7 +162,6 @@ class _ProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final levelColors = StatusColors.forLevel(student.level);
-    final progressPct = (student.totalCompletedJuz / 30 * 100).clamp(0, 100).toDouble();
 
     return Container(
       width: double.infinity,
@@ -198,19 +197,13 @@ class _ProfileCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 6),
+                // القسم ح.7: عدد الأجزاء المكتملة (المُشتقّ آلياً من
+                // الجلسات) أُزيل من هنا — بطاقة "المحفوظ من القرآن" أسفل
+                // هذه البطاقة مباشرة (القسم ح.2) هي المصدر الوحيد الآن
+                // لتقدّم الحفظ، يحدّدها المعلّم يدوياً بالجزء/الربع.
                 Text(
-                  'السورة الحالية: ${currentSurahName ?? '—'} · ${student.totalCompletedJuz} جزء مكتمل',
+                  'السورة الحالية: ${currentSurahName ?? '—'}',
                   style: const TextStyle(fontFamily: 'Cairo', fontSize: 12.5, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: progressPct / 100,
-                    minHeight: 6,
-                    backgroundColor: AppColors.dividerLight,
-                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-                  ),
                 ),
               ],
             ),
