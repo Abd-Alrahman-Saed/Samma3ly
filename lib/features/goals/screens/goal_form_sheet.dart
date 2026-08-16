@@ -7,6 +7,8 @@ import 'package:quran_mobile/core/theme/app_colors.dart';
 import 'package:quran_mobile/core/utils/date_utils.dart';
 import 'package:quran_mobile/core/widgets/app_form_field.dart';
 import 'package:quran_mobile/core/widgets/app_snackbar.dart';
+import 'package:quran_mobile/core/widgets/juz_dropdown.dart';
+import 'package:quran_mobile/core/widgets/surah_dropdown.dart';
 import 'package:quran_mobile/data/local/database/app_database.dart' hide Student;
 import 'package:quran_mobile/domain/entities/student.dart';
 import 'package:quran_mobile/features/goals/providers/goal_provider.dart';
@@ -40,8 +42,9 @@ class _GoalFormSheetContent extends ConsumerStatefulWidget {
 class _GoalFormSheetContentState extends ConsumerState<_GoalFormSheetContent> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
-  final _targetController = TextEditingController();
   String _goalType = 'سورة';
+  int? _targetSurahId;
+  int? _targetJuzNumber;
   int? _studentId;
   DateTime? _startDate = DateTime.now();
   DateTime? _targetDate;
@@ -56,7 +59,6 @@ class _GoalFormSheetContentState extends ConsumerState<_GoalFormSheetContent> {
   @override
   void dispose() {
     _titleController.dispose();
-    _targetController.dispose();
     super.dispose();
   }
 
@@ -66,6 +68,11 @@ class _GoalFormSheetContentState extends ConsumerState<_GoalFormSheetContent> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('الرجاء اختيار الطالب')));
       return;
     }
+    final target = _goalType == GoalType.surah.arabic ? _targetSurahId : _targetJuzNumber;
+    if (target == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_goalType == GoalType.surah.arabic ? 'الرجاء اختيار السورة' : 'الرجاء اختيار الجزء')));
+      return;
+    }
     if (_targetDate != null && _startDate != null && _targetDate!.isBefore(_startDate!)) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('يجب أن يكون تاريخ الاستهداف بعد تاريخ البداية')));
       return;
@@ -73,13 +80,12 @@ class _GoalFormSheetContentState extends ConsumerState<_GoalFormSheetContent> {
     setState(() => _isLoading = true);
     try {
       final dao = ref.read(goalDaoProvider);
-      final target = int.tryParse(_targetController.text.trim());
       await dao.insert(GoalsCompanion(
         studentId: Value(_studentId!),
         title: Value(_titleController.text.trim()),
         goalType: Value(_goalType),
-        targetSurahId: Value(_goalType == 'سورة' ? target : null),
-        targetJuzNumber: Value(_goalType == 'جزء' ? target : null),
+        targetSurahId: Value(_goalType == GoalType.surah.arabic ? target : null),
+        targetJuzNumber: Value(_goalType == GoalType.juz.arabic ? target : null),
         startDate: Value(_startDate ?? DateTime.now()),
         targetDate: Value(_targetDate),
       ));
@@ -137,26 +143,31 @@ class _GoalFormSheetContentState extends ConsumerState<_GoalFormSheetContent> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _TypeToggle(label: GoalType.surah.arabic, selected: _goalType == GoalType.surah.arabic, onTap: () => setState(() => _goalType = GoalType.surah.arabic))),
+                    // تبديل النوع يصفّر الهدف السابق — قيمة سورة وقيمة جزء
+                    // مساحتان مختلفتان تماماً، والاحتفاظ بقيمة قديمة بعد
+                    // التبديل قد يُحفَظ خطأً بلا أن يظهر ذلك في الواجهة.
+                    Expanded(child: _TypeToggle(label: GoalType.surah.arabic, selected: _goalType == GoalType.surah.arabic, onTap: () => setState(() { _goalType = GoalType.surah.arabic; _targetJuzNumber = null; }))),
                     const SizedBox(width: 6),
-                    Expanded(child: _TypeToggle(label: GoalType.juz.arabic, selected: _goalType == GoalType.juz.arabic, onTap: () => setState(() => _goalType = GoalType.juz.arabic))),
+                    Expanded(child: _TypeToggle(label: GoalType.juz.arabic, selected: _goalType == GoalType.juz.arabic, onTap: () => setState(() { _goalType = GoalType.juz.arabic; _targetSurahId = null; }))),
                   ],
                 ),
                 const SizedBox(height: 12),
-                AppFormField(
-                  controller: _targetController,
-                  label: _goalType == 'سورة' ? 'رقم السورة المستهدفة' : 'رقم الجزء المستهدف',
-                  hintText: _goalType == 'سورة' ? 'رقم السورة المستهدفة *' : 'رقم الجزء المستهدف *',
-                  onCard: true,
-                  keyboardType: TextInputType.number,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'هذا الحقل مطلوب';
-                    final n = int.tryParse(v.trim());
-                    final max = _goalType == 'سورة' ? 114 : 30;
-                    if (n == null || n < 1 || n > max) return 'الرجاء إدخال رقم صحيح بين 1 و $max';
-                    return null;
-                  },
-                ),
+                if (_goalType == GoalType.surah.arabic)
+                  SurahDropdown(
+                    key: const Key('goalTargetSurah'),
+                    value: _targetSurahId,
+                    onChanged: (v) => setState(() => _targetSurahId = v),
+                    label: 'السورة المستهدفة',
+                    noneLabel: 'اختر السورة',
+                  )
+                else
+                  JuzDropdown(
+                    key: const Key('goalTargetJuz'),
+                    value: _targetJuzNumber,
+                    onChanged: (v) => setState(() => _targetJuzNumber = v),
+                    label: 'الجزء المستهدف',
+                    noneLabel: 'اختر الجزء',
+                  ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
