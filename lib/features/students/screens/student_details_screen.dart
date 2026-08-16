@@ -14,8 +14,10 @@ import 'package:quran_mobile/core/widgets/loading_overlay.dart';
 import 'package:quran_mobile/core/widgets/score_display.dart';
 import 'package:quran_mobile/domain/entities/goal.dart';
 import 'package:quran_mobile/domain/entities/student.dart';
+import 'package:quran_mobile/domain/services/juz_quarter_progress_service.dart';
 import 'package:quran_mobile/features/goals/providers/goal_provider.dart';
 import 'package:quran_mobile/features/goals/screens/goal_form_sheet.dart';
+import 'package:quran_mobile/features/memorization/providers/juz_quarter_progress_provider.dart';
 import 'package:quran_mobile/features/schedules/providers/schedule_provider.dart';
 import 'package:quran_mobile/features/schedules/screens/schedule_form_sheet.dart';
 import 'package:quran_mobile/features/sessions/providers/session_provider.dart';
@@ -71,6 +73,8 @@ class StudentDetailsScreen extends ConsumerWidget {
                         const SizedBox(height: 12),
                         _PhoneRow(student: student),
                       ],
+                      const SizedBox(height: 12),
+                      _QuranMemorizationCard(studentId: studentId),
                       const SizedBox(height: 14),
                       Row(
                         children: [
@@ -212,6 +216,68 @@ class _ProfileCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// القسم ح.2 — تتبّع الحفظ اليدوي بالجزء/الربع (المعلّم هو اللي يعلّم كل
+/// ربع، لا حساب تلقائي من بيانات الجلسات). الضغط يفتح JuzProgressScreen
+/// (قائمة الـ30 جزء) ثم كل جزء أرباعه الثمانية.
+class _QuranMemorizationCard extends ConsumerWidget {
+  final int studentId;
+
+  const _QuranMemorizationCard({required this.studentId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final completedAsync = ref.watch(juzQuarterProgressProvider(studentId));
+    final percentage = completedAsync.valueOrNull != null ? JuzQuarterProgressService.overallPercentage(completedAsync.value!) : 0.0;
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: () => context.goNamed('juzProgress', pathParameters: {'id': '$studentId'}),
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.cardBorder)),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(color: AppColors.primaryLight, shape: BoxShape.circle),
+                child: const AppIcon(AppIcons.book, size: 17, color: AppColors.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('المحفوظ من القرآن', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    const SizedBox(height: 5),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        value: percentage / 100,
+                        minHeight: 5,
+                        backgroundColor: AppColors.dividerLight,
+                        valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text('${percentage.toStringAsFixed(0)}%', style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.primary)),
+              const SizedBox(width: 4),
+              const AppIcon(AppIcons.chevronLeft, size: 13, color: AppColors.textMuted),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -9,7 +9,9 @@ import 'package:quran_mobile/data/local/database/daos/schedule_dao.dart';
 import 'package:quran_mobile/data/local/database/daos/goal_dao.dart';
 import 'package:quran_mobile/data/local/database/daos/memorized_range_dao.dart';
 import 'package:quran_mobile/data/local/database/daos/group_dao.dart';
+import 'package:quran_mobile/data/local/database/daos/juz_quarter_progress_dao.dart';
 import 'package:quran_mobile/domain/services/auth_service.dart';
+import 'package:quran_mobile/domain/services/juz_quarter_progress_service.dart';
 import 'package:quran_mobile/domain/services/progress_service.dart';
 import 'package:quran_mobile/domain/services/memorized_range_service.dart';
 import 'package:quran_mobile/domain/services/dashboard_service.dart';
@@ -48,6 +50,8 @@ final scheduleDaoProvider = Provider<ScheduleDao>((ref) => ScheduleDao(ref.watch
 final goalDaoProvider = Provider<GoalDao>((ref) => GoalDao(ref.watch(appDatabaseProvider)));
 final memorizedRangeDaoProvider = Provider<MemorizedRangeDao>((ref) => MemorizedRangeDao(ref.watch(appDatabaseProvider)));
 final groupDaoProvider = Provider<GroupDao>((ref) => GroupDao(ref.watch(appDatabaseProvider)));
+final juzQuarterProgressDaoProvider =
+    Provider<JuzQuarterProgressDao>((ref) => JuzQuarterProgressDao(ref.watch(appDatabaseProvider)));
 
 // Services
 final authServiceProvider = Provider<AuthService>((ref) => AuthService(ref.watch(userDaoProvider)));
@@ -62,6 +66,10 @@ final progressServiceProvider = Provider<ProgressService>((ref) => ProgressServi
 
 final memorizedRangeServiceProvider = Provider<MemorizedRangeService>(
   (ref) => MemorizedRangeService(ref.watch(memorizedRangeDaoProvider)),
+);
+
+final juzQuarterProgressServiceProvider = Provider<JuzQuarterProgressService>(
+  (ref) => JuzQuarterProgressService(ref.watch(juzQuarterProgressDaoProvider)),
 );
 
 final dashboardServiceProvider = Provider<DashboardService>((ref) => DashboardService(

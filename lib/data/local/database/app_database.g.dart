@@ -6965,6 +6965,322 @@ class ScheduleExceptionsCompanion extends UpdateCompanion<ScheduleException> {
   }
 }
 
+class $JuzQuarterProgressTable extends JuzQuarterProgress
+    with TableInfo<$JuzQuarterProgressTable, JuzQuarterProgressData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $JuzQuarterProgressTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _studentIdMeta =
+      const VerificationMeta('studentId');
+  @override
+  late final GeneratedColumn<int> studentId = GeneratedColumn<int>(
+      'student_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES students (id)'));
+  static const VerificationMeta _juzNumberMeta =
+      const VerificationMeta('juzNumber');
+  @override
+  late final GeneratedColumn<int> juzNumber = GeneratedColumn<int>(
+      'juz_number', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _quarterIndexMeta =
+      const VerificationMeta('quarterIndex');
+  @override
+  late final GeneratedColumn<int> quarterIndex = GeneratedColumn<int>(
+      'quarter_index', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _completedAtMeta =
+      const VerificationMeta('completedAt');
+  @override
+  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
+      'completed_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, studentId, juzNumber, quarterIndex, completedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'juz_quarter_progress';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<JuzQuarterProgressData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('student_id')) {
+      context.handle(_studentIdMeta,
+          studentId.isAcceptableOrUnknown(data['student_id']!, _studentIdMeta));
+    } else if (isInserting) {
+      context.missing(_studentIdMeta);
+    }
+    if (data.containsKey('juz_number')) {
+      context.handle(_juzNumberMeta,
+          juzNumber.isAcceptableOrUnknown(data['juz_number']!, _juzNumberMeta));
+    } else if (isInserting) {
+      context.missing(_juzNumberMeta);
+    }
+    if (data.containsKey('quarter_index')) {
+      context.handle(
+          _quarterIndexMeta,
+          quarterIndex.isAcceptableOrUnknown(
+              data['quarter_index']!, _quarterIndexMeta));
+    } else if (isInserting) {
+      context.missing(_quarterIndexMeta);
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+          _completedAtMeta,
+          completedAt.isAcceptableOrUnknown(
+              data['completed_at']!, _completedAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+        {studentId, juzNumber, quarterIndex},
+      ];
+  @override
+  JuzQuarterProgressData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return JuzQuarterProgressData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      studentId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}student_id'])!,
+      juzNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}juz_number'])!,
+      quarterIndex: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}quarter_index'])!,
+      completedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}completed_at'])!,
+    );
+  }
+
+  @override
+  $JuzQuarterProgressTable createAlias(String alias) {
+    return $JuzQuarterProgressTable(attachedDatabase, alias);
+  }
+}
+
+class JuzQuarterProgressData extends DataClass
+    implements Insertable<JuzQuarterProgressData> {
+  final int id;
+  final int studentId;
+  final int juzNumber;
+  final int quarterIndex;
+  final DateTime completedAt;
+  const JuzQuarterProgressData(
+      {required this.id,
+      required this.studentId,
+      required this.juzNumber,
+      required this.quarterIndex,
+      required this.completedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['student_id'] = Variable<int>(studentId);
+    map['juz_number'] = Variable<int>(juzNumber);
+    map['quarter_index'] = Variable<int>(quarterIndex);
+    map['completed_at'] = Variable<DateTime>(completedAt);
+    return map;
+  }
+
+  JuzQuarterProgressCompanion toCompanion(bool nullToAbsent) {
+    return JuzQuarterProgressCompanion(
+      id: Value(id),
+      studentId: Value(studentId),
+      juzNumber: Value(juzNumber),
+      quarterIndex: Value(quarterIndex),
+      completedAt: Value(completedAt),
+    );
+  }
+
+  factory JuzQuarterProgressData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return JuzQuarterProgressData(
+      id: serializer.fromJson<int>(json['id']),
+      studentId: serializer.fromJson<int>(json['studentId']),
+      juzNumber: serializer.fromJson<int>(json['juzNumber']),
+      quarterIndex: serializer.fromJson<int>(json['quarterIndex']),
+      completedAt: serializer.fromJson<DateTime>(json['completedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'studentId': serializer.toJson<int>(studentId),
+      'juzNumber': serializer.toJson<int>(juzNumber),
+      'quarterIndex': serializer.toJson<int>(quarterIndex),
+      'completedAt': serializer.toJson<DateTime>(completedAt),
+    };
+  }
+
+  JuzQuarterProgressData copyWith(
+          {int? id,
+          int? studentId,
+          int? juzNumber,
+          int? quarterIndex,
+          DateTime? completedAt}) =>
+      JuzQuarterProgressData(
+        id: id ?? this.id,
+        studentId: studentId ?? this.studentId,
+        juzNumber: juzNumber ?? this.juzNumber,
+        quarterIndex: quarterIndex ?? this.quarterIndex,
+        completedAt: completedAt ?? this.completedAt,
+      );
+  JuzQuarterProgressData copyWithCompanion(JuzQuarterProgressCompanion data) {
+    return JuzQuarterProgressData(
+      id: data.id.present ? data.id.value : this.id,
+      studentId: data.studentId.present ? data.studentId.value : this.studentId,
+      juzNumber: data.juzNumber.present ? data.juzNumber.value : this.juzNumber,
+      quarterIndex: data.quarterIndex.present
+          ? data.quarterIndex.value
+          : this.quarterIndex,
+      completedAt:
+          data.completedAt.present ? data.completedAt.value : this.completedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('JuzQuarterProgressData(')
+          ..write('id: $id, ')
+          ..write('studentId: $studentId, ')
+          ..write('juzNumber: $juzNumber, ')
+          ..write('quarterIndex: $quarterIndex, ')
+          ..write('completedAt: $completedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, studentId, juzNumber, quarterIndex, completedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is JuzQuarterProgressData &&
+          other.id == this.id &&
+          other.studentId == this.studentId &&
+          other.juzNumber == this.juzNumber &&
+          other.quarterIndex == this.quarterIndex &&
+          other.completedAt == this.completedAt);
+}
+
+class JuzQuarterProgressCompanion
+    extends UpdateCompanion<JuzQuarterProgressData> {
+  final Value<int> id;
+  final Value<int> studentId;
+  final Value<int> juzNumber;
+  final Value<int> quarterIndex;
+  final Value<DateTime> completedAt;
+  const JuzQuarterProgressCompanion({
+    this.id = const Value.absent(),
+    this.studentId = const Value.absent(),
+    this.juzNumber = const Value.absent(),
+    this.quarterIndex = const Value.absent(),
+    this.completedAt = const Value.absent(),
+  });
+  JuzQuarterProgressCompanion.insert({
+    this.id = const Value.absent(),
+    required int studentId,
+    required int juzNumber,
+    required int quarterIndex,
+    this.completedAt = const Value.absent(),
+  })  : studentId = Value(studentId),
+        juzNumber = Value(juzNumber),
+        quarterIndex = Value(quarterIndex);
+  static Insertable<JuzQuarterProgressData> custom({
+    Expression<int>? id,
+    Expression<int>? studentId,
+    Expression<int>? juzNumber,
+    Expression<int>? quarterIndex,
+    Expression<DateTime>? completedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (studentId != null) 'student_id': studentId,
+      if (juzNumber != null) 'juz_number': juzNumber,
+      if (quarterIndex != null) 'quarter_index': quarterIndex,
+      if (completedAt != null) 'completed_at': completedAt,
+    });
+  }
+
+  JuzQuarterProgressCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? studentId,
+      Value<int>? juzNumber,
+      Value<int>? quarterIndex,
+      Value<DateTime>? completedAt}) {
+    return JuzQuarterProgressCompanion(
+      id: id ?? this.id,
+      studentId: studentId ?? this.studentId,
+      juzNumber: juzNumber ?? this.juzNumber,
+      quarterIndex: quarterIndex ?? this.quarterIndex,
+      completedAt: completedAt ?? this.completedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (studentId.present) {
+      map['student_id'] = Variable<int>(studentId.value);
+    }
+    if (juzNumber.present) {
+      map['juz_number'] = Variable<int>(juzNumber.value);
+    }
+    if (quarterIndex.present) {
+      map['quarter_index'] = Variable<int>(quarterIndex.value);
+    }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<DateTime>(completedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('JuzQuarterProgressCompanion(')
+          ..write('id: $id, ')
+          ..write('studentId: $studentId, ')
+          ..write('juzNumber: $juzNumber, ')
+          ..write('quarterIndex: $quarterIndex, ')
+          ..write('completedAt: $completedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6991,6 +7307,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $GroupScheduleSlotsTable(this);
   late final $ScheduleExceptionsTable scheduleExceptions =
       $ScheduleExceptionsTable(this);
+  late final $JuzQuarterProgressTable juzQuarterProgress =
+      $JuzQuarterProgressTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7011,7 +7329,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         memorizedRanges,
         groupMembers,
         groupScheduleSlots,
-        scheduleExceptions
+        scheduleExceptions,
+        juzQuarterProgress
       ];
 }
 
@@ -8226,6 +8545,23 @@ final class $$StudentsTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$JuzQuarterProgressTable,
+      List<JuzQuarterProgressData>> _juzQuarterProgressRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.juzQuarterProgress,
+          aliasName: 'students__id__juz_quarter_progress__student_id');
+
+  $$JuzQuarterProgressTableProcessedTableManager get juzQuarterProgressRefs {
+    final manager =
+        $$JuzQuarterProgressTableTableManager($_db, $_db.juzQuarterProgress)
+            .filter((f) => f.studentId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache =
+        $_typedResult.readTableOrNull(_juzQuarterProgressRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$StudentsTableFilterComposer
@@ -8426,6 +8762,27 @@ class $$StudentsTableFilterComposer
             $$GroupMembersTableFilterComposer(
               $db: $db,
               $table: $db.groupMembers,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> juzQuarterProgressRefs(
+      Expression<bool> Function($$JuzQuarterProgressTableFilterComposer f) f) {
+    final $$JuzQuarterProgressTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.juzQuarterProgress,
+        getReferencedColumn: (t) => t.studentId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$JuzQuarterProgressTableFilterComposer(
+              $db: $db,
+              $table: $db.juzQuarterProgress,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -8721,6 +9078,28 @@ class $$StudentsTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> juzQuarterProgressRefs<T extends Object>(
+      Expression<T> Function($$JuzQuarterProgressTableAnnotationComposer a) f) {
+    final $$JuzQuarterProgressTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.juzQuarterProgress,
+            getReferencedColumn: (t) => t.studentId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$JuzQuarterProgressTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.juzQuarterProgress,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
 }
 
 class $$StudentsTableTableManager extends RootTableManager<
@@ -8742,7 +9121,8 @@ class $$StudentsTableTableManager extends RootTableManager<
         bool schedulesRefs,
         bool goalsRefs,
         bool memorizedRangesRefs,
-        bool groupMembersRefs})> {
+        bool groupMembersRefs,
+        bool juzQuarterProgressRefs})> {
   $$StudentsTableTableManager(_$AppDatabase db, $StudentsTable table)
       : super(TableManagerState(
           db: db,
@@ -8821,7 +9201,8 @@ class $$StudentsTableTableManager extends RootTableManager<
               schedulesRefs = false,
               goalsRefs = false,
               memorizedRangesRefs = false,
-              groupMembersRefs = false}) {
+              groupMembersRefs = false,
+              juzQuarterProgressRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
@@ -8830,7 +9211,8 @@ class $$StudentsTableTableManager extends RootTableManager<
                 if (schedulesRefs) db.schedules,
                 if (goalsRefs) db.goals,
                 if (memorizedRangesRefs) db.memorizedRanges,
-                if (groupMembersRefs) db.groupMembers
+                if (groupMembersRefs) db.groupMembers,
+                if (juzQuarterProgressRefs) db.juzQuarterProgress
               ],
               addJoins: <
                   T extends TableManagerState<
@@ -8945,6 +9327,19 @@ class $$StudentsTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.studentId == item.id),
+                        typedResults: items),
+                  if (juzQuarterProgressRefs)
+                    await $_getPrefetchedData<Student, $StudentsTable,
+                            JuzQuarterProgressData>(
+                        currentTable: table,
+                        referencedTable: $$StudentsTableReferences
+                            ._juzQuarterProgressRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$StudentsTableReferences(db, table, p0)
+                                .juzQuarterProgressRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.studentId == item.id),
                         typedResults: items)
                 ];
               },
@@ -8972,7 +9367,8 @@ typedef $$StudentsTableProcessedTableManager = ProcessedTableManager<
         bool schedulesRefs,
         bool goalsRefs,
         bool memorizedRangesRefs,
-        bool groupMembersRefs})>;
+        bool groupMembersRefs,
+        bool juzQuarterProgressRefs})>;
 typedef $$GroupsTableCreateCompanionBuilder = GroupsCompanion Function({
   Value<int> id,
   required String name,
@@ -14295,6 +14691,279 @@ typedef $$ScheduleExceptionsTableProcessedTableManager = ProcessedTableManager<
     (ScheduleException, $$ScheduleExceptionsTableReferences),
     ScheduleException,
     PrefetchHooks Function({bool groupScheduleSlotId})>;
+typedef $$JuzQuarterProgressTableCreateCompanionBuilder
+    = JuzQuarterProgressCompanion Function({
+  Value<int> id,
+  required int studentId,
+  required int juzNumber,
+  required int quarterIndex,
+  Value<DateTime> completedAt,
+});
+typedef $$JuzQuarterProgressTableUpdateCompanionBuilder
+    = JuzQuarterProgressCompanion Function({
+  Value<int> id,
+  Value<int> studentId,
+  Value<int> juzNumber,
+  Value<int> quarterIndex,
+  Value<DateTime> completedAt,
+});
+
+final class $$JuzQuarterProgressTableReferences extends BaseReferences<
+    _$AppDatabase, $JuzQuarterProgressTable, JuzQuarterProgressData> {
+  $$JuzQuarterProgressTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $StudentsTable _studentIdTable(_$AppDatabase db) =>
+      db.students.createAlias('juz_quarter_progress__student_id__students__id');
+
+  $$StudentsTableProcessedTableManager get studentId {
+    final $_column = $_itemColumn<int>('student_id')!;
+
+    final manager = $$StudentsTableTableManager($_db, $_db.students)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_studentIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$JuzQuarterProgressTableFilterComposer
+    extends Composer<_$AppDatabase, $JuzQuarterProgressTable> {
+  $$JuzQuarterProgressTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get juzNumber => $composableBuilder(
+      column: $table.juzNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get quarterIndex => $composableBuilder(
+      column: $table.quarterIndex, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get completedAt => $composableBuilder(
+      column: $table.completedAt, builder: (column) => ColumnFilters(column));
+
+  $$StudentsTableFilterComposer get studentId {
+    final $$StudentsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.studentId,
+        referencedTable: $db.students,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$StudentsTableFilterComposer(
+              $db: $db,
+              $table: $db.students,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$JuzQuarterProgressTableOrderingComposer
+    extends Composer<_$AppDatabase, $JuzQuarterProgressTable> {
+  $$JuzQuarterProgressTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get juzNumber => $composableBuilder(
+      column: $table.juzNumber, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get quarterIndex => $composableBuilder(
+      column: $table.quarterIndex,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
+      column: $table.completedAt, builder: (column) => ColumnOrderings(column));
+
+  $$StudentsTableOrderingComposer get studentId {
+    final $$StudentsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.studentId,
+        referencedTable: $db.students,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$StudentsTableOrderingComposer(
+              $db: $db,
+              $table: $db.students,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$JuzQuarterProgressTableAnnotationComposer
+    extends Composer<_$AppDatabase, $JuzQuarterProgressTable> {
+  $$JuzQuarterProgressTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get juzNumber =>
+      $composableBuilder(column: $table.juzNumber, builder: (column) => column);
+
+  GeneratedColumn<int> get quarterIndex => $composableBuilder(
+      column: $table.quarterIndex, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
+      column: $table.completedAt, builder: (column) => column);
+
+  $$StudentsTableAnnotationComposer get studentId {
+    final $$StudentsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.studentId,
+        referencedTable: $db.students,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$StudentsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.students,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$JuzQuarterProgressTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $JuzQuarterProgressTable,
+    JuzQuarterProgressData,
+    $$JuzQuarterProgressTableFilterComposer,
+    $$JuzQuarterProgressTableOrderingComposer,
+    $$JuzQuarterProgressTableAnnotationComposer,
+    $$JuzQuarterProgressTableCreateCompanionBuilder,
+    $$JuzQuarterProgressTableUpdateCompanionBuilder,
+    (JuzQuarterProgressData, $$JuzQuarterProgressTableReferences),
+    JuzQuarterProgressData,
+    PrefetchHooks Function({bool studentId})> {
+  $$JuzQuarterProgressTableTableManager(
+      _$AppDatabase db, $JuzQuarterProgressTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$JuzQuarterProgressTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$JuzQuarterProgressTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$JuzQuarterProgressTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> studentId = const Value.absent(),
+            Value<int> juzNumber = const Value.absent(),
+            Value<int> quarterIndex = const Value.absent(),
+            Value<DateTime> completedAt = const Value.absent(),
+          }) =>
+              JuzQuarterProgressCompanion(
+            id: id,
+            studentId: studentId,
+            juzNumber: juzNumber,
+            quarterIndex: quarterIndex,
+            completedAt: completedAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int studentId,
+            required int juzNumber,
+            required int quarterIndex,
+            Value<DateTime> completedAt = const Value.absent(),
+          }) =>
+              JuzQuarterProgressCompanion.insert(
+            id: id,
+            studentId: studentId,
+            juzNumber: juzNumber,
+            quarterIndex: quarterIndex,
+            completedAt: completedAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$JuzQuarterProgressTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({studentId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (studentId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.studentId,
+                    referencedTable:
+                        $$JuzQuarterProgressTableReferences._studentIdTable(db),
+                    referencedColumn: $$JuzQuarterProgressTableReferences
+                        ._studentIdTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$JuzQuarterProgressTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $JuzQuarterProgressTable,
+    JuzQuarterProgressData,
+    $$JuzQuarterProgressTableFilterComposer,
+    $$JuzQuarterProgressTableOrderingComposer,
+    $$JuzQuarterProgressTableAnnotationComposer,
+    $$JuzQuarterProgressTableCreateCompanionBuilder,
+    $$JuzQuarterProgressTableUpdateCompanionBuilder,
+    (JuzQuarterProgressData, $$JuzQuarterProgressTableReferences),
+    JuzQuarterProgressData,
+    PrefetchHooks Function({bool studentId})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -14331,4 +15000,6 @@ class $AppDatabaseManager {
       $$GroupScheduleSlotsTableTableManager(_db, _db.groupScheduleSlots);
   $$ScheduleExceptionsTableTableManager get scheduleExceptions =>
       $$ScheduleExceptionsTableTableManager(_db, _db.scheduleExceptions);
+  $$JuzQuarterProgressTableTableManager get juzQuarterProgress =>
+      $$JuzQuarterProgressTableTableManager(_db, _db.juzQuarterProgress);
 }

@@ -21,6 +21,7 @@ import 'tables/groups_table.dart';
 import 'tables/group_members_table.dart';
 import 'tables/group_schedule_slots_table.dart';
 import 'tables/schedule_exceptions_table.dart';
+import 'tables/juz_quarter_progress_table.dart';
 
 part 'app_database.g.dart';
 
@@ -42,6 +43,7 @@ part 'app_database.g.dart';
     GroupMembers,
     GroupScheduleSlots,
     ScheduleExceptions,
+    JuzQuarterProgress,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -53,7 +55,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(QueryExecutor executor) : super(executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -160,6 +162,13 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(sessionAttendances, sessionAttendances.fluencyScore);
         await m.addColumn(sessionAttendances, sessionAttendances.accuracyScore);
         await m.addColumn(sessionAttendances, sessionAttendances.notes);
+      }
+      if (from < 6 && to >= 6) {
+        // القسم ح.2 (v6): تتبّع الحفظ اليدوي بالجزء/الربع — جدول جديد بالكامل،
+        // لا تعديل على جدول قائم، فلا ينطبق هنا فخّ `createTable` (الأعمدة
+        // الحيّة الحالية) الموصوف أعلاه فوق كتلة v5 — جدول جديد يُنشأ بشكله
+        // الصحيح دايماً بغض النظر عن عدد الإصدارات المقفوزة في نفس الترقية.
+        await m.createTable(juzQuarterProgress);
       }
     },
     beforeOpen: (details) async {

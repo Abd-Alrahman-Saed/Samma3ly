@@ -20,6 +20,8 @@ import 'package:quran_mobile/features/calendar/screens/weekly_calendar_screen.da
 import 'package:quran_mobile/features/more/screens/more_screen.dart';
 import 'package:quran_mobile/features/memorization/screens/memorization_screen.dart';
 import 'package:quran_mobile/features/memorization/screens/review_queue_screen.dart';
+import 'package:quran_mobile/features/memorization/screens/juz_progress_screen.dart';
+import 'package:quran_mobile/features/memorization/screens/juz_quarters_screen.dart';
 import 'package:quran_mobile/features/reports/screens/reports_screen.dart';
 import 'package:quran_mobile/features/settings/screens/settings_screen.dart';
 
@@ -98,6 +100,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) => MemorizationScreen(
                       studentId: int.parse(state.pathParameters['id']!),
                     ),
+                  ),
+                  GoRoute(
+                    path: 'juz-progress',
+                    name: 'juzProgress',
+                    builder: (_, state) => JuzProgressScreen(
+                      studentId: int.parse(state.pathParameters['id']!),
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: 'juz/:juzNumber',
+                        name: 'juzQuarters',
+                        builder: (_, state) => JuzQuartersScreen(
+                          studentId: int.parse(state.pathParameters['id']!),
+                          juzNumber: int.parse(state.pathParameters['juzNumber']!),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

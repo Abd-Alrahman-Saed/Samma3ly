@@ -15,6 +15,7 @@ import 'generated_migrations/schema_v1.dart' as v1;
 import 'generated_migrations/schema_v2.dart' as v2;
 import 'generated_migrations/schema_v3.dart' as v3;
 import 'generated_migrations/schema_v4.dart' as v4;
+import 'generated_migrations/schema_v5.dart' as v5;
 
 void main() {
   late SchemaVerifier verifier;
@@ -292,6 +293,39 @@ void main() {
       final columns = await migratedDb.customSelect("PRAGMA table_info('session_attendances')").get();
       final columnNames = columns.map((r) => r.data['name'] as String).toSet();
       expect(columnNames, containsAll(['memorization_surah_id', 'tajweed_score', 'notes']));
+    },
+  );
+
+  test(
+    'ترقية v5→v6 (القسم ح.2): تُنشئ جدول juz_quarter_progress فارغاً، وتُبقي بيانات v5 سليمة',
+    () async {
+      // قاعدة v5 حقيقية فيها بيانات — يحاكي جهاز مستخدم فعلي فيه طالب
+      // وجلسة قبل هذا التحديث.
+      final schema = await verifier.schemaAt(5);
+      final oldDb = v5.DatabaseAtV5(schema.newConnection());
+      await oldDb.customStatement('''
+        INSERT INTO students (id, full_name, age, phone, address)
+        VALUES (1, 'طالب حقيقي', 12, '0100000000', 'عنوان')
+      ''');
+      await oldDb.close();
+
+      // نفتح نفس القاعدة بالمُنشئ الحقيقي (schemaVersion=6) — يشغّل v5→v6.
+      final migratedDb = AppDatabase.forTesting(schema.newConnection());
+      addTearDown(migratedDb.close);
+
+      final students = await migratedDb.select(migratedDb.students).get();
+      expect(students, hasLength(1), reason: 'بيانات v5 يجب ألا تتأثر — الجدول الجديد لا يلمس أي جدول قائم');
+
+      expect(await migratedDb.select(migratedDb.juzQuarterProgress).get(), isEmpty);
+
+      // الحفظ اليدوي الفعلي يعمل بعد الترقية مباشرة: تعليم ربع لطالب حقيقي.
+      await migratedDb.into(migratedDb.juzQuarterProgress).insert(
+            JuzQuarterProgressCompanion.insert(studentId: 1, juzNumber: 5, quarterIndex: 3),
+          );
+      final rows = await migratedDb.select(migratedDb.juzQuarterProgress).get();
+      expect(rows, hasLength(1));
+      expect(rows.first.juzNumber, 5);
+      expect(rows.first.quarterIndex, 3);
     },
   );
 }
