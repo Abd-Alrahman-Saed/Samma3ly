@@ -10,6 +10,7 @@ import 'package:quran_mobile/domain/entities/dashboard_data.dart';
 import 'package:quran_mobile/features/dashboard/providers/dashboard_provider.dart';
 import 'package:quran_mobile/features/reports/widgets/attendance_trend_chart.dart';
 import 'package:quran_mobile/features/reports/widgets/top_students_score_chart.dart';
+import 'package:quran_mobile/features/reports/widgets/student_report_section.dart';
 
 class ReportsScreen extends ConsumerWidget {
   const ReportsScreen({super.key});
@@ -90,7 +91,11 @@ class ReportsScreen extends ConsumerWidget {
                         physics: const NeverScrollableScrollPhysics(),
                         mainAxisSpacing: 10,
                         crossAxisSpacing: 10,
-                        childAspectRatio: 1.7,
+                        // القسم ح.5: 1.7 كانت تضيّق البطاقات لدرجة تُسبّب فيض
+                        // نص فعلي (سطر القيمة الكبير + سطر العنوان يتزاحمان) —
+                        // 1.5 هي نفس النسبة المستخدَمة فعلياً في KpiCard
+                        // بالداشبورد (dashboard_screen.dart) لنفس الودجت.
+                        childAspectRatio: 1.5,
                         children: [
                           KpiCard(icon: AppIcons.people, title: 'إجمالي الطلاب', value: '${data.totalStudents}'),
                           KpiCard(icon: AppIcons.calendar, title: 'الجلسات', value: '${data.totalSessionsEver}'),
@@ -122,6 +127,10 @@ class ReportsScreen extends ConsumerWidget {
                         )
                       else
                         TopStudentsScoreChart(students: data.topStudents),
+                      const SizedBox(height: 22),
+                      const Text('تقرير طالب', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                      const SizedBox(height: 10),
+                      const StudentReportSection(),
                     ],
                   );
                 },
