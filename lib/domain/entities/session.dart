@@ -76,8 +76,11 @@ abstract class SessionEvaluation with _$SessionEvaluation {
   factory SessionEvaluation.fromJson(Map<String, dynamic> json) =>
       _$SessionEvaluationFromJson(json);
 
+  // القسم ح.10: التشكيل بقى معياراً رابعاً فعلياً (كان accuracyScore
+  // مخزَّناً دائماً لكن غير مُدخَل من أي شاشة فردية قبل الآن) — المتوسط
+  // بقى على 4 لا 3، مطابقاً لنفس حساب GroupStudentRecitationScreen.
   double get finalScore {
-    final sum = memorizationScore + tajweedScore + fluencyScore;
-    return (sum / 3 * 10).roundToDouble() / 10;
+    final sum = memorizationScore + tajweedScore + fluencyScore + accuracyScore;
+    return (sum / 4 * 10).roundToDouble() / 10;
   }
 }

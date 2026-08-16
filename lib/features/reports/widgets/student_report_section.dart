@@ -158,7 +158,15 @@ class _SelectedStudentReport extends ConsumerWidget {
                     attendanceStatus: s.attendanceStatus,
                     finalScore: s.evaluation?.finalScore ?? 0,
                   ),
-                  onTap: () => context.goNamed('sessionEdit', pathParameters: {'id': '${s.id}'}),
+                  // القسم ح.10: جلسة الحلقة تفتح شاشة تسميع الطالب داخل
+                  // الحلقة، لا شاشة الجلسة الفردية.
+                  onTap: () => s.groupId != null
+                      ? context.goNamed('groupStudentRecitation', pathParameters: {
+                          'id': '${s.groupId}',
+                          'sessionId': '${s.id}',
+                          'studentId': '$studentId',
+                        })
+                      : context.goNamed('sessionEdit', pathParameters: {'id': '${s.id}'}),
                 ),
               )),
       ],

@@ -438,7 +438,16 @@ class _StudentSessionsList extends ConsumerWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 child: InkWell(
-                  onTap: () => context.goNamed('sessionEdit', pathParameters: {'id': '${s.id}'}),
+                  // القسم ح.10: جلسة الحلقة (groupId != null) تفتح شاشة
+                  // تسميع الطالب داخل الحلقة (لا شاشة الجلسة الفردية —
+                  // تفترض طالباً واحداً، لا تعرف شيئاً عن هذه الجلسة).
+                  onTap: () => s.groupId != null
+                      ? context.goNamed('groupStudentRecitation', pathParameters: {
+                          'id': '${s.groupId}',
+                          'sessionId': '${s.id}',
+                          'studentId': '$studentId',
+                        })
+                      : context.goNamed('sessionEdit', pathParameters: {'id': '${s.id}'}),
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),

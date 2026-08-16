@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quran_mobile/core/enums/attendance_status.dart';
+import 'package:quran_mobile/core/enums/recitation_outcome.dart';
 import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
 import 'package:quran_mobile/core/utils/date_utils.dart';
@@ -42,6 +43,7 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
   double _evalMem = 0;
   double _evalTajweed = 0;
   double _evalFluency = 0;
+  double _evalTashkeel = 0;
   int? _studentId;
   bool _isLoading = false;
   bool _isEdit = false;
@@ -88,6 +90,7 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
         _evalMem = evaluation.memorizationScore;
         _evalTajweed = evaluation.tajweedScore;
         _evalFluency = evaluation.fluencyScore;
+        _evalTashkeel = evaluation.accuracyScore;
       }
       setState(() {});
       _isDirty = false;
@@ -122,7 +125,7 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
     return null;
   }
 
-  Future<void> _save() async {
+  Future<void> _save(RecitationOutcome outcome) async {
     if (!_formKey.currentState!.validate()) return;
     if (_studentId == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('الرجاء اختيار الطالب')));
@@ -134,59 +137,61 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
       _evalMem = 0;
       _evalTajweed = 0;
       _evalFluency = 0;
+      _evalTashkeel = 0;
     }
     setState(() => _isLoading = true);
     try {
       final sessionDao = ref.read(sessionDaoProvider);
       final timeStr = '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
-      final hasEvaluation = _isPresent && (_evalMem > 0 || _evalTajweed > 0 || _evalFluency > 0);
+      final hasEvaluation = _isPresent && (_evalMem > 0 || _evalTajweed > 0 || _evalFluency > 0 || _evalTashkeel > 0);
 
+      late final int sessionId;
       if (_isEdit) {
+        sessionId = widget.sessionId!;
         await sessionDao.updateEntry(SessionsCompanion(
-          id: Value(widget.sessionId!),
+          id: Value(sessionId),
           studentId: Value(_studentId!),
           date: Value(_selectedDate),
           time: Value(timeStr),
           notes: Value(_notesController.text.trim().isEmpty ? null : _notesController.text.trim()),
         ));
-        await sessionDao.upsertAttendance(widget.sessionId!, _studentId!, _attendanceStatus);
 
         if (_memSurahId != null) {
           await sessionDao.upsertMemorization(SessionMemorizationsCompanion(
-            sessionId: Value(widget.sessionId!),
+            sessionId: Value(sessionId),
             surahId: Value(_memSurahId!),
             fromAyah: Value(int.parse(_memFromAyahController.text.trim().isEmpty ? '1' : _memFromAyahController.text.trim())),
             toAyah: Value(int.parse(_memToAyahController.text.trim().isEmpty ? '1' : _memToAyahController.text.trim())),
           ));
         } else {
-          await sessionDao.deleteMemorization(widget.sessionId!);
+          await sessionDao.deleteMemorization(sessionId);
         }
         if (_revSurahId != null) {
           await sessionDao.upsertRevision(SessionRevisionsCompanion(
-            sessionId: Value(widget.sessionId!),
+            sessionId: Value(sessionId),
             surahId: Value(_revSurahId!),
             fromAyah: Value(int.parse(_revFromAyahController.text.trim().isEmpty ? '1' : _revFromAyahController.text.trim())),
             toAyah: Value(int.parse(_revToAyahController.text.trim().isEmpty ? '1' : _revToAyahController.text.trim())),
           ));
         } else {
-          await sessionDao.deleteRevision(widget.sessionId!);
+          await sessionDao.deleteRevision(sessionId);
         }
         if (hasEvaluation) {
           await sessionDao.upsertEvaluation(SessionEvaluationsCompanion(
-            sessionId: Value(widget.sessionId!),
+            sessionId: Value(sessionId),
             memorizationScore: Value(_evalMem),
             tajweedScore: Value(_evalTajweed),
             fluencyScore: Value(_evalFluency),
+            accuracyScore: Value(_evalTashkeel),
           ));
         }
       } else {
-        final sessionId = await sessionDao.insert(SessionsCompanion(
+        sessionId = await sessionDao.insert(SessionsCompanion(
           studentId: Value(_studentId!),
           date: Value(_selectedDate),
           time: Value(timeStr),
           notes: Value(_notesController.text.trim().isEmpty ? null : _notesController.text.trim()),
         ));
-        await sessionDao.upsertAttendance(sessionId, _studentId!, _attendanceStatus);
 
         if (_memSurahId != null) {
           await sessionDao.upsertMemorization(SessionMemorizationsCompanion(
@@ -210,6 +215,7 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
             memorizationScore: Value(_evalMem),
             tajweedScore: Value(_evalTajweed),
             fluencyScore: Value(_evalFluency),
+            accuracyScore: Value(_evalTashkeel),
           ));
         }
 
@@ -223,6 +229,19 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
           );
         }
       }
+
+      // القسم ح.10: حالة الحضور والقرار السريع (ممتاز/يُعاد) بعد كل تفاصيل
+      // الجلسة الأخرى — upsertAttendance أولاً (يحفظ الحضور)، ثم
+      // upsertRecitation (تحفظ recitationOutcome فقط هنا؛ الجلسة الفردية
+      // تخزّن الحفظ/المراجعة/التقييم في جداولها المنفصلة كالمعتاد، لا في
+      // أعمدة SessionAttendances المخصَّصة للحلقات — لكن العمود نفسه
+      // (v7) مشترك، فلا داعي لمخطط جديد).
+      await sessionDao.upsertAttendance(sessionId, _studentId!, _attendanceStatus);
+      await sessionDao.upsertRecitation(SessionAttendancesCompanion(
+        sessionId: Value(sessionId),
+        studentId: Value(_studentId!),
+        recitationOutcome: Value(outcome.arabic),
+      ));
 
       if (mounted) {
         ref.invalidate(sessionListProvider);
@@ -244,7 +263,7 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
 
   bool get _isPresent => _attendanceStatus == AttendanceStatus.present.arabic;
 
-  double get _liveFinalScore => ((_evalMem + _evalTajweed + _evalFluency) / 3 * 10).roundToDouble() / 10;
+  double get _liveFinalScore => ((_evalMem + _evalTajweed + _evalFluency + _evalTashkeel) / 4 * 10).roundToDouble() / 10;
 
   @override
   Widget build(BuildContext context) {
@@ -384,16 +403,38 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
                           _ScoreSlider(label: 'الحفظ', value: _evalMem, onChanged: (v) => setState(() { _evalMem = v; _isDirty = true; })),
                           _ScoreSlider(label: 'التجويد', value: _evalTajweed, onChanged: (v) => setState(() { _evalTajweed = v; _isDirty = true; })),
                           _ScoreSlider(label: 'الطلاقة', value: _evalFluency, onChanged: (v) => setState(() { _evalFluency = v; _isDirty = true; })),
+                          _ScoreSlider(label: 'التشكيل', value: _evalTashkeel, onChanged: (v) => setState(() { _evalTashkeel = v; _isDirty = true; })),
                         ],
                         const SizedBox(height: 24),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _save,
-                            child: _isLoading
-                                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.onPrimary))
-                                : Text(_isEdit ? 'حفظ التعديلات' : 'حفظ الجلسة'),
-                          ),
+                        // القسم ح.10: بديل زر "حفظ الجلسة" الواحد — قرار سريع
+                        // بعد التسميع، نفس زرَّي GroupStudentRecitationScreen
+                        // بالضبط (بند ح.6)، فتجربة تسجيل الجلسة موحَّدة فردية
+                        // كانت أو جماعية.
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                key: const Key('sessionRepeat'),
+                                onPressed: _isLoading ? null : () => _save(RecitationOutcome.repeat),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFFD97706),
+                                  side: const BorderSide(color: Color(0xFFD97706)),
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                ),
+                                child: const Text('يُعاد'),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton(
+                                key: const Key('sessionExcellent'),
+                                onPressed: _isLoading ? null : () => _save(RecitationOutcome.excellent),
+                                child: _isLoading
+                                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.onPrimary))
+                                    : const Text('ممتاز'),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

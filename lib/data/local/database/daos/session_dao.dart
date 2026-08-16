@@ -20,6 +20,30 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
     return query.get();
   }
 
+  /// القسم ح.10 — جلسات الحلقات (`sessionType == 'جماعي'`) اللي حضرها
+  /// [studentId] فعلاً (له صفّ `SessionAttendances`)، مع صفّ الحضور نفسه —
+  /// المصدر الوحيد لتسميع هذا الطالب داخل جلسة جماعية (راجع تعليق v5 على
+  /// `SessionAttendances`). يُستخدَم في `SessionRepositoryImpl.getAll()`
+  /// لدمج مشاركات الحلقات ضمن "جلسات الطالب" العادية.
+  Future<List<(Session session, SessionAttendance attendance)>> getGroupSessionsForStudent(
+    int studentId, {
+    DateTime? from,
+    DateTime? to,
+  }) {
+    final query = select(sessions).join([
+      innerJoin(
+        sessionAttendances,
+        sessionAttendances.sessionId.equalsExp(sessions.id) & sessionAttendances.studentId.equals(studentId),
+      ),
+    ])
+      ..where(sessions.sessionType.equals('جماعي'));
+    if (from != null) query.where(sessions.date.isBiggerOrEqualValue(from));
+    if (to != null) query.where(sessions.date.isSmallerOrEqualValue(to));
+    return query.get().then((rows) => [
+          for (final r in rows) (r.readTable(sessions), r.readTable(sessionAttendances)),
+        ]);
+  }
+
   Future<Session?> getById(int id) => (select(sessions)..where((t) => t.id.equals(id))).getSingleOrNull();
 
   Future<int> insert(SessionsCompanion entry) => into(sessions).insert(entry);

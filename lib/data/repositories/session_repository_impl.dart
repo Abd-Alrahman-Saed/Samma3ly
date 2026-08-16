@@ -45,6 +45,56 @@ SessionEvaluation _evaluationToEntity(db.SessionEvaluation e) =>
       accuracyScore: e.accuracyScore,
     );
 
+/// القسم ح.10 — تحويل جلسة حلقة + صفّ حضور طالب واحد فيها إلى `Session`
+/// بنفس شكل جلسة فردية، عشان تظهر في "جلسات الطالب" العادية. المصدر هنا
+/// عمداً `SessionAttendances` نفسها (لا `SessionMemorizations`/
+/// `SessionRevisions`/`SessionEvaluations` المشترَكة على مستوى الجلسة كلها
+/// — تلك خاطئة هنا، لأن كل طالب في الحلقة له تسميع مستقلّ. راجع تعليق v5
+/// على `SessionAttendances` للسبب الكامل.
+Session _groupAttendanceToSession(db.Session groupSession, db.SessionAttendance attendance) {
+  final hasEvaluation = attendance.memorizationScore > 0 ||
+      attendance.tajweedScore > 0 ||
+      attendance.fluencyScore > 0 ||
+      attendance.accuracyScore > 0;
+  return Session(
+    id: groupSession.id,
+    studentId: attendance.studentId,
+    groupId: groupSession.groupId,
+    sessionType: groupSession.sessionType,
+    occurrenceDate: groupSession.occurrenceDate,
+    date: groupSession.date,
+    time: groupSession.time,
+    notes: attendance.notes,
+    createdAt: groupSession.createdAt,
+    attendanceStatus: attendance.attendanceStatus,
+    memorization: attendance.memorizationSurahId == null
+        ? null
+        : SessionMemorization(
+            sessionId: groupSession.id,
+            surahId: attendance.memorizationSurahId!,
+            fromAyah: attendance.memorizationFromAyah ?? 1,
+            toAyah: attendance.memorizationToAyah ?? 1,
+          ),
+    revision: attendance.revisionSurahId == null
+        ? null
+        : SessionRevision(
+            sessionId: groupSession.id,
+            surahId: attendance.revisionSurahId!,
+            fromAyah: attendance.revisionFromAyah ?? 1,
+            toAyah: attendance.revisionToAyah ?? 1,
+          ),
+    evaluation: !hasEvaluation
+        ? null
+        : SessionEvaluation(
+            sessionId: groupSession.id,
+            memorizationScore: attendance.memorizationScore,
+            tajweedScore: attendance.tajweedScore,
+            fluencyScore: attendance.fluencyScore,
+            accuracyScore: attendance.accuracyScore,
+          ),
+  );
+}
+
 class SessionRepositoryImpl implements SessionRepository {
   final SessionDao _dao;
 
@@ -86,7 +136,18 @@ class SessionRepositoryImpl implements SessionRepository {
     // التقارير) من الانهيار على `session.studentId!` بمجرد وجود بيانات
     // حلقات حقيقية — وهو العطل الفعلي المُبلَّغ عنه ("null check operator").
     final individualRows = rows.where((r) => r.studentId != null);
-    return Future.wait(individualRows.map(_toEntity).map(_hydrate));
+    final individualSessions = await Future.wait(individualRows.map(_toEntity).map(_hydrate));
+
+    if (studentId == null) return individualSessions;
+
+    // القسم ح.10: "الجلسات بتاعة الحلقات تتحفظ في جلسات الطالب عادي" —
+    // مشاركات هذا الطالب في جلسات الحلقات تُدمَج هنا فقط (عند تحديد
+    // studentId)، لا في القائمة العامة غير المفلترة أعلاه (تلك تمثّل
+    // الجلسات الفردية حصراً، وتبقى كما هي لكل مستهلكيها الحاليين).
+    final groupRows = await _dao.getGroupSessionsForStudent(studentId, from: from, to: to);
+    final groupSessions = [for (final (session, attendance) in groupRows) _groupAttendanceToSession(session, attendance)];
+
+    return [...individualSessions, ...groupSessions]..sort((a, b) => b.date.compareTo(a.date));
   }
 
   @override
