@@ -10,12 +10,14 @@ import 'package:drift/drift.dart' hide isNull;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:quran_mobile/data/local/database/app_database.dart';
 import 'package:quran_mobile/data/local/database/daos/group_dao.dart';
 import 'package:quran_mobile/data/local/database/daos/session_dao.dart';
 import 'package:quran_mobile/data/local/database/daos/student_dao.dart';
 import 'package:quran_mobile/features/groups/screens/group_live_session_screen.dart';
+import 'package:quran_mobile/features/groups/screens/group_student_recitation_screen.dart';
 import 'package:quran_mobile/providers.dart';
 
 import '../../helpers/test_database.dart';
@@ -26,6 +28,45 @@ Widget _harness(AppDatabase db, Widget child) {
     child: MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Directionality(textDirection: TextDirection.rtl, child: child),
+    ),
+  );
+}
+
+/// نسخة موجَّهة بـGoRouter حقيقي — بند ح.6: الضغط على الصف بقى ينقل عبر
+/// `context.goNamed('groupStudentRecitation', ...)` بدل فتح ورقة سفلية، فلا
+/// بد من GoRouter حقيقي في هذا الاختبار تحديداً (النمط المتّبع في بقية
+/// الشاشات لا يحتاج هذا لأنه لا يفحص التنقّل نفسه).
+Widget _routedHarness(AppDatabase db, {required int groupId, required int sessionId}) {
+  final router = GoRouter(
+    initialLocation: '/groups/$groupId/session/$sessionId',
+    routes: [
+      GoRoute(
+        path: '/groups/:id/session/:sessionId',
+        name: 'groupLiveSession',
+        builder: (_, state) => GroupLiveSessionScreen(
+          groupId: int.parse(state.pathParameters['id']!),
+          sessionId: int.parse(state.pathParameters['sessionId']!),
+        ),
+        routes: [
+          GoRoute(
+            path: 'student/:studentId',
+            name: 'groupStudentRecitation',
+            builder: (_, state) => GroupStudentRecitationScreen(
+              groupId: int.parse(state.pathParameters['id']!),
+              sessionId: int.parse(state.pathParameters['sessionId']!),
+              studentId: int.parse(state.pathParameters['studentId']!),
+            ),
+          ),
+        ],
+      ),
+    ],
+  );
+  return ProviderScope(
+    overrides: [appDatabaseProvider.overrideWithValue(db)],
+    child: MaterialApp.router(
+      routerConfig: router,
+      debugShowCheckedModeBanner: false,
+      builder: (context, child) => Directionality(textDirection: TextDirection.rtl, child: child!),
     ),
   );
 }
@@ -136,17 +177,17 @@ void main() {
     expect(attendance?.attendanceStatus, 'مستأذن');
   });
 
-  testWidgets('الضغط على صف الطالب (بعيداً عن شريحة الحالة) يفتح شاشة التسميع الكاملة', (tester) async {
-    await tester.pumpWidget(_harness(db, GroupLiveSessionScreen(groupId: groupId, sessionId: sessionId)));
+  testWidgets('الضغط على صف الطالب (بعيداً عن شريحة الحالة) يفتح شاشة تسميع الطالب الكاملة', (tester) async {
+    await tester.pumpWidget(_routedHarness(db, groupId: groupId, sessionId: sessionId));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('أحمد'));
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    // GroupRecitationSheet's close button (item 3.4) — proves the full
-    // recitation sheet opened, not the attendance-status picker.
-    expect(find.byKey(const ValueKey('recitationSheetClose')), findsOneWidget);
-    expect(find.text('حالة الحضور'), findsNothing);
+    // القسم ح.6: بقت شاشة كاملة بنفس تخطيط SessionCreateScreen، لا ورقة
+    // سفلية — الزرّان "ممتاز"/"يُعاد" فريدان لهذه الشاشة تحديداً.
+    expect(find.text('ممتاز'), findsOneWidget);
+    expect(find.text('يُعاد'), findsOneWidget);
   });
 }

@@ -3355,6 +3355,12 @@ class $SessionAttendancesTable extends SessionAttendances
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
       'notes', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _recitationOutcomeMeta =
+      const VerificationMeta('recitationOutcome');
+  @override
+  late final GeneratedColumn<String> recitationOutcome =
+      GeneratedColumn<String>('recitation_outcome', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -3380,6 +3386,7 @@ class $SessionAttendancesTable extends SessionAttendances
         fluencyScore,
         accuracyScore,
         notes,
+        recitationOutcome,
         createdAt
       ];
   @override
@@ -3477,6 +3484,12 @@ class $SessionAttendancesTable extends SessionAttendances
       context.handle(
           _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
     }
+    if (data.containsKey('recitation_outcome')) {
+      context.handle(
+          _recitationOutcomeMeta,
+          recitationOutcome.isAcceptableOrUnknown(
+              data['recitation_outcome']!, _recitationOutcomeMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -3524,6 +3537,8 @@ class $SessionAttendancesTable extends SessionAttendances
           .read(DriftSqlType.double, data['${effectivePrefix}accuracy_score'])!,
       notes: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}notes']),
+      recitationOutcome: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}recitation_outcome']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
@@ -3552,6 +3567,7 @@ class SessionAttendance extends DataClass
   final double fluencyScore;
   final double accuracyScore;
   final String? notes;
+  final String? recitationOutcome;
   final DateTime createdAt;
   const SessionAttendance(
       {required this.id,
@@ -3569,6 +3585,7 @@ class SessionAttendance extends DataClass
       required this.fluencyScore,
       required this.accuracyScore,
       this.notes,
+      this.recitationOutcome,
       required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3601,6 +3618,9 @@ class SessionAttendance extends DataClass
     map['accuracy_score'] = Variable<double>(accuracyScore);
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
+    }
+    if (!nullToAbsent || recitationOutcome != null) {
+      map['recitation_outcome'] = Variable<String>(recitationOutcome);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -3636,6 +3656,9 @@ class SessionAttendance extends DataClass
       accuracyScore: Value(accuracyScore),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
+      recitationOutcome: recitationOutcome == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recitationOutcome),
       createdAt: Value(createdAt),
     );
   }
@@ -3661,6 +3684,8 @@ class SessionAttendance extends DataClass
       fluencyScore: serializer.fromJson<double>(json['fluencyScore']),
       accuracyScore: serializer.fromJson<double>(json['accuracyScore']),
       notes: serializer.fromJson<String?>(json['notes']),
+      recitationOutcome:
+          serializer.fromJson<String?>(json['recitationOutcome']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -3683,6 +3708,7 @@ class SessionAttendance extends DataClass
       'fluencyScore': serializer.toJson<double>(fluencyScore),
       'accuracyScore': serializer.toJson<double>(accuracyScore),
       'notes': serializer.toJson<String?>(notes),
+      'recitationOutcome': serializer.toJson<String?>(recitationOutcome),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -3703,6 +3729,7 @@ class SessionAttendance extends DataClass
           double? fluencyScore,
           double? accuracyScore,
           Value<String?> notes = const Value.absent(),
+          Value<String?> recitationOutcome = const Value.absent(),
           DateTime? createdAt}) =>
       SessionAttendance(
         id: id ?? this.id,
@@ -3731,6 +3758,9 @@ class SessionAttendance extends DataClass
         fluencyScore: fluencyScore ?? this.fluencyScore,
         accuracyScore: accuracyScore ?? this.accuracyScore,
         notes: notes.present ? notes.value : this.notes,
+        recitationOutcome: recitationOutcome.present
+            ? recitationOutcome.value
+            : this.recitationOutcome,
         createdAt: createdAt ?? this.createdAt,
       );
   SessionAttendance copyWithCompanion(SessionAttendancesCompanion data) {
@@ -3772,6 +3802,9 @@ class SessionAttendance extends DataClass
           ? data.accuracyScore.value
           : this.accuracyScore,
       notes: data.notes.present ? data.notes.value : this.notes,
+      recitationOutcome: data.recitationOutcome.present
+          ? data.recitationOutcome.value
+          : this.recitationOutcome,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -3794,6 +3827,7 @@ class SessionAttendance extends DataClass
           ..write('fluencyScore: $fluencyScore, ')
           ..write('accuracyScore: $accuracyScore, ')
           ..write('notes: $notes, ')
+          ..write('recitationOutcome: $recitationOutcome, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -3816,6 +3850,7 @@ class SessionAttendance extends DataClass
       fluencyScore,
       accuracyScore,
       notes,
+      recitationOutcome,
       createdAt);
   @override
   bool operator ==(Object other) =>
@@ -3836,6 +3871,7 @@ class SessionAttendance extends DataClass
           other.fluencyScore == this.fluencyScore &&
           other.accuracyScore == this.accuracyScore &&
           other.notes == this.notes &&
+          other.recitationOutcome == this.recitationOutcome &&
           other.createdAt == this.createdAt);
 }
 
@@ -3855,6 +3891,7 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
   final Value<double> fluencyScore;
   final Value<double> accuracyScore;
   final Value<String?> notes;
+  final Value<String?> recitationOutcome;
   final Value<DateTime> createdAt;
   const SessionAttendancesCompanion({
     this.id = const Value.absent(),
@@ -3872,6 +3909,7 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
     this.fluencyScore = const Value.absent(),
     this.accuracyScore = const Value.absent(),
     this.notes = const Value.absent(),
+    this.recitationOutcome = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   SessionAttendancesCompanion.insert({
@@ -3890,6 +3928,7 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
     this.fluencyScore = const Value.absent(),
     this.accuracyScore = const Value.absent(),
     this.notes = const Value.absent(),
+    this.recitationOutcome = const Value.absent(),
     this.createdAt = const Value.absent(),
   })  : sessionId = Value(sessionId),
         studentId = Value(studentId);
@@ -3909,6 +3948,7 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
     Expression<double>? fluencyScore,
     Expression<double>? accuracyScore,
     Expression<String>? notes,
+    Expression<String>? recitationOutcome,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -3930,6 +3970,7 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
       if (fluencyScore != null) 'fluency_score': fluencyScore,
       if (accuracyScore != null) 'accuracy_score': accuracyScore,
       if (notes != null) 'notes': notes,
+      if (recitationOutcome != null) 'recitation_outcome': recitationOutcome,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -3950,6 +3991,7 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
       Value<double>? fluencyScore,
       Value<double>? accuracyScore,
       Value<String?>? notes,
+      Value<String?>? recitationOutcome,
       Value<DateTime>? createdAt}) {
     return SessionAttendancesCompanion(
       id: id ?? this.id,
@@ -3967,6 +4009,7 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
       fluencyScore: fluencyScore ?? this.fluencyScore,
       accuracyScore: accuracyScore ?? this.accuracyScore,
       notes: notes ?? this.notes,
+      recitationOutcome: recitationOutcome ?? this.recitationOutcome,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -4019,6 +4062,9 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (recitationOutcome.present) {
+      map['recitation_outcome'] = Variable<String>(recitationOutcome.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -4043,6 +4089,7 @@ class SessionAttendancesCompanion extends UpdateCompanion<SessionAttendance> {
           ..write('fluencyScore: $fluencyScore, ')
           ..write('accuracyScore: $accuracyScore, ')
           ..write('notes: $notes, ')
+          ..write('recitationOutcome: $recitationOutcome, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -11563,6 +11610,7 @@ typedef $$SessionAttendancesTableCreateCompanionBuilder
   Value<double> fluencyScore,
   Value<double> accuracyScore,
   Value<String?> notes,
+  Value<String?> recitationOutcome,
   Value<DateTime> createdAt,
 });
 typedef $$SessionAttendancesTableUpdateCompanionBuilder
@@ -11582,6 +11630,7 @@ typedef $$SessionAttendancesTableUpdateCompanionBuilder
   Value<double> fluencyScore,
   Value<double> accuracyScore,
   Value<String?> notes,
+  Value<String?> recitationOutcome,
   Value<DateTime> createdAt,
 });
 
@@ -11694,6 +11743,10 @@ class $$SessionAttendancesTableFilterComposer
 
   ColumnFilters<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get recitationOutcome => $composableBuilder(
+      column: $table.recitationOutcome,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -11830,6 +11883,10 @@ class $$SessionAttendancesTableOrderingComposer
   ColumnOrderings<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get recitationOutcome => $composableBuilder(
+      column: $table.recitationOutcome,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -11955,6 +12012,9 @@ class $$SessionAttendancesTableAnnotationComposer
 
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get recitationOutcome => $composableBuilder(
+      column: $table.recitationOutcome, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -12084,6 +12144,7 @@ class $$SessionAttendancesTableTableManager extends RootTableManager<
             Value<double> fluencyScore = const Value.absent(),
             Value<double> accuracyScore = const Value.absent(),
             Value<String?> notes = const Value.absent(),
+            Value<String?> recitationOutcome = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
               SessionAttendancesCompanion(
@@ -12102,6 +12163,7 @@ class $$SessionAttendancesTableTableManager extends RootTableManager<
             fluencyScore: fluencyScore,
             accuracyScore: accuracyScore,
             notes: notes,
+            recitationOutcome: recitationOutcome,
             createdAt: createdAt,
           ),
           createCompanionCallback: ({
@@ -12120,6 +12182,7 @@ class $$SessionAttendancesTableTableManager extends RootTableManager<
             Value<double> fluencyScore = const Value.absent(),
             Value<double> accuracyScore = const Value.absent(),
             Value<String?> notes = const Value.absent(),
+            Value<String?> recitationOutcome = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
               SessionAttendancesCompanion.insert(
@@ -12138,6 +12201,7 @@ class $$SessionAttendancesTableTableManager extends RootTableManager<
             fluencyScore: fluencyScore,
             accuracyScore: accuracyScore,
             notes: notes,
+            recitationOutcome: recitationOutcome,
             createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0

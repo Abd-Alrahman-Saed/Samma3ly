@@ -6,6 +6,7 @@
 //   dart run drift_dev schema dump lib/data/local/database/app_database.dart drift_schemas/
 //   dart run drift_dev schema generate drift_schemas/ test/generated_migrations/
 // Re-run both whenever schemaVersion changes.
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quran_mobile/data/local/database/app_database.dart';
@@ -16,6 +17,7 @@ import 'generated_migrations/schema_v2.dart' as v2;
 import 'generated_migrations/schema_v3.dart' as v3;
 import 'generated_migrations/schema_v4.dart' as v4;
 import 'generated_migrations/schema_v5.dart' as v5;
+import 'generated_migrations/schema_v6.dart' as v6;
 
 void main() {
   late SchemaVerifier verifier;
@@ -279,8 +281,10 @@ void main() {
       ''');
       await oldDb.close();
 
-      // نفتح نفس القاعدة بالمُنشئ الحقيقي (schemaVersion=5) — from=2,
-      // to=5: تشغّل كتلتَي v4 وv5 في نفس المرور، بالضبط سيناريو الخطر.
+      // نفتح نفس القاعدة بالمُنشئ الحقيقي (schemaVersion الحالي 7) — from=2:
+      // تشغّل كتلة v4 (بما فيها createTable بشكلها الحيّ الكامل حتى v7) في
+      // نفس المرور مع كتلتَي v5 وv7 اللي بتضيف أعمدة على نفس الجدول —
+      // بالضبط سيناريو الخطر (كلتاهما محروسة بـ`from >= 4`).
       final migratedDb = AppDatabase.forTesting(schema.newConnection());
       addTearDown(migratedDb.close);
 
@@ -288,11 +292,12 @@ void main() {
       final students = await migratedDb.select(migratedDb.students).get();
       expect(students, hasLength(1));
 
-      // الجدول له شكل v5 الكامل، بلا تكرار أعمدة، بقيم افتراضية سليمة.
+      // الجدول له شكل v5+ الكامل (وأعمدة v7 اللاحقة كمان، بما أن
+      // schemaVersion الحقيقي الآن 7)، بلا تكرار أعمدة، بقيم افتراضية سليمة.
       expect(await migratedDb.select(migratedDb.sessionAttendances).get(), isEmpty);
       final columns = await migratedDb.customSelect("PRAGMA table_info('session_attendances')").get();
       final columnNames = columns.map((r) => r.data['name'] as String).toSet();
-      expect(columnNames, containsAll(['memorization_surah_id', 'tajweed_score', 'notes']));
+      expect(columnNames, containsAll(['memorization_surah_id', 'tajweed_score', 'notes', 'recitation_outcome']));
     },
   );
 
@@ -326,6 +331,45 @@ void main() {
       expect(rows, hasLength(1));
       expect(rows.first.juzNumber, 5);
       expect(rows.first.quarterIndex, 3);
+    },
+  );
+
+  test(
+    'ترقية v6→v7 (القسم ح.6): تضيف recitation_outcome بعمود إضافي فقط، وتُبقي بيانات v6 سليمة',
+    () async {
+      final schema = await verifier.schemaAt(6);
+      final oldDb = v6.DatabaseAtV6(schema.newConnection());
+      await oldDb.customStatement('''
+        INSERT INTO students (id, full_name, age, phone, address)
+        VALUES (1, 'طالب حقيقي', 10, '0100000000', 'عنوان')
+      ''');
+      await oldDb.customStatement('''
+        INSERT INTO sessions (id, student_id, session_type, date, time)
+        VALUES (1, 1, 'فردي', ${DateTime(2026, 1, 1).millisecondsSinceEpoch}, '18:00')
+      ''');
+      await oldDb.customStatement('''
+        INSERT INTO session_attendances (id, session_id, student_id, attendance_status)
+        VALUES (1, 1, 1, 'حاضر')
+      ''');
+      await oldDb.close();
+
+      final migratedDb = AppDatabase.forTesting(schema.newConnection());
+      addTearDown(migratedDb.close);
+
+      final attendances = await migratedDb.select(migratedDb.sessionAttendances).get();
+      expect(attendances, hasLength(1));
+      expect(attendances.first.attendanceStatus, 'حاضر', reason: 'القيمة الحالية يجب أن تبقى كما هي');
+      expect(attendances.first.recitationOutcome, isNull);
+
+      // العمود الجديد فعلاً قابل للكتابة بعد الترقية مباشرة.
+      await migratedDb.update(migratedDb.sessionAttendances).replace(SessionAttendancesCompanion(
+            id: const Value(1),
+            sessionId: const Value(1),
+            studentId: const Value(1),
+            recitationOutcome: const Value('ممتاز'),
+          ));
+      final updated = await migratedDb.select(migratedDb.sessionAttendances).getSingle();
+      expect(updated.recitationOutcome, 'ممتاز');
     },
   );
 }

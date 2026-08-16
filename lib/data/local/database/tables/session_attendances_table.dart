@@ -15,6 +15,10 @@ import 'surahs_table.dart';
 /// كل واحد منهم تسميعاً مستقلاً. هذا الجدول أصلاً مفتاحه الفريد
 /// (sessionId, studentId) — التمثيل الطبيعي لتسميع طالب واحد داخل جلسة
 /// واحدة، فردية كانت أو جماعية.
+///
+/// v7 (القسم ح.6): `recitationOutcome` — قرار المعلّم السريع بعد التسميع
+/// ("ممتاز" أو "يُعاد")، مستقلّ عن تفاصيل التقييم الأربعة. لا يمثّل نتيجة
+/// اشتقاقاً آلياً (مثلاً من متوسط الدرجات) — هذا حكم المعلّم المباشر.
 class SessionAttendances extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get sessionId => integer().references(Sessions, #id)();
@@ -35,6 +39,8 @@ class SessionAttendances extends Table {
   RealColumn get accuracyScore => real().withDefault(const Constant(0.0))();
 
   TextColumn? get notes => text().nullable()();
+
+  TextColumn? get recitationOutcome => text().nullable()();
 
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 

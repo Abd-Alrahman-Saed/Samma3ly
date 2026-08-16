@@ -55,7 +55,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(QueryExecutor executor) : super(executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -169,6 +169,16 @@ class AppDatabase extends _$AppDatabase {
         // الحيّة الحالية) الموصوف أعلاه فوق كتلة v5 — جدول جديد يُنشأ بشكله
         // الصحيح دايماً بغض النظر عن عدد الإصدارات المقفوزة في نفس الترقية.
         await m.createTable(juzQuarterProgress);
+      }
+      // نفس فخّ v5 بالضبط، ونفس الحارس `from >= 4`: recitationOutcome أُضيف
+      // على session_attendances — الجدول اللي أنشأته كتلة v4 بـ`createTable`
+      // (يعكس الشكل الحيّ الحالي دايماً). أي ترقية جمعت كتلة v4 في نفس
+      // المرور (from < 4) بيبقى العمود موجود بالفعل، فكتلة addColumn هنا
+      // المفروض تتخطّى تماماً زي v5 — وإلا "duplicate column name".
+      if (from < 7 && to >= 7 && from >= 4) {
+        // القسم ح.6 (v7): قرار المعلّم السريع بعد التسميع الجماعي — "ممتاز"
+        // أو "يُعاد". عمود nullable إضافي فقط.
+        await m.addColumn(sessionAttendances, sessionAttendances.recitationOutcome);
       }
     },
     beforeOpen: (details) async {

@@ -12,7 +12,6 @@ import 'package:quran_mobile/core/widgets/status_badge.dart';
 import 'package:quran_mobile/domain/entities/group_member.dart';
 import 'package:quran_mobile/domain/entities/student.dart';
 import 'package:quran_mobile/features/groups/providers/group_provider.dart';
-import 'package:quran_mobile/features/groups/screens/group_recitation_sheet.dart';
 import 'package:quran_mobile/features/students/providers/student_provider.dart';
 import 'package:quran_mobile/providers.dart';
 
@@ -27,10 +26,12 @@ import 'package:quran_mobile/providers.dart';
 /// status, it never removes the row. Rare statuses (متأخر/مستأذن) and a
 /// general accessible alternative to swiping are both a tap on the status
 /// chip, opening `_StatusPickerSheet`. Tapping the row itself (its main,
-/// largest touch target) opens the full recitation sheet — that's the
+/// largest touch target) opens `GroupStudentRecitationScreen` — that's the
 /// actual point of a session: recording what was recited and rating it,
 /// not just presence. Attendance stays fast (swipe / status chip);
-/// recitation is what tapping a student is *for*.
+/// recitation is what tapping a student is *for*. (القسم ح.6: كانت هذه
+/// شاشة عبارة عن bottom sheet — GroupRecitationSheet — بقت شاشة كاملة
+/// بنفس تخطيط SessionCreateScreen بطلب المستخدم.)
 class GroupLiveSessionScreen extends ConsumerWidget {
   final int groupId;
   final int sessionId;
@@ -166,11 +167,13 @@ class GroupLiveSessionScreen extends ConsumerWidget {
                           status: status,
                           onSetStatus: (s) => _setStatus(ref, member.studentId, s),
                           onTap: () => _showStatusPicker(context, ref, member.studentId, status),
-                          onOpenRecitation: () => GroupRecitationSheet.show(
-                            context,
-                            sessionId: sessionId,
-                            studentId: member.studentId,
-                            studentName: name,
+                          onOpenRecitation: () => context.goNamed(
+                            'groupStudentRecitation',
+                            pathParameters: {
+                              'id': '$groupId',
+                              'sessionId': '$sessionId',
+                              'studentId': '${member.studentId}',
+                            },
                           ),
                         );
                       },
