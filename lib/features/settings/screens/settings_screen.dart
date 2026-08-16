@@ -14,7 +14,6 @@ import 'package:quran_mobile/core/enums/prayer_calculation_method.dart';
 import 'package:quran_mobile/core/enums/prayer_madhab.dart';
 import 'package:quran_mobile/features/settings/providers/notification_settings_provider.dart';
 import 'package:quran_mobile/features/settings/providers/prayer_settings_provider.dart';
-import 'package:quran_mobile/features/settings/providers/theme_mode_provider.dart';
 import 'package:quran_mobile/providers.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -23,7 +22,6 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final themeMode = ref.watch(themeModeProvider);
     final prayerSettings = ref.watch(prayerSettingsProvider);
     final notificationSettings = ref.watch(notificationSettingsProvider);
 
@@ -34,23 +32,6 @@ class SettingsScreen extends ConsumerWidget {
           children: [
             Text('الإعدادات', style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 16),
-            const _SectionLabel('المظهر'),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.cardBorder)),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('وضع العرض', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                  _ThemeSegmentedControl(
-                    value: themeMode,
-                    onChanged: (v) => ref.read(themeModeProvider.notifier).setThemeMode(v),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
             const _SectionLabel('مواقيت الصلاة'),
             const SizedBox(height: 8),
             _RowContainer(
@@ -484,38 +465,3 @@ class _ActionRow extends StatelessWidget {
   }
 }
 
-class _ThemeSegmentedControl extends StatelessWidget {
-  final ThemeMode value;
-  final ValueChanged<ThemeMode> onChanged;
-
-  const _ThemeSegmentedControl({required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: AppColors.dividerLight, borderRadius: BorderRadius.circular(999)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _segment('فاتح', ThemeMode.light),
-          _segment('تلقائي', ThemeMode.system),
-          _segment('داكن', ThemeMode.dark),
-        ],
-      ),
-    );
-  }
-
-  Widget _segment(String label, ThemeMode mode) {
-    final selected = value == mode;
-    return InkWell(
-      onTap: () => onChanged(mode),
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(color: selected ? AppColors.primary : Colors.transparent, borderRadius: BorderRadius.circular(999)),
-        child: Text(label, style: TextStyle(fontFamily: 'Cairo', fontSize: 11.5, fontWeight: FontWeight.w700, color: selected ? AppColors.onPrimary : AppColors.textSecondary)),
-      ),
-    );
-  }
-}

@@ -7,9 +7,8 @@ import 'package:quran_mobile/core/widgets/app_form_field.dart';
 import 'package:quran_mobile/core/widgets/app_snackbar.dart';
 import 'package:quran_mobile/core/widgets/discard_changes_dialog.dart';
 import 'package:quran_mobile/domain/entities/group.dart';
-import 'package:quran_mobile/domain/entities/user.dart';
+import 'package:quran_mobile/features/auth/providers/auth_provider.dart';
 import 'package:quran_mobile/features/groups/providers/group_provider.dart';
-import 'package:quran_mobile/features/settings/providers/settings_provider.dart';
 import 'package:quran_mobile/providers.dart';
 
 class GroupCreateScreen extends ConsumerStatefulWidget {
@@ -62,7 +61,11 @@ class _GroupCreateScreenState extends ConsumerState<GroupCreateScreen> {
       if (_isEdit) {
         await repo.update(Group(id: widget.groupId!, name: _nameController.text.trim(), teacherId: _teacherId));
       } else {
-        await repo.create(Group(name: _nameController.text.trim(), teacherId: _teacherId));
+        // القسم ح.9: معلّم واحد فقط في التطبيق — يُعيَّن تلقائياً هنا (لا في
+        // initState، تفادياً لسباق مع تحميل authStateProvider غير المتزامن)
+        // بدل اختياره من قائمة، اللي بقت بلا معنى بعد تبسيط الدخول لمعلّم واحد.
+        final teacherId = ref.read(currentUserProvider)?.id;
+        await repo.create(Group(name: _nameController.text.trim(), teacherId: teacherId));
       }
       if (mounted) {
         ref.read(groupRefreshProvider.notifier).state++;
@@ -79,7 +82,11 @@ class _GroupCreateScreenState extends ConsumerState<GroupCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final usersAsync = ref.watch(allUsersProvider);
+    // القسم ح.9: مُشاهَد هنا (لا يُقرأ لأول مرة داخل _save فقط) عشان نضمن
+    // تحميل authStateProvider فعلياً بحلول وقت الحفظ — في التطبيق الحقيقي
+    // هذا مضمون أصلاً عبر بوّابة التوجيه (isLoggedInProvider)، لكن هذا يجعل
+    // الشاشة نفسها لا تعتمد على ذلك الضمان الخارجي وحده.
+    ref.watch(currentUserProvider);
 
     return PopScope(
       canPop: !_isDirty,
@@ -132,19 +139,6 @@ class _GroupCreateScreenState extends ConsumerState<GroupCreateScreen> {
                           hintText: 'اسم الحلقة *',
                           validator: (v) => v == null || v.trim().isEmpty ? 'الرجاء إدخال اسم الحلقة' : null,
                         ),
-                        const SizedBox(height: 14),
-                        usersAsync.when(
-                          loading: () => const LinearProgressIndicator(),
-                          error: (e, _) => const SizedBox.shrink(),
-                          data: (users) => _TeacherDropdown(
-                            value: _teacherId,
-                            users: users,
-                            onChanged: (v) => setState(() {
-                              _teacherId = v;
-                              _isDirty = true;
-                            }),
-                          ),
-                        ),
                         const SizedBox(height: 20),
                         SizedBox(
                           width: double.infinity,
@@ -164,37 +158,6 @@ class _GroupCreateScreenState extends ConsumerState<GroupCreateScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _TeacherDropdown extends StatelessWidget {
-  final int? value;
-  final List<User> users;
-  final ValueChanged<int?> onChanged;
-
-  const _TeacherDropdown({required this.value, required this.users, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<int?>(
-      initialValue: value,
-      isExpanded: true,
-      style: const TextStyle(fontFamily: 'Cairo', fontSize: 13.5, color: AppColors.textPrimary),
-      decoration: InputDecoration(
-        hintText: 'المعلم المسؤول (اختياري)',
-        filled: true,
-        fillColor: AppColors.inputBg,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.inputBorder)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.inputBorder)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
-      ),
-      items: [
-        const DropdownMenuItem<int?>(value: null, child: Text('بلا معلم محدَّد')),
-        for (final u in users) DropdownMenuItem<int?>(value: u.id, child: Text(u.fullName)),
-      ],
-      onChanged: onChanged,
     );
   }
 }
