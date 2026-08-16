@@ -975,6 +975,45 @@ idempotency في الاتجاهين، استقلال كل طالب عن الآخ
 الأربع الصحيحة فقط)، و`shared_widgets_golden_test.dart` (KpiCard) للتأكد
 من أن التعديل على الواجهة المشتركة لم يغيّر أي شكل قائم.
 
+## ح.4 — عطل حقيقي: "null check operator" في شاشة الجلسات و"آخر الجلسات"
+
+**البلاغ:** "فيه ايرور بيظهر null check operator في اخر الجلسات مش بتظهر".
+
+**السبب الجذري:** `Sessions.studentId` بقى Nullable من v4 (Sprint 2،
+بند 2.1) — جلسة الحلقة (`sessionType == 'جماعي'`) لها `studentId == null`
+وطلاب متعددون بدل واحد. لكن شاشتين ظلّتا تفترضان أن كل جلسة عائدة من
+`sessionRepositoryProvider.getAll()` (بلا فلتر studentId) فردية دائماً،
+وتستخدمان `session.studentId!` بلا حراسة:
+- `dashboard_screen.dart` → `_RecentSessionsList` ("آخر الجلسات" —
+  مطابقة حرفية لنص البلاغ).
+- `session_list_screen.dart` → شاشة "الجلسات" الكاملة.
+
+العطل كان كامناً منذ v4 لأنه ما كانش فيه جلسات حلقات حقيقية بعد؛ بمجرد ما
+Sprint 3 (الحلقة المباشرة) بدأ يُنشئ جلسات حلقات فعلية عبر
+`GroupSessionService.materializeOccurrence`، أي جلسة حلقة تظهر بين أحدث 5
+جلسات (الداشبورد) أو في شاشة الجلسات الكاملة تُسقط تلك الشاشة بعطل
+"Null check operator used on a null value".
+
+**الإصلاح:** عند المصدر لا عند كل شاشة على حدة — `SessionRepositoryImpl.
+getAll()` يستبعد الآن أي صفّ `studentId == null` قبل التحويل/الـhydration.
+هذا المستودع يمثّل الجلسات الفردية حصراً (كل صفّ له طالب واحد بالضبط)؛
+جلسات الحلقات مفهوم مختلف تماماً (طلاب متعددون) وتُعرض عبر
+`GroupRepository`/`GroupSessionService` بدل هذا المسار — تماماً نفس
+الاستبعاد (`sessionType == 'جماعي'`) اللي `WeeklyCalendarService` (بند
+3.6) يطبّقه بالفعل عند دمج الجلسات الفردية مع مواعيد الحلقات. الإصلاح في
+مكان واحد يحمي أي شاشة حالية أو مستقبلية تستهلك `sessionRepositoryProvider.
+getAll()` (شملت هذا أيضاً `report_provider.dart` — ذات الثغرة بالضبط،
+ذات صلة ببند ح.5 القادم). `_sessionDao.getAll()` الخام في
+`DashboardService` (لحساب إحصاءات منفصلة) لم يتأثر — مسار مختلف تماماً،
+وأصلاً محروس بـ`if (s.studentId != null)` في كل استخدام له.
+
+**الاختبارات:** `test/data/repositories/session_repository_impl_test.dart`
+(3 — الاستبعاد يعمل، الفلترة بـstudentId غير متأثرة، السلوك القديم سليم)،
+و`test/features/dashboard/dashboard_screen_test.dart` +
+`test/features/sessions/session_list_screen_test.dart` (اختبارا انحدار
+حقيقيان: يزرعان جلسة حلقة حقيقية بجانب فردية ويتحققان من عدم انهيار
+الشاشتين — كانا يفشلان فعلاً قبل الإصلاح بنفس رسالة الخطأ المُبلَّغ عنها).
+
 ---
 
 ## الخلاصة

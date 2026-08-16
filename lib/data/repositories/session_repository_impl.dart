@@ -77,7 +77,16 @@ class SessionRepositoryImpl implements SessionRepository {
   @override
   Future<List<Session>> getAll({int? studentId, DateTime? from, DateTime? to}) async {
     final rows = await _dao.getAll(studentId: studentId, from: from, to: to);
-    return Future.wait(rows.map(_toEntity).map(_hydrate));
+    // القسم ح.4: هذا المستودع يمثّل الجلسات الفردية (كل صف له طالب واحد
+    // بالضبط). جلسات الحلقات (sessionType == 'جماعي', studentId == null)
+    // مفهوم مختلف تماماً — طلاب متعددون لكل جلسة — وتُعرض عبر
+    // GroupRepository/GroupSessionService بدل هذا المسار. استبعادها هنا
+    // (بدل الاعتماد على كل مستدعٍ لاحق ليتذكّر تجاهلها) يمنع أي شاشة تعرض
+    // نتيجة هذا الاستدعاء (شاشة الجلسات، "آخر الجلسات" في الداشبورد،
+    // التقارير) من الانهيار على `session.studentId!` بمجرد وجود بيانات
+    // حلقات حقيقية — وهو العطل الفعلي المُبلَّغ عنه ("null check operator").
+    final individualRows = rows.where((r) => r.studentId != null);
+    return Future.wait(individualRows.map(_toEntity).map(_hydrate));
   }
 
   @override
