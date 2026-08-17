@@ -69,7 +69,7 @@ flutter test
 المشروع مفتوح المصدر ومرحِّب بالمساهمات — Issues وPull Requests مرحَّب
 بيهم. لو بتضيف تعديلاً على الـschema (Drift)، اتّبع انضباط الترقية
 الموثَّق في `docs/IMPLEMENTATION_PLAN.md` (نسخة جديدة لكل تعديل schema،
-مايتلغيش migration اتشحن قبل كده).
+مايتلغيش migration اتعمل قبل كده).
 
 ## الترخيص
 
