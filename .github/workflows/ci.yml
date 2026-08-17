@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Scoped to the exact directories that hold generated code (see
+      # `grep -rl "part '.*\.g\.dart'\|part '.*\.freezed\.dart'" lib`).
+      # An unscoped `build_runner build` currently crashes while linking
+      # lib/app.dart's full transitive closure — the pinned `freezed`/
+      # `analyzer` toolchain doesn't understand a Dart 3.9+ syntax feature
+      # ("dot shorthand") used inside the Flutter SDK itself. See the
+      # "ملاحظة بيئة عمل" note in docs/IMPLEMENTATION_PLAN.md Sprint 0.
+      # IMPORTANT: list every generated-code directory in ONE invocation —
+      # `--delete-conflicting-outputs` deletes stale outputs outside the
+      # filter too, without regenerating them, if they're not also included.
+      - name: Generate code (drift/freezed/json_serializable)
+        run: |
+          dart run build_runner build --delete-conflicting-outputs `
+            --build-filter="lib/data/local/database/**.g.dart" `
+            --build-filter="lib/domain/entities/**.g.dart" `
+            --build-filter="lib/domain/entities/**.freezed.dart" `
+            --build-filter="lib/core/errors/**.freezed.dart"
+
+      # `--fatal-infos` was tried and reverted: the codebase carries several
+      # pre-existing info/warning-level lint issues (prefer_const_constructors,
+      # a couple of unused imports, one deprecated Flutter API) unrelated to
+      # any single change — gating CI on zero of those would need a
+      # dedicated lint-cleanup pass, not something to bundle silently here.
+      # Plain `flutter analyze` still fails the build on actual `error`-level
+      # problems, which is what correctness depends on.
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build debug APK
+        run: flutter build apk --debug
