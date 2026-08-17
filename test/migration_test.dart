@@ -19,6 +19,7 @@ import 'generated_migrations/schema_v4.dart' as v4;
 import 'generated_migrations/schema_v5.dart' as v5;
 import 'generated_migrations/schema_v6.dart' as v6;
 import 'generated_migrations/schema_v7.dart' as v7;
+import 'generated_migrations/schema_v8.dart' as v8;
 
 void main() {
   late SchemaVerifier verifier;
@@ -426,6 +427,91 @@ void main() {
           ));
       final updatedEval = await migratedDb.select(migratedDb.sessionEvaluations).getSingle();
       expect(updatedEval.revisionMemorizationScore, 5.0);
+    },
+  );
+
+  test(
+    'ترقية v8→v9 (امسح التوقيت المرتبط بالصلاة): تحذف anchor_type/prayer_name/'
+    'offset_minutes من group_schedule_slots، وتُبقي fixed_time الحالي سليماً، '
+    'وتُعطي أي موعد كان مرتبطاً بصلاة (بلا fixed_time) توقيتاً افتراضياً',
+    () async {
+      final schema = await verifier.schemaAt(8);
+      final oldDb = v8.DatabaseAtV8(schema.newConnection());
+      await oldDb.customStatement('''
+        INSERT INTO groups (id, name) VALUES (1, 'حلقة حقيقية')
+      ''');
+      // موعد بوقت ثابت — يجب أن يبقى كما هو تماماً بعد الترقية.
+      await oldDb.customStatement('''
+        INSERT INTO group_schedule_slots (id, group_id, weekday, anchor_type, fixed_time, effective_from)
+        VALUES (1, 1, 1, 'وقت محدد', '17:00', ${DateTime(2026, 1, 1).millisecondsSinceEpoch})
+      ''');
+      // موعد كان مرتبطاً بصلاة — fixed_time فارغ قبل الترقية (كان يُحسَب من
+      // prayer_name/offset_minutes وقتها)، يحاكي بيانات مستخدم حقيقي.
+      await oldDb.customStatement('''
+        INSERT INTO group_schedule_slots (id, group_id, weekday, anchor_type, prayer_name, offset_minutes, effective_from)
+        VALUES (2, 1, 2, 'مرتبط بصلاة', 'المغرب', 15, ${DateTime(2026, 1, 1).millisecondsSinceEpoch})
+      ''');
+      await oldDb.close();
+
+      final migratedDb = AppDatabase.forTesting(schema.newConnection());
+      addTearDown(migratedDb.close);
+
+      final slots = await migratedDb.select(migratedDb.groupScheduleSlots).get();
+      expect(slots, hasLength(2));
+
+      final fixedSlot = slots.firstWhere((s) => s.id == 1);
+      expect(fixedSlot.fixedTime, '17:00', reason: 'القيمة الحالية يجب أن تبقى كما هي — لم تُلمَس');
+
+      final wasPrayerSlot = slots.firstWhere((s) => s.id == 2);
+      expect(wasPrayerSlot.fixedTime, '18:00', reason: 'كان بلا fixed_time (مرتبط بصلاة) — يُعطى توقيتاً افتراضياً بدل أن يبقى بلا وقت');
+
+      // الأعمدة الثلاثة محذوفة فعلياً من الـschema — أي محاولة قراءة منها
+      // بعد الترقية المفروض تفشل لأنها لم تعد موجودة.
+      expect(
+        () => migratedDb.customSelect('SELECT anchor_type FROM group_schedule_slots').get(),
+        throwsA(anything),
+        reason: 'anchor_type يجب أن يكون محذوفاً تماماً بعد الترقية',
+      );
+      expect(
+        () => migratedDb.customSelect('SELECT prayer_name FROM group_schedule_slots').get(),
+        throwsA(anything),
+        reason: 'prayer_name يجب أن يكون محذوفاً تماماً بعد الترقية',
+      );
+      expect(
+        () => migratedDb.customSelect('SELECT offset_minutes FROM group_schedule_slots').get(),
+        throwsA(anything),
+        reason: 'offset_minutes يجب أن يكون محذوفاً تماماً بعد الترقية',
+      );
+    },
+  );
+
+  test(
+    'ترقية v2→v9 مباشرة (قفز عدّة إصدارات دفعة واحدة) لا تفشل بعمود مفقود على group_schedule_slots',
+    () async {
+      // نفس سيناريو خطر "duplicate column name" الموثّق فوق onUpgrade —
+      // لكن بالعكس هنا: group_schedule_slots أنشأتها كتلة v4 بـcreateTable
+      // (شكلها الحيّ الحالي دائماً)، فمستخدم قافز من v2 مباشرة لآخر إصدار
+      // (from < 4) يحصل على الجدول بشكله *الجديد* من الأصل (بلا anchor_type
+      // أصلاً) — فكتلة v9's dropColumn (لو اتنفّذت بلا حارس from >= 4) كانت
+      // هترمي "no such column" وتفشل الترقية بالكامل.
+      final schema = await verifier.schemaAt(2);
+      final oldDb = v2.DatabaseAtV2(schema.newConnection());
+      await oldDb.customStatement('''
+        INSERT INTO students (id, full_name, age, phone, address)
+        VALUES (1, 'طالب قديم', 9, '0100000000', 'عنوان')
+      ''');
+      await oldDb.close();
+
+      final migratedDb = AppDatabase.forTesting(schema.newConnection());
+      addTearDown(migratedDb.close);
+
+      final students = await migratedDb.select(migratedDb.students).get();
+      expect(students, hasLength(1));
+      expect(await migratedDb.select(migratedDb.groupScheduleSlots).get(), isEmpty);
+      final columns = await migratedDb.customSelect("PRAGMA table_info('group_schedule_slots')").get();
+      final columnNames = columns.map((r) => r.data['name'] as String).toSet();
+      expect(columnNames, containsAll(['weekday', 'fixed_time', 'effective_from']));
+      expect(columnNames, isNot(contains('anchor_type')));
     },
   );
 }

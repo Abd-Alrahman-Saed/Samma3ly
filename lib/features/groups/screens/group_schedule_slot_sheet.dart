@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:quran_mobile/core/enums/anchor_type.dart';
-import 'package:quran_mobile/core/enums/prayer_name.dart';
 import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
 import 'package:quran_mobile/core/utils/date_utils.dart';
-import 'package:quran_mobile/core/widgets/app_form_field.dart';
 import 'package:quran_mobile/core/widgets/app_snackbar.dart';
 import 'package:quran_mobile/domain/entities/group_schedule_slot.dart';
 import 'package:quran_mobile/features/groups/notifications/group_notification_scheduler.dart';
 import 'package:quran_mobile/features/groups/providers/group_provider.dart';
 import 'package:quran_mobile/providers.dart';
 
-/// Bottom-sheet form to add/edit one `GroupScheduleSlot` — weekday +
-/// anchor (fixed clock time, or a prayer name + offset). See item 2.1 for
-/// the schema and item 2.2/2.3 for how this rule gets expanded into actual
-/// dated occurrences. The dedicated drag-and-drop weekly editor UI is item
-/// 2.6 — this is the functional (non-visual-editor) CRUD form it will sit
-/// on top of.
+/// Bottom-sheet form to add/edit one `GroupScheduleSlot` — weekday + وقت
+/// ثابت. See item 2.1 for the schema and item 2.2 for how this rule gets
+/// expanded into actual dated occurrences. The dedicated drag-and-drop
+/// weekly editor UI is item 2.6 — this is the functional (non-visual-editor)
+/// CRUD form it will sit on top of.
+///
+/// كان فيه خيار توقيت "مرتبط بصلاة" (بند 2.3) — أُزيل بالكامل؛ راجع
+/// docs/IMPLEMENTATION_PLAN.md.
 class GroupScheduleSlotSheet {
   static Future<void> show(BuildContext context, {required int groupId, GroupScheduleSlot? existing}) {
     return showModalBottomSheet(
@@ -51,11 +50,7 @@ class _SlotSheetContent extends ConsumerStatefulWidget {
 
 class _SlotSheetContentState extends ConsumerState<_SlotSheetContent> {
   late int _weekday;
-  late AnchorType _anchorType;
   TimeOfDay? _fixedTime;
-  PrayerName _prayerName = PrayerName.maghrib;
-  int _offsetMinutes = 0;
-  late final TextEditingController _offsetController;
   late DateTime _effectiveFrom;
   DateTime? _effectiveTo;
   bool _isLoading = false;
@@ -65,19 +60,9 @@ class _SlotSheetContentState extends ConsumerState<_SlotSheetContent> {
     super.initState();
     final e = widget.existing;
     _weekday = e?.weekday ?? DateTime.monday;
-    _anchorType = e != null ? AnchorType.fromArabic(e.anchorType) : AnchorType.fixedTime;
     _fixedTime = e?.fixedTime != null ? _parseTime(e!.fixedTime!) : null;
-    _prayerName = e?.prayerName != null ? PrayerName.fromArabic(e!.prayerName!) : PrayerName.maghrib;
-    _offsetMinutes = e?.offsetMinutes ?? 0;
-    _offsetController = TextEditingController(text: _offsetMinutes == 0 ? '' : '$_offsetMinutes');
     _effectiveFrom = e?.effectiveFrom ?? DateTime.now();
     _effectiveTo = e?.effectiveTo;
-  }
-
-  @override
-  void dispose() {
-    _offsetController.dispose();
-    super.dispose();
   }
 
   TimeOfDay _parseTime(String hhmm) {
@@ -86,7 +71,7 @@ class _SlotSheetContentState extends ConsumerState<_SlotSheetContent> {
   }
 
   Future<void> _save() async {
-    if (_anchorType == AnchorType.fixedTime && _fixedTime == null) {
+    if (_fixedTime == null) {
       AppSnackbar.info(context, 'الرجاء اختيار الوقت');
       return;
     }
@@ -97,10 +82,7 @@ class _SlotSheetContentState extends ConsumerState<_SlotSheetContent> {
         id: widget.existing?.id ?? 0,
         groupId: widget.groupId,
         weekday: _weekday,
-        anchorType: _anchorType.arabic,
-        fixedTime: _anchorType == AnchorType.fixedTime ? AppDateUtils.formatTime(_fixedTime!) : null,
-        prayerName: _anchorType == AnchorType.prayer ? _prayerName.arabic : null,
-        offsetMinutes: _anchorType == AnchorType.prayer ? _offsetMinutes : 0,
+        fixedTime: AppDateUtils.formatTime(_fixedTime!),
         effectiveFrom: _effectiveFrom,
         effectiveTo: _effectiveTo,
         createdAt: widget.existing?.createdAt,
@@ -165,56 +147,21 @@ class _SlotSheetContentState extends ConsumerState<_SlotSheetContent> {
               const SizedBox(height: 16),
               Text('التوقيت', style: Theme.of(context).textTheme.labelLarge),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(child: _Chip(label: 'وقت محدد', selected: _anchorType == AnchorType.fixedTime, onTap: () => setState(() => _anchorType = AnchorType.fixedTime), fullWidth: true)),
-                  const SizedBox(width: 6),
-                  Expanded(child: _Chip(label: 'مرتبط بصلاة', selected: _anchorType == AnchorType.prayer, onTap: () => setState(() => _anchorType = AnchorType.prayer), fullWidth: true)),
-                ],
+              InkWell(
+                onTap: () async {
+                  final picked = await showTimePicker(context: context, initialTime: _fixedTime ?? TimeOfDay.now());
+                  if (picked != null) setState(() => _fixedTime = picked);
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.inputBorder)),
+                  child: Text(
+                    _fixedTime != null ? AppDateUtils.formatTime(_fixedTime!) : 'اختر الوقت',
+                    style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: _fixedTime != null ? AppColors.textPrimary : AppColors.textMuted),
+                  ),
+                ),
               ),
-              const SizedBox(height: 12),
-              if (_anchorType == AnchorType.fixedTime)
-                InkWell(
-                  onTap: () async {
-                    final picked = await showTimePicker(context: context, initialTime: _fixedTime ?? TimeOfDay.now());
-                    if (picked != null) setState(() => _fixedTime = picked);
-                  },
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.inputBorder)),
-                    child: Text(
-                      _fixedTime != null ? AppDateUtils.formatTime(_fixedTime!) : 'اختر الوقت',
-                      style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: _fixedTime != null ? AppColors.textPrimary : AppColors.textMuted),
-                    ),
-                  ),
-                )
-              else ...[
-                DropdownButtonFormField<PrayerName>(
-                  initialValue: _prayerName,
-                  isExpanded: true,
-                  style: const TextStyle(fontFamily: 'Cairo', fontSize: 13.5, color: AppColors.textPrimary),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.inputBorder)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.inputBorder)),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
-                  ),
-                  items: [for (final p in PrayerName.values) DropdownMenuItem(value: p, child: Text(p.arabic))],
-                  onChanged: (v) => setState(() => _prayerName = v ?? _prayerName),
-                ),
-                const SizedBox(height: 10),
-                AppFormField(
-                  controller: _offsetController,
-                  label: 'الإزاحة بالدقائق',
-                  hintText: 'مثال: 15 (بعد الصلاة) أو -10 (قبلها)',
-                  keyboardType: const TextInputType.numberWithOptions(signed: true),
-                  onCard: true,
-                  onChanged: (v) => _offsetMinutes = int.tryParse(v.trim()) ?? 0,
-                ),
-              ],
               const SizedBox(height: 16),
               Text('نطاق السريان', style: Theme.of(context).textTheme.labelLarge),
               const SizedBox(height: 8),
@@ -266,9 +213,8 @@ class _Chip extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  final bool fullWidth;
 
-  const _Chip({required this.label, required this.selected, required this.onTap, this.fullWidth = false});
+  const _Chip({required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -279,7 +225,6 @@ class _Chip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
         child: Container(
-          width: fullWidth ? double.infinity : null,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           alignment: Alignment.center,
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: selected ? AppColors.primary : AppColors.inputBorder)),

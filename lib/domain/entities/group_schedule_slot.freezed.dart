@@ -20,11 +20,9 @@ mixin _$GroupScheduleSlot {
   /// ١ (الاثنين) إلى ٧ (الأحد) — مطابق لـ DateTime.weekday.
   int get weekday;
 
-  /// 'وقت محدد' أو 'مرتبط بصلاة' — راجع core/enums/anchor_type.dart.
-  String get anchorType;
+  /// HH:mm. كان اختيارياً قبل حذف ميزة "مرتبط بصلاة" (راجع
+  /// docs/IMPLEMENTATION_PLAN.md) — الآن هو التوقيت الوحيد لأي موعد.
   String? get fixedTime;
-  String? get prayerName;
-  int get offsetMinutes;
   DateTime get effectiveFrom;
   DateTime? get effectiveTo;
   DateTime? get createdAt;
@@ -48,14 +46,8 @@ mixin _$GroupScheduleSlot {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.groupId, groupId) || other.groupId == groupId) &&
             (identical(other.weekday, weekday) || other.weekday == weekday) &&
-            (identical(other.anchorType, anchorType) ||
-                other.anchorType == anchorType) &&
             (identical(other.fixedTime, fixedTime) ||
                 other.fixedTime == fixedTime) &&
-            (identical(other.prayerName, prayerName) ||
-                other.prayerName == prayerName) &&
-            (identical(other.offsetMinutes, offsetMinutes) ||
-                other.offsetMinutes == offsetMinutes) &&
             (identical(other.effectiveFrom, effectiveFrom) ||
                 other.effectiveFrom == effectiveFrom) &&
             (identical(other.effectiveTo, effectiveTo) ||
@@ -66,22 +58,12 @@ mixin _$GroupScheduleSlot {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      groupId,
-      weekday,
-      anchorType,
-      fixedTime,
-      prayerName,
-      offsetMinutes,
-      effectiveFrom,
-      effectiveTo,
-      createdAt);
+  int get hashCode => Object.hash(runtimeType, id, groupId, weekday, fixedTime,
+      effectiveFrom, effectiveTo, createdAt);
 
   @override
   String toString() {
-    return 'GroupScheduleSlot(id: $id, groupId: $groupId, weekday: $weekday, anchorType: $anchorType, fixedTime: $fixedTime, prayerName: $prayerName, offsetMinutes: $offsetMinutes, effectiveFrom: $effectiveFrom, effectiveTo: $effectiveTo, createdAt: $createdAt)';
+    return 'GroupScheduleSlot(id: $id, groupId: $groupId, weekday: $weekday, fixedTime: $fixedTime, effectiveFrom: $effectiveFrom, effectiveTo: $effectiveTo, createdAt: $createdAt)';
   }
 }
 
@@ -95,10 +77,7 @@ abstract mixin class $GroupScheduleSlotCopyWith<$Res> {
       {int id,
       int groupId,
       int weekday,
-      String anchorType,
       String? fixedTime,
-      String? prayerName,
-      int offsetMinutes,
       DateTime effectiveFrom,
       DateTime? effectiveTo,
       DateTime? createdAt});
@@ -120,10 +99,7 @@ class _$GroupScheduleSlotCopyWithImpl<$Res>
     Object? id = null,
     Object? groupId = null,
     Object? weekday = null,
-    Object? anchorType = null,
     Object? fixedTime = freezed,
-    Object? prayerName = freezed,
-    Object? offsetMinutes = null,
     Object? effectiveFrom = null,
     Object? effectiveTo = freezed,
     Object? createdAt = freezed,
@@ -141,22 +117,10 @@ class _$GroupScheduleSlotCopyWithImpl<$Res>
           ? _self.weekday
           : weekday // ignore: cast_nullable_to_non_nullable
               as int,
-      anchorType: null == anchorType
-          ? _self.anchorType
-          : anchorType // ignore: cast_nullable_to_non_nullable
-              as String,
       fixedTime: freezed == fixedTime
           ? _self.fixedTime
           : fixedTime // ignore: cast_nullable_to_non_nullable
               as String?,
-      prayerName: freezed == prayerName
-          ? _self.prayerName
-          : prayerName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      offsetMinutes: null == offsetMinutes
-          ? _self.offsetMinutes
-          : offsetMinutes // ignore: cast_nullable_to_non_nullable
-              as int,
       effectiveFrom: null == effectiveFrom
           ? _self.effectiveFrom
           : effectiveFrom // ignore: cast_nullable_to_non_nullable
@@ -266,34 +230,16 @@ extension GroupScheduleSlotPatterns on GroupScheduleSlot {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(
-            int id,
-            int groupId,
-            int weekday,
-            String anchorType,
-            String? fixedTime,
-            String? prayerName,
-            int offsetMinutes,
-            DateTime effectiveFrom,
-            DateTime? effectiveTo,
-            DateTime? createdAt)?
+    TResult Function(int id, int groupId, int weekday, String? fixedTime,
+            DateTime effectiveFrom, DateTime? effectiveTo, DateTime? createdAt)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _GroupScheduleSlot() when $default != null:
-        return $default(
-            _that.id,
-            _that.groupId,
-            _that.weekday,
-            _that.anchorType,
-            _that.fixedTime,
-            _that.prayerName,
-            _that.offsetMinutes,
-            _that.effectiveFrom,
-            _that.effectiveTo,
-            _that.createdAt);
+        return $default(_that.id, _that.groupId, _that.weekday, _that.fixedTime,
+            _that.effectiveFrom, _that.effectiveTo, _that.createdAt);
       case _:
         return orElse();
     }
@@ -314,33 +260,15 @@ extension GroupScheduleSlotPatterns on GroupScheduleSlot {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(
-            int id,
-            int groupId,
-            int weekday,
-            String anchorType,
-            String? fixedTime,
-            String? prayerName,
-            int offsetMinutes,
-            DateTime effectiveFrom,
-            DateTime? effectiveTo,
-            DateTime? createdAt)
+    TResult Function(int id, int groupId, int weekday, String? fixedTime,
+            DateTime effectiveFrom, DateTime? effectiveTo, DateTime? createdAt)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _GroupScheduleSlot():
-        return $default(
-            _that.id,
-            _that.groupId,
-            _that.weekday,
-            _that.anchorType,
-            _that.fixedTime,
-            _that.prayerName,
-            _that.offsetMinutes,
-            _that.effectiveFrom,
-            _that.effectiveTo,
-            _that.createdAt);
+        return $default(_that.id, _that.groupId, _that.weekday, _that.fixedTime,
+            _that.effectiveFrom, _that.effectiveTo, _that.createdAt);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -360,33 +288,15 @@ extension GroupScheduleSlotPatterns on GroupScheduleSlot {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(
-            int id,
-            int groupId,
-            int weekday,
-            String anchorType,
-            String? fixedTime,
-            String? prayerName,
-            int offsetMinutes,
-            DateTime effectiveFrom,
-            DateTime? effectiveTo,
-            DateTime? createdAt)?
+    TResult? Function(int id, int groupId, int weekday, String? fixedTime,
+            DateTime effectiveFrom, DateTime? effectiveTo, DateTime? createdAt)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _GroupScheduleSlot() when $default != null:
-        return $default(
-            _that.id,
-            _that.groupId,
-            _that.weekday,
-            _that.anchorType,
-            _that.fixedTime,
-            _that.prayerName,
-            _that.offsetMinutes,
-            _that.effectiveFrom,
-            _that.effectiveTo,
-            _that.createdAt);
+        return $default(_that.id, _that.groupId, _that.weekday, _that.fixedTime,
+            _that.effectiveFrom, _that.effectiveTo, _that.createdAt);
       case _:
         return null;
     }
@@ -400,10 +310,7 @@ class _GroupScheduleSlot implements GroupScheduleSlot {
       {this.id = 0,
       required this.groupId,
       required this.weekday,
-      this.anchorType = 'وقت محدد',
       this.fixedTime,
-      this.prayerName,
-      this.offsetMinutes = 0,
       required this.effectiveFrom,
       this.effectiveTo,
       this.createdAt});
@@ -420,17 +327,10 @@ class _GroupScheduleSlot implements GroupScheduleSlot {
   @override
   final int weekday;
 
-  /// 'وقت محدد' أو 'مرتبط بصلاة' — راجع core/enums/anchor_type.dart.
-  @override
-  @JsonKey()
-  final String anchorType;
+  /// HH:mm. كان اختيارياً قبل حذف ميزة "مرتبط بصلاة" (راجع
+  /// docs/IMPLEMENTATION_PLAN.md) — الآن هو التوقيت الوحيد لأي موعد.
   @override
   final String? fixedTime;
-  @override
-  final String? prayerName;
-  @override
-  @JsonKey()
-  final int offsetMinutes;
   @override
   final DateTime effectiveFrom;
   @override
@@ -461,14 +361,8 @@ class _GroupScheduleSlot implements GroupScheduleSlot {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.groupId, groupId) || other.groupId == groupId) &&
             (identical(other.weekday, weekday) || other.weekday == weekday) &&
-            (identical(other.anchorType, anchorType) ||
-                other.anchorType == anchorType) &&
             (identical(other.fixedTime, fixedTime) ||
                 other.fixedTime == fixedTime) &&
-            (identical(other.prayerName, prayerName) ||
-                other.prayerName == prayerName) &&
-            (identical(other.offsetMinutes, offsetMinutes) ||
-                other.offsetMinutes == offsetMinutes) &&
             (identical(other.effectiveFrom, effectiveFrom) ||
                 other.effectiveFrom == effectiveFrom) &&
             (identical(other.effectiveTo, effectiveTo) ||
@@ -479,22 +373,12 @@ class _GroupScheduleSlot implements GroupScheduleSlot {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      groupId,
-      weekday,
-      anchorType,
-      fixedTime,
-      prayerName,
-      offsetMinutes,
-      effectiveFrom,
-      effectiveTo,
-      createdAt);
+  int get hashCode => Object.hash(runtimeType, id, groupId, weekday, fixedTime,
+      effectiveFrom, effectiveTo, createdAt);
 
   @override
   String toString() {
-    return 'GroupScheduleSlot(id: $id, groupId: $groupId, weekday: $weekday, anchorType: $anchorType, fixedTime: $fixedTime, prayerName: $prayerName, offsetMinutes: $offsetMinutes, effectiveFrom: $effectiveFrom, effectiveTo: $effectiveTo, createdAt: $createdAt)';
+    return 'GroupScheduleSlot(id: $id, groupId: $groupId, weekday: $weekday, fixedTime: $fixedTime, effectiveFrom: $effectiveFrom, effectiveTo: $effectiveTo, createdAt: $createdAt)';
   }
 }
 
@@ -510,10 +394,7 @@ abstract mixin class _$GroupScheduleSlotCopyWith<$Res>
       {int id,
       int groupId,
       int weekday,
-      String anchorType,
       String? fixedTime,
-      String? prayerName,
-      int offsetMinutes,
       DateTime effectiveFrom,
       DateTime? effectiveTo,
       DateTime? createdAt});
@@ -535,10 +416,7 @@ class __$GroupScheduleSlotCopyWithImpl<$Res>
     Object? id = null,
     Object? groupId = null,
     Object? weekday = null,
-    Object? anchorType = null,
     Object? fixedTime = freezed,
-    Object? prayerName = freezed,
-    Object? offsetMinutes = null,
     Object? effectiveFrom = null,
     Object? effectiveTo = freezed,
     Object? createdAt = freezed,
@@ -556,22 +434,10 @@ class __$GroupScheduleSlotCopyWithImpl<$Res>
           ? _self.weekday
           : weekday // ignore: cast_nullable_to_non_nullable
               as int,
-      anchorType: null == anchorType
-          ? _self.anchorType
-          : anchorType // ignore: cast_nullable_to_non_nullable
-              as String,
       fixedTime: freezed == fixedTime
           ? _self.fixedTime
           : fixedTime // ignore: cast_nullable_to_non_nullable
               as String?,
-      prayerName: freezed == prayerName
-          ? _self.prayerName
-          : prayerName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      offsetMinutes: null == offsetMinutes
-          ? _self.offsetMinutes
-          : offsetMinutes // ignore: cast_nullable_to_non_nullable
-              as int,
       effectiveFrom: null == effectiveFrom
           ? _self.effectiveFrom
           : effectiveFrom // ignore: cast_nullable_to_non_nullable

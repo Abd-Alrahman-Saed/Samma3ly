@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_mobile/core/services/notification_service.dart';
 import 'package:quran_mobile/features/groups/providers/group_provider.dart';
 import 'package:quran_mobile/features/settings/providers/notification_settings_provider.dart';
-import 'package:quran_mobile/features/settings/providers/prayer_settings_provider.dart';
 import 'package:quran_mobile/providers.dart';
 
 /// Item 3.5 — re-syncs a group's upcoming-session reminders (next 14 days)
@@ -21,12 +20,10 @@ Future<void> rescheduleGroupNotifications(WidgetRef ref, int groupId) async {
 
   final settings = ref.read(notificationSettingsProvider);
   final service = ref.read(groupSessionServiceProvider);
-  final resolver = ref.read(prayerTimeResolverProvider);
   final occurrences = await service.upcomingOccurrences(
     groupId: groupId,
     from: windowStart,
     to: windowEnd,
-    prayerTimeResolver: resolver,
   );
   final occurrenceDateTimes = {for (final o in occurrences) o.date: o.dateTime};
 

@@ -12,11 +12,9 @@ abstract class GroupScheduleSlot with _$GroupScheduleSlot {
     /// ١ (الاثنين) إلى ٧ (الأحد) — مطابق لـ DateTime.weekday.
     required int weekday,
 
-    /// 'وقت محدد' أو 'مرتبط بصلاة' — راجع core/enums/anchor_type.dart.
-    @Default('وقت محدد') String anchorType,
+    /// HH:mm. كان اختيارياً قبل حذف ميزة "مرتبط بصلاة" (راجع
+    /// docs/IMPLEMENTATION_PLAN.md) — الآن هو التوقيت الوحيد لأي موعد.
     String? fixedTime,
-    String? prayerName,
-    @Default(0) int offsetMinutes,
     required DateTime effectiveFrom,
     DateTime? effectiveTo,
     DateTime? createdAt,

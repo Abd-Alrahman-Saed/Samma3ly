@@ -6493,34 +6493,12 @@ class $GroupScheduleSlotsTable extends GroupScheduleSlots
   late final GeneratedColumn<int> weekday = GeneratedColumn<int>(
       'weekday', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
-  static const VerificationMeta _anchorTypeMeta =
-      const VerificationMeta('anchorType');
-  @override
-  late final GeneratedColumn<String> anchorType = GeneratedColumn<String>(
-      'anchor_type', aliasedName, false,
-      additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 20),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
   static const VerificationMeta _fixedTimeMeta =
       const VerificationMeta('fixedTime');
   @override
   late final GeneratedColumn<String> fixedTime = GeneratedColumn<String>(
       'fixed_time', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _prayerNameMeta =
-      const VerificationMeta('prayerName');
-  @override
-  late final GeneratedColumn<String> prayerName = GeneratedColumn<String>(
-      'prayer_name', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _offsetMinutesMeta =
-      const VerificationMeta('offsetMinutes');
-  @override
-  late final GeneratedColumn<int> offsetMinutes = GeneratedColumn<int>(
-      'offset_minutes', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0));
   static const VerificationMeta _effectiveFromMeta =
       const VerificationMeta('effectiveFrom');
   @override
@@ -6542,18 +6520,8 @@ class $GroupScheduleSlotsTable extends GroupScheduleSlots
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
   @override
-  List<GeneratedColumn> get $columns => [
-        id,
-        groupId,
-        weekday,
-        anchorType,
-        fixedTime,
-        prayerName,
-        offsetMinutes,
-        effectiveFrom,
-        effectiveTo,
-        createdAt
-      ];
+  List<GeneratedColumn> get $columns =>
+      [id, groupId, weekday, fixedTime, effectiveFrom, effectiveTo, createdAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -6579,29 +6547,9 @@ class $GroupScheduleSlotsTable extends GroupScheduleSlots
     } else if (isInserting) {
       context.missing(_weekdayMeta);
     }
-    if (data.containsKey('anchor_type')) {
-      context.handle(
-          _anchorTypeMeta,
-          anchorType.isAcceptableOrUnknown(
-              data['anchor_type']!, _anchorTypeMeta));
-    } else if (isInserting) {
-      context.missing(_anchorTypeMeta);
-    }
     if (data.containsKey('fixed_time')) {
       context.handle(_fixedTimeMeta,
           fixedTime.isAcceptableOrUnknown(data['fixed_time']!, _fixedTimeMeta));
-    }
-    if (data.containsKey('prayer_name')) {
-      context.handle(
-          _prayerNameMeta,
-          prayerName.isAcceptableOrUnknown(
-              data['prayer_name']!, _prayerNameMeta));
-    }
-    if (data.containsKey('offset_minutes')) {
-      context.handle(
-          _offsetMinutesMeta,
-          offsetMinutes.isAcceptableOrUnknown(
-              data['offset_minutes']!, _offsetMinutesMeta));
     }
     if (data.containsKey('effective_from')) {
       context.handle(
@@ -6636,14 +6584,8 @@ class $GroupScheduleSlotsTable extends GroupScheduleSlots
           .read(DriftSqlType.int, data['${effectivePrefix}group_id'])!,
       weekday: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}weekday'])!,
-      anchorType: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}anchor_type'])!,
       fixedTime: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}fixed_time']),
-      prayerName: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}prayer_name']),
-      offsetMinutes: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}offset_minutes'])!,
       effectiveFrom: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}effective_from'])!,
       effectiveTo: attachedDatabase.typeMapping
@@ -6667,17 +6609,8 @@ class GroupScheduleSlot extends DataClass
   /// ١ (الاثنين) إلى ٧ (الأحد) — مطابق لـ DateTime.weekday في Dart.
   final int weekday;
 
-  /// 'وقت محدد' أو 'مرتبط بصلاة' — راجع core/enums/anchor_type.dart.
-  final String anchorType;
-
-  /// HH:mm — مطلوب فقط لو anchorType == 'وقت محدد'.
+  /// HH:mm.
   final String? fixedTime;
-
-  /// اسم الصلاة (مثال: 'المغرب') — مطلوب فقط لو anchorType == 'مرتبط بصلاة'.
-  final String? prayerName;
-
-  /// الإزاحة بالدقائق عن وقت الصلاة (يمكن أن تكون سالبة = قبل الصلاة).
-  final int offsetMinutes;
   final DateTime effectiveFrom;
   final DateTime? effectiveTo;
   final DateTime createdAt;
@@ -6685,10 +6618,7 @@ class GroupScheduleSlot extends DataClass
       {required this.id,
       required this.groupId,
       required this.weekday,
-      required this.anchorType,
       this.fixedTime,
-      this.prayerName,
-      required this.offsetMinutes,
       required this.effectiveFrom,
       this.effectiveTo,
       required this.createdAt});
@@ -6698,14 +6628,9 @@ class GroupScheduleSlot extends DataClass
     map['id'] = Variable<int>(id);
     map['group_id'] = Variable<int>(groupId);
     map['weekday'] = Variable<int>(weekday);
-    map['anchor_type'] = Variable<String>(anchorType);
     if (!nullToAbsent || fixedTime != null) {
       map['fixed_time'] = Variable<String>(fixedTime);
     }
-    if (!nullToAbsent || prayerName != null) {
-      map['prayer_name'] = Variable<String>(prayerName);
-    }
-    map['offset_minutes'] = Variable<int>(offsetMinutes);
     map['effective_from'] = Variable<DateTime>(effectiveFrom);
     if (!nullToAbsent || effectiveTo != null) {
       map['effective_to'] = Variable<DateTime>(effectiveTo);
@@ -6719,14 +6644,9 @@ class GroupScheduleSlot extends DataClass
       id: Value(id),
       groupId: Value(groupId),
       weekday: Value(weekday),
-      anchorType: Value(anchorType),
       fixedTime: fixedTime == null && nullToAbsent
           ? const Value.absent()
           : Value(fixedTime),
-      prayerName: prayerName == null && nullToAbsent
-          ? const Value.absent()
-          : Value(prayerName),
-      offsetMinutes: Value(offsetMinutes),
       effectiveFrom: Value(effectiveFrom),
       effectiveTo: effectiveTo == null && nullToAbsent
           ? const Value.absent()
@@ -6742,10 +6662,7 @@ class GroupScheduleSlot extends DataClass
       id: serializer.fromJson<int>(json['id']),
       groupId: serializer.fromJson<int>(json['groupId']),
       weekday: serializer.fromJson<int>(json['weekday']),
-      anchorType: serializer.fromJson<String>(json['anchorType']),
       fixedTime: serializer.fromJson<String?>(json['fixedTime']),
-      prayerName: serializer.fromJson<String?>(json['prayerName']),
-      offsetMinutes: serializer.fromJson<int>(json['offsetMinutes']),
       effectiveFrom: serializer.fromJson<DateTime>(json['effectiveFrom']),
       effectiveTo: serializer.fromJson<DateTime?>(json['effectiveTo']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -6758,10 +6675,7 @@ class GroupScheduleSlot extends DataClass
       'id': serializer.toJson<int>(id),
       'groupId': serializer.toJson<int>(groupId),
       'weekday': serializer.toJson<int>(weekday),
-      'anchorType': serializer.toJson<String>(anchorType),
       'fixedTime': serializer.toJson<String?>(fixedTime),
-      'prayerName': serializer.toJson<String?>(prayerName),
-      'offsetMinutes': serializer.toJson<int>(offsetMinutes),
       'effectiveFrom': serializer.toJson<DateTime>(effectiveFrom),
       'effectiveTo': serializer.toJson<DateTime?>(effectiveTo),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -6772,10 +6686,7 @@ class GroupScheduleSlot extends DataClass
           {int? id,
           int? groupId,
           int? weekday,
-          String? anchorType,
           Value<String?> fixedTime = const Value.absent(),
-          Value<String?> prayerName = const Value.absent(),
-          int? offsetMinutes,
           DateTime? effectiveFrom,
           Value<DateTime?> effectiveTo = const Value.absent(),
           DateTime? createdAt}) =>
@@ -6783,10 +6694,7 @@ class GroupScheduleSlot extends DataClass
         id: id ?? this.id,
         groupId: groupId ?? this.groupId,
         weekday: weekday ?? this.weekday,
-        anchorType: anchorType ?? this.anchorType,
         fixedTime: fixedTime.present ? fixedTime.value : this.fixedTime,
-        prayerName: prayerName.present ? prayerName.value : this.prayerName,
-        offsetMinutes: offsetMinutes ?? this.offsetMinutes,
         effectiveFrom: effectiveFrom ?? this.effectiveFrom,
         effectiveTo: effectiveTo.present ? effectiveTo.value : this.effectiveTo,
         createdAt: createdAt ?? this.createdAt,
@@ -6796,14 +6704,7 @@ class GroupScheduleSlot extends DataClass
       id: data.id.present ? data.id.value : this.id,
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
       weekday: data.weekday.present ? data.weekday.value : this.weekday,
-      anchorType:
-          data.anchorType.present ? data.anchorType.value : this.anchorType,
       fixedTime: data.fixedTime.present ? data.fixedTime.value : this.fixedTime,
-      prayerName:
-          data.prayerName.present ? data.prayerName.value : this.prayerName,
-      offsetMinutes: data.offsetMinutes.present
-          ? data.offsetMinutes.value
-          : this.offsetMinutes,
       effectiveFrom: data.effectiveFrom.present
           ? data.effectiveFrom.value
           : this.effectiveFrom,
@@ -6819,10 +6720,7 @@ class GroupScheduleSlot extends DataClass
           ..write('id: $id, ')
           ..write('groupId: $groupId, ')
           ..write('weekday: $weekday, ')
-          ..write('anchorType: $anchorType, ')
           ..write('fixedTime: $fixedTime, ')
-          ..write('prayerName: $prayerName, ')
-          ..write('offsetMinutes: $offsetMinutes, ')
           ..write('effectiveFrom: $effectiveFrom, ')
           ..write('effectiveTo: $effectiveTo, ')
           ..write('createdAt: $createdAt')
@@ -6831,8 +6729,8 @@ class GroupScheduleSlot extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(id, groupId, weekday, anchorType, fixedTime,
-      prayerName, offsetMinutes, effectiveFrom, effectiveTo, createdAt);
+  int get hashCode => Object.hash(
+      id, groupId, weekday, fixedTime, effectiveFrom, effectiveTo, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -6840,10 +6738,7 @@ class GroupScheduleSlot extends DataClass
           other.id == this.id &&
           other.groupId == this.groupId &&
           other.weekday == this.weekday &&
-          other.anchorType == this.anchorType &&
           other.fixedTime == this.fixedTime &&
-          other.prayerName == this.prayerName &&
-          other.offsetMinutes == this.offsetMinutes &&
           other.effectiveFrom == this.effectiveFrom &&
           other.effectiveTo == this.effectiveTo &&
           other.createdAt == this.createdAt);
@@ -6853,10 +6748,7 @@ class GroupScheduleSlotsCompanion extends UpdateCompanion<GroupScheduleSlot> {
   final Value<int> id;
   final Value<int> groupId;
   final Value<int> weekday;
-  final Value<String> anchorType;
   final Value<String?> fixedTime;
-  final Value<String?> prayerName;
-  final Value<int> offsetMinutes;
   final Value<DateTime> effectiveFrom;
   final Value<DateTime?> effectiveTo;
   final Value<DateTime> createdAt;
@@ -6864,10 +6756,7 @@ class GroupScheduleSlotsCompanion extends UpdateCompanion<GroupScheduleSlot> {
     this.id = const Value.absent(),
     this.groupId = const Value.absent(),
     this.weekday = const Value.absent(),
-    this.anchorType = const Value.absent(),
     this.fixedTime = const Value.absent(),
-    this.prayerName = const Value.absent(),
-    this.offsetMinutes = const Value.absent(),
     this.effectiveFrom = const Value.absent(),
     this.effectiveTo = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -6876,25 +6765,18 @@ class GroupScheduleSlotsCompanion extends UpdateCompanion<GroupScheduleSlot> {
     this.id = const Value.absent(),
     required int groupId,
     required int weekday,
-    required String anchorType,
     this.fixedTime = const Value.absent(),
-    this.prayerName = const Value.absent(),
-    this.offsetMinutes = const Value.absent(),
     required DateTime effectiveFrom,
     this.effectiveTo = const Value.absent(),
     this.createdAt = const Value.absent(),
   })  : groupId = Value(groupId),
         weekday = Value(weekday),
-        anchorType = Value(anchorType),
         effectiveFrom = Value(effectiveFrom);
   static Insertable<GroupScheduleSlot> custom({
     Expression<int>? id,
     Expression<int>? groupId,
     Expression<int>? weekday,
-    Expression<String>? anchorType,
     Expression<String>? fixedTime,
-    Expression<String>? prayerName,
-    Expression<int>? offsetMinutes,
     Expression<DateTime>? effectiveFrom,
     Expression<DateTime>? effectiveTo,
     Expression<DateTime>? createdAt,
@@ -6903,10 +6785,7 @@ class GroupScheduleSlotsCompanion extends UpdateCompanion<GroupScheduleSlot> {
       if (id != null) 'id': id,
       if (groupId != null) 'group_id': groupId,
       if (weekday != null) 'weekday': weekday,
-      if (anchorType != null) 'anchor_type': anchorType,
       if (fixedTime != null) 'fixed_time': fixedTime,
-      if (prayerName != null) 'prayer_name': prayerName,
-      if (offsetMinutes != null) 'offset_minutes': offsetMinutes,
       if (effectiveFrom != null) 'effective_from': effectiveFrom,
       if (effectiveTo != null) 'effective_to': effectiveTo,
       if (createdAt != null) 'created_at': createdAt,
@@ -6917,10 +6796,7 @@ class GroupScheduleSlotsCompanion extends UpdateCompanion<GroupScheduleSlot> {
       {Value<int>? id,
       Value<int>? groupId,
       Value<int>? weekday,
-      Value<String>? anchorType,
       Value<String?>? fixedTime,
-      Value<String?>? prayerName,
-      Value<int>? offsetMinutes,
       Value<DateTime>? effectiveFrom,
       Value<DateTime?>? effectiveTo,
       Value<DateTime>? createdAt}) {
@@ -6928,10 +6804,7 @@ class GroupScheduleSlotsCompanion extends UpdateCompanion<GroupScheduleSlot> {
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       weekday: weekday ?? this.weekday,
-      anchorType: anchorType ?? this.anchorType,
       fixedTime: fixedTime ?? this.fixedTime,
-      prayerName: prayerName ?? this.prayerName,
-      offsetMinutes: offsetMinutes ?? this.offsetMinutes,
       effectiveFrom: effectiveFrom ?? this.effectiveFrom,
       effectiveTo: effectiveTo ?? this.effectiveTo,
       createdAt: createdAt ?? this.createdAt,
@@ -6950,17 +6823,8 @@ class GroupScheduleSlotsCompanion extends UpdateCompanion<GroupScheduleSlot> {
     if (weekday.present) {
       map['weekday'] = Variable<int>(weekday.value);
     }
-    if (anchorType.present) {
-      map['anchor_type'] = Variable<String>(anchorType.value);
-    }
     if (fixedTime.present) {
       map['fixed_time'] = Variable<String>(fixedTime.value);
-    }
-    if (prayerName.present) {
-      map['prayer_name'] = Variable<String>(prayerName.value);
-    }
-    if (offsetMinutes.present) {
-      map['offset_minutes'] = Variable<int>(offsetMinutes.value);
     }
     if (effectiveFrom.present) {
       map['effective_from'] = Variable<DateTime>(effectiveFrom.value);
@@ -6980,10 +6844,7 @@ class GroupScheduleSlotsCompanion extends UpdateCompanion<GroupScheduleSlot> {
           ..write('id: $id, ')
           ..write('groupId: $groupId, ')
           ..write('weekday: $weekday, ')
-          ..write('anchorType: $anchorType, ')
           ..write('fixedTime: $fixedTime, ')
-          ..write('prayerName: $prayerName, ')
-          ..write('offsetMinutes: $offsetMinutes, ')
           ..write('effectiveFrom: $effectiveFrom, ')
           ..write('effectiveTo: $effectiveTo, ')
           ..write('createdAt: $createdAt')
@@ -14548,10 +14409,7 @@ typedef $$GroupScheduleSlotsTableCreateCompanionBuilder
   Value<int> id,
   required int groupId,
   required int weekday,
-  required String anchorType,
   Value<String?> fixedTime,
-  Value<String?> prayerName,
-  Value<int> offsetMinutes,
   required DateTime effectiveFrom,
   Value<DateTime?> effectiveTo,
   Value<DateTime> createdAt,
@@ -14561,10 +14419,7 @@ typedef $$GroupScheduleSlotsTableUpdateCompanionBuilder
   Value<int> id,
   Value<int> groupId,
   Value<int> weekday,
-  Value<String> anchorType,
   Value<String?> fixedTime,
-  Value<String?> prayerName,
-  Value<int> offsetMinutes,
   Value<DateTime> effectiveFrom,
   Value<DateTime?> effectiveTo,
   Value<DateTime> createdAt,
@@ -14624,17 +14479,8 @@ class $$GroupScheduleSlotsTableFilterComposer
   ColumnFilters<int> get weekday => $composableBuilder(
       column: $table.weekday, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get anchorType => $composableBuilder(
-      column: $table.anchorType, builder: (column) => ColumnFilters(column));
-
   ColumnFilters<String> get fixedTime => $composableBuilder(
       column: $table.fixedTime, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get prayerName => $composableBuilder(
-      column: $table.prayerName, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get offsetMinutes => $composableBuilder(
-      column: $table.offsetMinutes, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get effectiveFrom => $composableBuilder(
       column: $table.effectiveFrom, builder: (column) => ColumnFilters(column));
@@ -14702,18 +14548,8 @@ class $$GroupScheduleSlotsTableOrderingComposer
   ColumnOrderings<int> get weekday => $composableBuilder(
       column: $table.weekday, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get anchorType => $composableBuilder(
-      column: $table.anchorType, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get fixedTime => $composableBuilder(
       column: $table.fixedTime, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get prayerName => $composableBuilder(
-      column: $table.prayerName, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get offsetMinutes => $composableBuilder(
-      column: $table.offsetMinutes,
-      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get effectiveFrom => $composableBuilder(
       column: $table.effectiveFrom,
@@ -14761,17 +14597,8 @@ class $$GroupScheduleSlotsTableAnnotationComposer
   GeneratedColumn<int> get weekday =>
       $composableBuilder(column: $table.weekday, builder: (column) => column);
 
-  GeneratedColumn<String> get anchorType => $composableBuilder(
-      column: $table.anchorType, builder: (column) => column);
-
   GeneratedColumn<String> get fixedTime =>
       $composableBuilder(column: $table.fixedTime, builder: (column) => column);
-
-  GeneratedColumn<String> get prayerName => $composableBuilder(
-      column: $table.prayerName, builder: (column) => column);
-
-  GeneratedColumn<int> get offsetMinutes => $composableBuilder(
-      column: $table.offsetMinutes, builder: (column) => column);
 
   GeneratedColumn<DateTime> get effectiveFrom => $composableBuilder(
       column: $table.effectiveFrom, builder: (column) => column);
@@ -14853,10 +14680,7 @@ class $$GroupScheduleSlotsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<int> groupId = const Value.absent(),
             Value<int> weekday = const Value.absent(),
-            Value<String> anchorType = const Value.absent(),
             Value<String?> fixedTime = const Value.absent(),
-            Value<String?> prayerName = const Value.absent(),
-            Value<int> offsetMinutes = const Value.absent(),
             Value<DateTime> effectiveFrom = const Value.absent(),
             Value<DateTime?> effectiveTo = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
@@ -14865,10 +14689,7 @@ class $$GroupScheduleSlotsTableTableManager extends RootTableManager<
             id: id,
             groupId: groupId,
             weekday: weekday,
-            anchorType: anchorType,
             fixedTime: fixedTime,
-            prayerName: prayerName,
-            offsetMinutes: offsetMinutes,
             effectiveFrom: effectiveFrom,
             effectiveTo: effectiveTo,
             createdAt: createdAt,
@@ -14877,10 +14698,7 @@ class $$GroupScheduleSlotsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             required int groupId,
             required int weekday,
-            required String anchorType,
             Value<String?> fixedTime = const Value.absent(),
-            Value<String?> prayerName = const Value.absent(),
-            Value<int> offsetMinutes = const Value.absent(),
             required DateTime effectiveFrom,
             Value<DateTime?> effectiveTo = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
@@ -14889,10 +14707,7 @@ class $$GroupScheduleSlotsTableTableManager extends RootTableManager<
             id: id,
             groupId: groupId,
             weekday: weekday,
-            anchorType: anchorType,
             fixedTime: fixedTime,
-            prayerName: prayerName,
-            offsetMinutes: offsetMinutes,
             effectiveFrom: effectiveFrom,
             effectiveTo: effectiveTo,
             createdAt: createdAt,

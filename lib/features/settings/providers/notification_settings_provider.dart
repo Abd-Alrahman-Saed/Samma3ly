@@ -37,8 +37,8 @@ const _prefsReviewMinuteKey = 'notification_settings_review_minute';
 const _prefsGroupLeadMinutesKey = 'notification_settings_group_lead_minutes';
 
 class NotificationSettingsNotifier extends StateNotifier<NotificationSettings> {
-  /// See PrayerSettingsNotifier.ready — same reasoning: lets tests await
-  /// the initial SharedPreferences load deterministically.
+  /// Lets tests await the initial SharedPreferences load deterministically
+  /// instead of racing it.
   late final Future<void> ready;
 
   NotificationSettingsNotifier() : super(const NotificationSettings()) {

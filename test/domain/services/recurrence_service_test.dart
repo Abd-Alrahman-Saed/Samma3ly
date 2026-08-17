@@ -1,21 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quran_mobile/core/enums/anchor_type.dart';
 import 'package:quran_mobile/core/enums/schedule_exception_type.dart';
 import 'package:quran_mobile/data/local/database/app_database.dart';
 import 'package:quran_mobile/domain/services/recurrence_service.dart';
-
-class _FakePrayerTimeResolver implements PrayerTimeResolver {
-  /// Every prayer resolves to the same hour:minute on every date, so tests
-  /// stay deterministic without a real adhan calculation (item 2.3).
-  final int hour;
-  final int minute;
-  _FakePrayerTimeResolver({this.hour = 18, this.minute = 30});
-
-  @override
-  DateTime resolve({required DateTime date, required String prayerName}) {
-    return DateTime(date.year, date.month, date.day, hour, minute);
-  }
-}
 
 GroupScheduleSlot _fixedSlot({
   int id = 1,
@@ -29,31 +15,7 @@ GroupScheduleSlot _fixedSlot({
     id: id,
     groupId: groupId,
     weekday: weekday,
-    anchorType: AnchorType.fixedTime.arabic,
     fixedTime: fixedTime,
-    offsetMinutes: 0,
-    effectiveFrom: effectiveFrom,
-    effectiveTo: effectiveTo,
-    createdAt: DateTime(2026, 1, 1),
-  );
-}
-
-GroupScheduleSlot _prayerSlot({
-  int id = 1,
-  int groupId = 1,
-  required int weekday,
-  String prayerName = 'المغرب',
-  int offsetMinutes = 15,
-  required DateTime effectiveFrom,
-  DateTime? effectiveTo,
-}) {
-  return GroupScheduleSlot(
-    id: id,
-    groupId: groupId,
-    weekday: weekday,
-    anchorType: AnchorType.prayer.arabic,
-    prayerName: prayerName,
-    offsetMinutes: offsetMinutes,
     effectiveFrom: effectiveFrom,
     effectiveTo: effectiveTo,
     createdAt: DateTime(2026, 1, 1),
@@ -302,60 +264,12 @@ void main() {
     });
   });
 
-  group('التعيين بمواقيت الصلاة (anchorType = مرتبط بصلاة)', () {
-    test('يستخدم الـ resolver ويضيف offsetMinutes', () {
-      final slot = _prayerSlot(
-        weekday: DateTime.tuesday,
-        prayerName: 'المغرب',
-        offsetMinutes: 15,
-        effectiveFrom: DateTime(2026, 3, 1),
-      );
-      final result = service.expand(
-        slot: slot,
-        rangeStart: DateTime(2026, 3, 1),
-        rangeEnd: DateTime(2026, 3, 9),
-        prayerTimeResolver: _FakePrayerTimeResolver(hour: 18, minute: 30),
-      );
-      expect(result, hasLength(1));
-      expect(result.first.dateTime, DateTime(2026, 3, 3, 18, 45)); // +15 min offset
-    });
-
-    test('إزاحة سالبة تُطبَّق قبل وقت الصلاة', () {
-      final slot = _prayerSlot(
-        weekday: DateTime.tuesday,
-        offsetMinutes: -10,
-        effectiveFrom: DateTime(2026, 3, 1),
-      );
-      final result = service.expand(
-        slot: slot,
-        rangeStart: DateTime(2026, 3, 1),
-        rangeEnd: DateTime(2026, 3, 10),
-        prayerTimeResolver: _FakePrayerTimeResolver(hour: 18, minute: 30),
-      );
-      expect(result.first.dateTime, DateTime(2026, 3, 3, 18, 20));
-    });
-
-    test('بلا resolver يرمي StateError برسالة توضّح أن التنفيذ في بند 2.3', () {
-      final slot = _prayerSlot(weekday: DateTime.tuesday, effectiveFrom: DateTime(2026, 3, 1));
-      expect(
-        () => service.expand(
-          slot: slot,
-          rangeStart: DateTime(2026, 3, 1),
-          rangeEnd: DateTime(2026, 3, 10),
-        ),
-        throwsA(isA<StateError>()),
-      );
-    });
-  });
-
   group('حالات دفاعية (بيانات غير متسقة)', () {
-    test('anchorType=وقت محدد بلا fixedTime يرمي StateError', () {
+    test('بلا fixedTime يرمي StateError', () {
       final slot = GroupScheduleSlot(
         id: 1,
         groupId: 1,
         weekday: DateTime.monday,
-        anchorType: AnchorType.fixedTime.arabic,
-        offsetMinutes: 0,
         effectiveFrom: DateTime(2026, 3, 1),
         createdAt: DateTime(2026, 1, 1),
       );

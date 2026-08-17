@@ -12,10 +12,7 @@ entity.GroupScheduleSlot _slotToEntity(db.GroupScheduleSlot s) => entity.GroupSc
       id: s.id,
       groupId: s.groupId,
       weekday: s.weekday,
-      anchorType: s.anchorType,
       fixedTime: s.fixedTime,
-      prayerName: s.prayerName,
-      offsetMinutes: s.offsetMinutes,
       effectiveFrom: s.effectiveFrom,
       effectiveTo: s.effectiveTo,
       createdAt: s.createdAt,
@@ -47,10 +44,7 @@ class GroupScheduleRepositoryImpl implements GroupScheduleRepository {
     final id = await _dao.insertSlot(GroupScheduleSlotsCompanion(
       groupId: Value(slot.groupId),
       weekday: Value(slot.weekday),
-      anchorType: Value(slot.anchorType),
       fixedTime: Value(slot.fixedTime),
-      prayerName: Value(slot.prayerName),
-      offsetMinutes: Value(slot.offsetMinutes),
       effectiveFrom: Value(slot.effectiveFrom),
       effectiveTo: Value(slot.effectiveTo),
       createdAt: Value(DateTime.now()),
@@ -64,10 +58,7 @@ class GroupScheduleRepositoryImpl implements GroupScheduleRepository {
       id: Value(slot.id),
       groupId: Value(slot.groupId),
       weekday: Value(slot.weekday),
-      anchorType: Value(slot.anchorType),
       fixedTime: Value(slot.fixedTime),
-      prayerName: Value(slot.prayerName),
-      offsetMinutes: Value(slot.offsetMinutes),
       effectiveFrom: Value(slot.effectiveFrom),
       effectiveTo: Value(slot.effectiveTo),
       createdAt: Value(slot.createdAt ?? DateTime.now()),
@@ -109,7 +100,6 @@ class GroupScheduleRepositoryImpl implements GroupScheduleRepository {
     required int groupId,
     required DateTime from,
     required DateTime to,
-    PrayerTimeResolver? prayerTimeResolver,
   }) async {
     final slots = await _dao.getSlots(groupId);
     if (slots.isEmpty) return const [];
@@ -121,7 +111,6 @@ class GroupScheduleRepositoryImpl implements GroupScheduleRepository {
       exceptions: exceptions,
       rangeStart: from,
       rangeEnd: to,
-      prayerTimeResolver: prayerTimeResolver,
     );
   }
 }

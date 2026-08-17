@@ -1329,6 +1329,78 @@ drift، خلافاً للأعمدة غير القابلة للـnull الجدي�
 
 ---
 
+## ح.13 — حذف ميزة "مرتبط بصلاة" (Prayer-time anchoring) بالكامل
+
+**الطلب:** "امسح التوقيت المرتبط بالصلاة".
+
+**قبل الحذف:** بند 2.3 كان يسمح لموعد الحلقة الأسبوعي أن يكون إما وقتاً
+ثابتاً، أو "مرتبطاً بصلاة" (اسم الصلاة + إزاحة بالدقائق)، محسوباً فعلياً
+عبر حزمة `adhan` بناءً على موقع/طريقة حساب/مذهب يضبطهم المعلّم من
+الإعدادات. هذه الميزة أُزيلت بالكامل — لم يبقَ إلا الوقت الثابت.
+
+**الحذف الكامل (ملفات محذوفة):**
+- `lib/core/enums/anchor_type.dart`, `prayer_madhab.dart`,
+  `prayer_calculation_method.dart`, `prayer_name.dart`
+- `lib/domain/services/adhan_prayer_time_resolver.dart`
+- `lib/features/settings/providers/prayer_settings_provider.dart`
+- اختباراتها: `test/domain/services/adhan_prayer_time_resolver_test.dart`,
+  `test/features/settings/providers/prayer_settings_provider_test.dart`
+- اعتماد الحزمة `adhan` من `pubspec.yaml` بالكامل.
+
+**التبسيط عبر السلسلة الكاملة** (كل موضع كان يمرّر `prayerTimeResolver`
+اختيارياً، أُزيل المعامل نفسه لا فقط قيمته — لم يعد له أي استهلاك ممكن):
+`RecurrenceService.expand/expandAll` (حذف واجهة `PrayerTimeResolver`
+وفرع "مرتبط بصلاة" في `_resolveTime`)، `GroupScheduleRepository.
+expandOccurrences` (الواجهة والتنفيذ)، `GroupSessionService.
+upcomingOccurrences`، `WeeklyCalendarService.getEntries`،
+`calendar_provider.dart`، `group_provider.dart`،
+`group_notification_scheduler.dart`.
+
+**الكيان/الجدول:** `GroupScheduleSlot`/`GroupScheduleSlots` — حذف
+`anchorType`/`prayerName`/`offsetMinutes`، وبقي `fixedTime` هو التوقيت
+الوحيد لأي موعد.
+
+**الواجهة:** `GroupScheduleSlotSheet` — حذف زرَّي الاختيار "وقت محدد"/
+"مرتبط بصلاة" وحقلَي اسم الصلاة/الإزاحة؛ منتقي الوقت الثابت يظهر دائماً
+الآن. `GroupDetailScreen._timeLabel` بسِّط لعرض `الساعة {fixedTime}`
+فقط. `SettingsScreen` — حُذف قسم "مواقيت الصلاة" (الصف + `_showPrayer
+SettingsDialog`) بالكامل؛ الإعدادات المتبقية (الإشعارات، الملف الشخصي،
+النسخ الاحتياطي، المساعدة) غير متأثرة.
+
+**Schema v9:** حذف 3 أعمدة (`anchor_type`, `prayer_name`,
+`offset_minutes`) من `group_schedule_slots` عبر `m.dropColumn()` (يتطلب
+SQLite ≥ 3.35 — متوفر عبر `sqlite3_flutter_libs` المرفقة مع التطبيق).
+`group_schedule_slots` أنشأتها كتلة v4 بـ`m.createTable()` (تماماً مثل
+`session_attendances`) — فنفس فخّ "الشكل الحيّ الحالي" ينطبق هنا، وحُرست
+كتلة v9 بنفس `from >= 4` المُثبَّت من قبل. قبل الحذف، `UPDATE` يُعطي أي
+موعد كان `fixed_time IS NULL` (أي كان مرتبطاً بصلاة قبلاً، بلا وقت ثابت
+مخزَّن) قيمة افتراضية `'18:00'` — تفادياً لموعد بلا أي توقيت بعد حذف
+الطريقة الوحيدة لحساب وقته.
+
+**الاختبارات:**
+- `test/domain/services/recurrence_service_test.dart` — حذف مجموعة
+  "التعيين بمواقيت الصلاة" بالكامل (3 اختبارات) و`_FakePrayerTimeResolver`/
+  `_prayerSlot`؛ الاختبار الدفاعي "anchorType=وقت محدد بلا fixedTime"
+  بقي بنفس المعنى ("بلا fixedTime يرمي StateError") بعد حذف الحقل.
+- `test/data/repositories/group_schedule_repository_impl_test.dart` +
+  `group_repository_impl_test.dart` — حذف الحقول الثلاثة من كل بناء
+  `GroupScheduleSlot`/`GroupScheduleSlotsCompanion`، وحذف اختبار "موعد
+  مرتبط بصلاة".
+- `test/migration_test.dart` — اختباران جديدان: "ترقية v8→v9" (يثبت حذف
+  الأعمدة الثلاثة فعلياً، وبقاء `fixed_time` الحالي سليماً، وتطبيق
+  القيمة الافتراضية `'18:00'` على الموعد الذي كان بلا `fixed_time`)
+  و"ترقية v2→v9 مباشرة" (يثبت أن القفز من قبل v4 لا يفشل بـ"no such
+  column" على `group_schedule_slots" — نفس نمط اختبار "v2→v5 مباشرة"
+  الموجود لـ`session_attendances`).
+
+**التحقّق:** `flutter analyze` نظيف (39 issue — نفس خط الأساس تماماً،
+صفر تحذيرات جديدة رغم حجم الحذف)؛ `flutter test` الحزمة الكاملة:
+195/195 ناجحة (كانت 211 قبل هذا البند — حذف صافي 16 اختباراً: ملفَا
+اختبار كاملان + عدة حالات مفردة، لا فقدان تغطية حقيقية لأن الميزة نفسها
+اختفت).
+
+---
+
 ## الخلاصة
 
 **أهم قرارين في هذه الوثيقة:**

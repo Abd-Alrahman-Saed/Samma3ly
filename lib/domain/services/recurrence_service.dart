@@ -1,20 +1,5 @@
-import 'package:quran_mobile/core/enums/anchor_type.dart';
 import 'package:quran_mobile/core/enums/schedule_exception_type.dart';
 import 'package:quran_mobile/data/local/database/app_database.dart';
-
-/// Resolves the clock time of a named prayer on a given date.
-///
-/// Implemented against the `adhan` package in item 2.3 — kept as an
-/// interface here so [RecurrenceService]'s date math stays fully unit
-/// testable without a prayer-time dependency, and so a prayer-anchored slot
-/// used without a real resolver fails loudly instead of silently falling
-/// back to some made-up fixed time.
-abstract class PrayerTimeResolver {
-  /// Returns [date] with its time-of-day set to when [prayerName] occurs
-  /// on that date (prayer times shift daily, so this must be resolved
-  /// per-occurrence, not once for the whole slot).
-  DateTime resolve({required DateTime date, required String prayerName});
-}
 
 /// One concrete occurrence produced by [RecurrenceService.expand].
 class RecurrenceOccurrence {
@@ -68,18 +53,12 @@ class RecurrenceService {
   /// [exceptions] may contain rows for other slots — they are ignored; you
   /// do not need to pre-filter by `groupScheduleSlotId`.
   ///
-  /// [prayerTimeResolver] is required only when `slot.anchorType` is
-  /// [AnchorType.prayer] (or a reschedule exception both targets a
-  /// prayer-anchored slot and omits `newTime`); a fixed-time-only slot
-  /// never needs one.
-  ///
   /// Results are sorted by [RecurrenceOccurrence.dateTime].
   List<RecurrenceOccurrence> expand({
     required GroupScheduleSlot slot,
     List<ScheduleException> exceptions = const [],
     required DateTime rangeStart,
     required DateTime rangeEnd,
-    PrayerTimeResolver? prayerTimeResolver,
   }) {
     final rangeStartDate = _dateOnly(rangeStart);
     final rangeEndDate = _dateOnly(rangeEnd);
@@ -108,7 +87,7 @@ class RecurrenceService {
         if (exception == null) {
           results.add(RecurrenceOccurrence(
             date: cursor,
-            dateTime: _resolveTime(slot, cursor, prayerTimeResolver),
+            dateTime: _resolveTime(slot, cursor),
           ));
         } else if (exception.exceptionType ==
             ScheduleExceptionType.skip.arabic) {
@@ -119,7 +98,6 @@ class RecurrenceService {
             slot: slot,
             exception: exception,
             fallbackDate: cursor,
-            prayerTimeResolver: prayerTimeResolver,
           );
           if (occurrence != null &&
               !occurrence.date.isBefore(rangeStartDate) &&
@@ -155,7 +133,6 @@ class RecurrenceService {
     List<ScheduleException> exceptions = const [],
     required DateTime rangeStart,
     required DateTime rangeEnd,
-    PrayerTimeResolver? prayerTimeResolver,
   }) {
     final results = <RecurrenceOccurrence>[];
     for (final slot in slots) {
@@ -164,7 +141,6 @@ class RecurrenceService {
         exceptions: exceptions,
         rangeStart: rangeStart,
         rangeEnd: rangeEnd,
-        prayerTimeResolver: prayerTimeResolver,
       ));
     }
     results.sort((a, b) => a.dateTime.compareTo(b.dateTime));
@@ -175,14 +151,12 @@ class RecurrenceService {
     required GroupScheduleSlot slot,
     required ScheduleException exception,
     required DateTime fallbackDate,
-    required PrayerTimeResolver? prayerTimeResolver,
   }) {
     final newDate =
         exception.newDate != null ? _dateOnly(exception.newDate!) : fallbackDate;
     final dateTime = _resolveTime(
       slot,
       newDate,
-      prayerTimeResolver,
       timeOverride: exception.newTime,
     );
     return RecurrenceOccurrence(date: newDate, dateTime: dateTime, isRescheduled: true);
@@ -190,42 +164,19 @@ class RecurrenceService {
 
   DateTime _resolveTime(
     GroupScheduleSlot slot,
-    DateTime date,
-    PrayerTimeResolver? resolver, {
+    DateTime date, {
     String? timeOverride,
   }) {
     if (timeOverride != null) {
       return _combine(date, timeOverride);
     }
-    if (slot.anchorType == AnchorType.fixedTime.arabic) {
-      final fixedTime = slot.fixedTime;
-      if (fixedTime == null) {
-        throw StateError(
-          'GroupScheduleSlot ${slot.id}: anchorType="وقت محدد" لكن fixedTime فارغ.',
-        );
-      }
-      return _combine(date, fixedTime);
+    final fixedTime = slot.fixedTime;
+    if (fixedTime == null) {
+      throw StateError(
+        'GroupScheduleSlot ${slot.id}: fixedTime فارغ.',
+      );
     }
-    if (slot.anchorType == AnchorType.prayer.arabic) {
-      final prayerName = slot.prayerName;
-      if (prayerName == null) {
-        throw StateError(
-          'GroupScheduleSlot ${slot.id}: anchorType="مرتبط بصلاة" لكن prayerName فارغ.',
-        );
-      }
-      if (resolver == null) {
-        throw StateError(
-          'GroupScheduleSlot ${slot.id} مرتبط بصلاة ($prayerName) لكن لم يُمرَّر '
-          'prayerTimeResolver إلى RecurrenceService.expand — التنفيذ الفعلي '
-          'لحساب المواقيت في بند 2.3.',
-        );
-      }
-      final base = resolver.resolve(date: date, prayerName: prayerName);
-      return base.add(Duration(minutes: slot.offsetMinutes));
-    }
-    throw StateError(
-      'GroupScheduleSlot ${slot.id}: anchorType غير معروف "${slot.anchorType}".',
-    );
+    return _combine(date, fixedTime);
   }
 
   DateTime _combine(DateTime date, String hhmm) {

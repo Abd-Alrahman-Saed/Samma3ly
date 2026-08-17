@@ -3,7 +3,6 @@ import 'package:quran_mobile/core/enums/session_type.dart';
 import 'package:quran_mobile/data/local/database/app_database.dart';
 import 'package:quran_mobile/data/local/database/daos/session_dao.dart';
 import 'package:quran_mobile/domain/repositories/group_schedule_repository.dart';
-import 'package:quran_mobile/domain/services/recurrence_service.dart';
 
 /// One occurrence of a group's recurring schedule, merged with whatever
 /// `Sessions` row (if any) has already been materialized for it.
@@ -53,13 +52,11 @@ class GroupSessionService {
     required int groupId,
     required DateTime from,
     required DateTime to,
-    PrayerTimeResolver? prayerTimeResolver,
   }) async {
     final virtual = await _scheduleRepo.expandOccurrences(
       groupId: groupId,
       from: from,
       to: to,
-      prayerTimeResolver: prayerTimeResolver,
     );
     final materialized = await _sessionDao.getMaterializedByGroup(groupId, from, to);
     final byDate = {

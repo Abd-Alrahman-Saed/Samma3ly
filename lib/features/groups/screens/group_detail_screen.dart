@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:quran_mobile/core/enums/anchor_type.dart';
 import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
 import 'package:quran_mobile/core/utils/date_utils.dart';
@@ -357,14 +356,7 @@ class _ScheduleTab extends ConsumerWidget {
   final int groupId;
   const _ScheduleTab({required this.groupId});
 
-  String _timeLabel(GroupScheduleSlot slot) {
-    if (AnchorType.fromArabic(slot.anchorType) == AnchorType.fixedTime) {
-      return 'الساعة ${slot.fixedTime ?? '؟'}';
-    }
-    final offset = slot.offsetMinutes;
-    final offsetText = offset == 0 ? '' : (offset > 0 ? ' +$offset د' : ' $offset د');
-    return '${slot.prayerName ?? '؟'}$offsetText';
-  }
+  String _timeLabel(GroupScheduleSlot slot) => 'الساعة ${slot.fixedTime ?? '؟'}';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -390,7 +382,7 @@ class _ScheduleTab extends ConsumerWidget {
                   return const EmptyState(
                     icon: Icons.event_repeat_outlined,
                     title: 'لا توجد مواعيد أسبوعية بعد',
-                    description: 'أضف موعداً متكرراً — بوقت محدد أو مرتبطاً بصلاة',
+                    description: 'أضف موعداً أسبوعياً متكرراً بوقت محدد',
                     card: true,
                   );
                 }

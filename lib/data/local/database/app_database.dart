@@ -55,7 +55,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(QueryExecutor executor) : super(executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -199,6 +199,24 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(sessionAttendances, sessionAttendances.revisionTajweedScore);
         await m.addColumn(sessionAttendances, sessionAttendances.revisionFluencyScore);
         await m.addColumn(sessionAttendances, sessionAttendances.revisionAccuracyScore);
+      }
+      // نفس فخّ v5/v7/v8 بالضبط، ونفس الحارس `from >= 4`: group_schedule_slots
+      // (خلافاً لـsession_evaluations) أنشأتها كتلة v4 بـ`createTable` —
+      // فأي ترقية جمعت v4 في نفس المرور (from < 4) بيبقى الجدول بشكله
+      // الحيّ الحالي (بلا الأعمدة الثلاثة أصلاً)، فمحاولة حذفها هتفشل
+      // ("no such column"). فقط قاعدة v4+ فعلية تحتاج هذا الحذف.
+      if (from < 9 && to >= 9 && from >= 4) {
+        // القسم "امسح التوقيت المرتبط بالصلاة" (v9): حذف ميزة "مرتبط بصلاة"
+        // بالكامل — anchorType/prayerName/offsetMinutes على
+        // group_schedule_slots. أي موعد كان قديماً مرتبطاً بصلاة (fixedTime
+        // فارغ وقتها) يُعطى توقيتاً افتراضياً معقولاً بدل أن يبقى بلا وقت
+        // إطلاقاً بعد حذف بديله الوحيد لحساب الوقت.
+        await customStatement(
+          "UPDATE group_schedule_slots SET fixed_time = '18:00' WHERE fixed_time IS NULL",
+        );
+        await m.dropColumn(groupScheduleSlots, 'anchor_type');
+        await m.dropColumn(groupScheduleSlots, 'prayer_name');
+        await m.dropColumn(groupScheduleSlots, 'offset_minutes');
       }
     },
     beforeOpen: (details) async {

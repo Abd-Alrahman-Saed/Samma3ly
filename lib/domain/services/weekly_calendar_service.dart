@@ -1,7 +1,6 @@
 import 'package:quran_mobile/data/local/database/daos/session_dao.dart';
 import 'package:quran_mobile/domain/repositories/group_repository.dart';
 import 'package:quran_mobile/domain/services/group_session_service.dart';
-import 'package:quran_mobile/domain/services/recurrence_service.dart' show PrayerTimeResolver;
 
 /// One row in the weekly calendar (item 3.6) — either a real individual
 /// `Sessions` row, or a group occurrence (virtual or materialized, exactly
@@ -31,10 +30,9 @@ class CalendarEntry {
 }
 
 /// Combines individual sessions and every group's occurrences (items
-/// 2.6/2.7, including prayer-anchored ones from 2.3) into one
-/// chronologically-sorted list for a date range — the data behind the
-/// weekly calendar screen. A pure read: never materializes a group
-/// occurrence itself (same "no write in read" discipline as
+/// 2.6/2.7) into one chronologically-sorted list for a date range — the
+/// data behind the weekly calendar screen. A pure read: never materializes
+/// a group occurrence itself (same "no write in read" discipline as
 /// `GroupSessionService.upcomingOccurrences`).
 class WeeklyCalendarService {
   final SessionDao _sessionDao;
@@ -53,7 +51,6 @@ class WeeklyCalendarService {
   Future<List<CalendarEntry>> getEntries({
     required DateTime from,
     required DateTime to,
-    PrayerTimeResolver? prayerTimeResolver,
   }) async {
     final entries = <CalendarEntry>[];
 
@@ -74,7 +71,6 @@ class WeeklyCalendarService {
         groupId: group.id,
         from: from,
         to: to,
-        prayerTimeResolver: prayerTimeResolver,
       );
       for (final o in occurrences) {
         entries.add(CalendarEntry(

@@ -7,16 +7,8 @@ import 'package:quran_mobile/data/repositories/group_schedule_repository_impl.da
 import 'package:quran_mobile/domain/entities/group.dart';
 import 'package:quran_mobile/domain/entities/group_schedule_slot.dart';
 import 'package:quran_mobile/domain/entities/schedule_exception.dart';
-import 'package:quran_mobile/domain/services/recurrence_service.dart';
 
 import '../../helpers/test_database.dart';
-
-class _FakePrayerTimeResolver implements PrayerTimeResolver {
-  @override
-  DateTime resolve({required DateTime date, required String prayerName}) {
-    return DateTime(date.year, date.month, date.day, 18, 30);
-  }
-}
 
 void main() {
   late AppDatabase db;
@@ -41,7 +33,6 @@ void main() {
       final created = await repo.createSlot(GroupScheduleSlot(
         groupId: groupId,
         weekday: DateTime.monday,
-        anchorType: 'وقت محدد',
         fixedTime: '17:00',
         effectiveFrom: DateTime(2026, 1, 1),
       ));
@@ -210,28 +201,6 @@ void main() {
         await repo.expandOccurrences(groupId: groupId, from: DateTime(2026, 3, 1), to: DateTime(2026, 3, 31)),
         isEmpty,
       );
-    });
-
-    test('موعد مرتبط بصلاة يستخدم prayerTimeResolver المُمرَّر', () async {
-      final groupId = await createGroup();
-      await repo.createSlot(GroupScheduleSlot(
-        groupId: groupId,
-        weekday: DateTime.tuesday,
-        anchorType: 'مرتبط بصلاة',
-        prayerName: 'المغرب',
-        offsetMinutes: 15,
-        effectiveFrom: DateTime(2026, 3, 1),
-      ));
-
-      final occurrences = await repo.expandOccurrences(
-        groupId: groupId,
-        from: DateTime(2026, 3, 1),
-        to: DateTime(2026, 3, 9),
-        prayerTimeResolver: _FakePrayerTimeResolver(),
-      );
-
-      expect(occurrences, hasLength(1));
-      expect(occurrences.first.dateTime, DateTime(2026, 3, 3, 18, 45));
     });
   });
 }

@@ -110,9 +110,7 @@ void main() {
       final slotId = await dao.insertSlot(GroupScheduleSlotsCompanion.insert(
         groupId: group.id,
         weekday: 1,
-        anchorType: 'وقت محدد',
         fixedTime: const Value('17:00'),
-        offsetMinutes: const Value(0),
         effectiveFrom: DateTime(2026, 1, 1),
       ));
       await dao.insertException(ScheduleExceptionsCompanion.insert(
