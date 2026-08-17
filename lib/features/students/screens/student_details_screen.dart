@@ -432,6 +432,10 @@ class _StudentSessionsList extends ConsumerWidget {
         return Column(
           children: sessions.take(5).map((s) {
             final statusColors = StatusColors.forAttendance(s.attendanceStatus);
+            // القسم ح.12: نفس منطق ألوان SessionCard — "يُعاد" تحذيري،
+            // "اجتاز" نجاح.
+            final outcomeColors = s.recitationOutcome == 'يُعاد' ? StatusColors.attendanceLate : StatusColors.present;
+            final revisionFinalScore = s.evaluation?.revisionFinalScore ?? 0;
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Material(
@@ -474,6 +478,38 @@ class _StudentSessionsList extends ConsumerWidget {
                             ),
                           ],
                         ),
+                        // القسم ح.12: "معلومات الجلسة الخارجية" — القرار
+                        // السريع (اجتاز/يُعاد) ودرجة المراجعة المنفصلة،
+                        // بدون فتح الجلسة.
+                        if (s.recitationOutcome != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                                  decoration: BoxDecoration(color: outcomeColors.bg, borderRadius: BorderRadius.circular(999)),
+                                  child: Text(s.recitationOutcome!, style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w700, color: outcomeColors.fg)),
+                                ),
+                                if (revisionFinalScore > 0) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                                    decoration: BoxDecoration(color: const Color(0xFFE9F3EF), borderRadius: BorderRadius.circular(999)),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text('مراجعة', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.streakIconFg)),
+                                        const SizedBox(width: 4),
+                                        ScoreDisplay(score: revisionFinalScore, style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w800)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
                         if (s.memorization != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 5),

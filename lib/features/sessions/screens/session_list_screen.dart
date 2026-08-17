@@ -217,6 +217,8 @@ class _SessionListScreenState extends ConsumerState<SessionListScreen> {
                                       finalScore: session.evaluation?.finalScore ?? 0,
                                       memorizationInfo: session.memorization != null ? 'حفظ: ${surahLabel(session.memorization!.surahId)} (${session.memorization!.fromAyah}-${session.memorization!.toAyah})' : '',
                                       revisionInfo: session.revision != null ? 'مراجعة: ${surahLabel(session.revision!.surahId)} (${session.revision!.fromAyah}-${session.revision!.toAyah})' : '',
+                                      recitationOutcome: session.recitationOutcome,
+                                      revisionFinalScore: session.evaluation?.revisionFinalScore ?? 0,
                                     ),
                                     onTap: () => context.goNamed('sessionEdit', pathParameters: {'id': '${session.id}'}),
                                     onDelete: () => _deleteSession(session),

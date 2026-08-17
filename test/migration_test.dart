@@ -18,6 +18,7 @@ import 'generated_migrations/schema_v3.dart' as v3;
 import 'generated_migrations/schema_v4.dart' as v4;
 import 'generated_migrations/schema_v5.dart' as v5;
 import 'generated_migrations/schema_v6.dart' as v6;
+import 'generated_migrations/schema_v7.dart' as v7;
 
 void main() {
   late SchemaVerifier verifier;
@@ -366,10 +367,65 @@ void main() {
             id: const Value(1),
             sessionId: const Value(1),
             studentId: const Value(1),
-            recitationOutcome: const Value('ممتاز'),
+            recitationOutcome: const Value('اجتاز'),
           ));
       final updated = await migratedDb.select(migratedDb.sessionAttendances).getSingle();
-      expect(updated.recitationOutcome, 'ممتاز');
+      expect(updated.recitationOutcome, 'اجتاز');
+    },
+  );
+
+  test(
+    'ترقية v7→v8 (القسم ح.12): تضيف أعمدة تقييم المراجعة على session_evaluations '
+    'وsession_attendances بأعمدة إضافية فقط، وتُبقي بيانات v7 سليمة',
+    () async {
+      final schema = await verifier.schemaAt(7);
+      final oldDb = v7.DatabaseAtV7(schema.newConnection());
+      await oldDb.customStatement('''
+        INSERT INTO students (id, full_name, age, phone, address)
+        VALUES (1, 'طالب حقيقي', 10, '0100000000', 'عنوان')
+      ''');
+      await oldDb.customStatement('''
+        INSERT INTO sessions (id, student_id, session_type, date, time)
+        VALUES (1, 1, 'فردي', ${DateTime(2026, 1, 1).millisecondsSinceEpoch}, '18:00')
+      ''');
+      await oldDb.customStatement('''
+        INSERT INTO session_attendances (id, session_id, student_id, attendance_status, recitation_outcome)
+        VALUES (1, 1, 1, 'حاضر', 'اجتاز')
+      ''');
+      await oldDb.customStatement('''
+        INSERT INTO session_evaluations (id, session_id, memorization_score, tajweed_score, fluency_score, accuracy_score)
+        VALUES (1, 1, 8.0, 7.0, 9.0, 6.0)
+      ''');
+      await oldDb.close();
+
+      final migratedDb = AppDatabase.forTesting(schema.newConnection());
+      addTearDown(migratedDb.close);
+
+      // بيانات v7 سليمة تماماً — لم تُلمَس.
+      final attendances = await migratedDb.select(migratedDb.sessionAttendances).get();
+      expect(attendances, hasLength(1));
+      expect(attendances.first.recitationOutcome, 'اجتاز');
+      expect(attendances.first.revisionMemorizationScore, 0.0);
+      expect(attendances.first.revisionTajweedScore, 0.0);
+      expect(attendances.first.revisionFluencyScore, 0.0);
+      expect(attendances.first.revisionAccuracyScore, 0.0);
+
+      final evaluations = await migratedDb.select(migratedDb.sessionEvaluations).get();
+      expect(evaluations, hasLength(1));
+      expect(evaluations.first.memorizationScore, 8.0);
+      expect(evaluations.first.revisionMemorizationScore, 0.0);
+      expect(evaluations.first.revisionTajweedScore, 0.0);
+      expect(evaluations.first.revisionFluencyScore, 0.0);
+      expect(evaluations.first.revisionAccuracyScore, 0.0);
+
+      // الأعمدة الجديدة فعلاً قابلة للكتابة بعد الترقية مباشرة.
+      await migratedDb.update(migratedDb.sessionEvaluations).replace(SessionEvaluationsCompanion(
+            id: const Value(1),
+            sessionId: const Value(1),
+            revisionMemorizationScore: const Value(5.0),
+          ));
+      final updatedEval = await migratedDb.select(migratedDb.sessionEvaluations).getSingle();
+      expect(updatedEval.revisionMemorizationScore, 5.0);
     },
   );
 }

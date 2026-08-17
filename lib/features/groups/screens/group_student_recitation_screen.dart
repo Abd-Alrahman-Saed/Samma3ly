@@ -25,7 +25,7 @@ import 'package:quran_mobile/providers.dart';
 /// بعمل جلسة جديدة لطالب" (طلب المستخدم صراحةً): نفس تخطيط
 /// `SessionCreateScreen` — حضور، ملاحظات، حفظ، مراجعة، تقييم — لكن
 /// التاريخ معروض فقط (مربوط بموعد الحلقة، لا يُعدَّل من هنا)، والحفظ
-/// النهائي بزرَّين بدل واحد: "ممتاز" أو "يُعاد" (بند التقييم السريع، v7).
+/// النهائي بزرَّين بدل واحد: "اجتاز" أو "يُعاد" (بند التقييم السريع، v7).
 ///
 /// البيانات تُكتب على SessionAttendances (لا SessionMemorizations/
 /// SessionRevisions/SessionEvaluations) — نفس سبب بند 3.4: جلسة جماعية
@@ -59,6 +59,11 @@ class _GroupStudentRecitationScreenState extends ConsumerState<GroupStudentRecit
   double _evalTajweed = 0;
   double _evalFluency = 0;
   double _evalTashkeel = 0;
+  // القسم ح.12: تقييم منفصل للمراجعة — يظهر فقط عند اختيار سورة مراجعة.
+  double _revEvalMem = 0;
+  double _revEvalTajweed = 0;
+  double _revEvalFluency = 0;
+  double _revEvalTashkeel = 0;
 
   bool _loading = true;
   bool _isSaving = false;
@@ -88,6 +93,10 @@ class _GroupStudentRecitationScreenState extends ConsumerState<GroupStudentRecit
       _evalTajweed = existing.tajweedScore;
       _evalFluency = existing.fluencyScore;
       _evalTashkeel = existing.accuracyScore;
+      _revEvalMem = existing.revisionMemorizationScore;
+      _revEvalTajweed = existing.revisionTajweedScore;
+      _revEvalFluency = existing.revisionFluencyScore;
+      _revEvalTashkeel = existing.revisionAccuracyScore;
       _notesController.text = existing.notes ?? '';
     }
     if (mounted) {
@@ -108,6 +117,9 @@ class _GroupStudentRecitationScreenState extends ConsumerState<GroupStudentRecit
 
   double get _liveFinalScore => ((_evalMem + _evalTajweed + _evalFluency + _evalTashkeel) / 4 * 10).roundToDouble() / 10;
 
+  double get _liveRevisionFinalScore =>
+      ((_revEvalMem + _revEvalTajweed + _revEvalFluency + _revEvalTashkeel) / 4 * 10).roundToDouble() / 10;
+
   Future<void> _save(RecitationOutcome outcome) async {
     setState(() => _isSaving = true);
     try {
@@ -126,6 +138,11 @@ class _GroupStudentRecitationScreenState extends ConsumerState<GroupStudentRecit
         tajweedScore: Value(_isPresent ? _evalTajweed : 0),
         fluencyScore: Value(_isPresent ? _evalFluency : 0),
         accuracyScore: Value(_isPresent ? _evalTashkeel : 0),
+        // القسم ح.12: تُحفَظ فقط لو الطالب حاضر وفيه سورة مراجعة مختارة.
+        revisionMemorizationScore: Value(_isPresent && _revSurahId != null ? _revEvalMem : 0),
+        revisionTajweedScore: Value(_isPresent && _revSurahId != null ? _revEvalTajweed : 0),
+        revisionFluencyScore: Value(_isPresent && _revSurahId != null ? _revEvalFluency : 0),
+        revisionAccuracyScore: Value(_isPresent && _revSurahId != null ? _revEvalTashkeel : 0),
         notes: Value(_notesController.text.trim().isEmpty ? null : _notesController.text.trim()),
         recitationOutcome: Value(outcome.arabic),
       ));
@@ -286,6 +303,34 @@ class _GroupStudentRecitationScreenState extends ConsumerState<GroupStudentRecit
                   _ScoreSlider(label: 'التجويد', value: _evalTajweed, onChanged: (v) => setState(() { _evalTajweed = v; _isDirty = true; })),
                   _ScoreSlider(label: 'الطلاقة', value: _evalFluency, onChanged: (v) => setState(() { _evalFluency = v; _isDirty = true; })),
                   _ScoreSlider(label: 'التشكيل', value: _evalTashkeel, onChanged: (v) => setState(() { _evalTashkeel = v; _isDirty = true; })),
+                  // القسم ح.12: تقييم مستقلّ للمراجعة، يظهر فقط عند اختيار
+                  // سورة مراجعة — مطلب المستخدم صراحةً.
+                  if (_revSurahId != null) ...[
+                    const SizedBox(height: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('تقييم المراجعة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
+                          decoration: BoxDecoration(color: const Color(0xFFE9F3EF), borderRadius: BorderRadius.circular(999)),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(_liveRevisionFinalScore.toStringAsFixed(1), style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                              const SizedBox(width: 3),
+                              const Text('/ ١٠', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, color: AppColors.textSecondary)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    _ScoreSlider(label: 'الحفظ', value: _revEvalMem, onChanged: (v) => setState(() { _revEvalMem = v; _isDirty = true; })),
+                    _ScoreSlider(label: 'التجويد', value: _revEvalTajweed, onChanged: (v) => setState(() { _revEvalTajweed = v; _isDirty = true; })),
+                    _ScoreSlider(label: 'الطلاقة', value: _revEvalFluency, onChanged: (v) => setState(() { _revEvalFluency = v; _isDirty = true; })),
+                    _ScoreSlider(label: 'التشكيل', value: _revEvalTashkeel, onChanged: (v) => setState(() { _revEvalTashkeel = v; _isDirty = true; })),
+                  ],
                 ],
                 const SizedBox(height: 24),
                 Row(
@@ -309,7 +354,7 @@ class _GroupStudentRecitationScreenState extends ConsumerState<GroupStudentRecit
                         onPressed: _isSaving ? null : () => _save(RecitationOutcome.excellent),
                         child: _isSaving
                             ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.onPrimary))
-                            : const Text('ممتاز'),
+                            : const Text('اجتاز'),
                       ),
                     ),
                   ],

@@ -23,6 +23,10 @@ abstract class Session with _$Session {
     // راجع docs/DESIGN_SPEC.md وdocs/IMPLEMENTATION_PLAN.md القسم ب.
     @Default('حاضر') String attendanceStatus,
     String? notes,
+    // القسم ح.6 (v7): قرار المعلّم السريع بعد التسميع — "اجتاز" أو "يُعاد".
+    // يُعرَض في "معلومات الجلسة الخارجية" (بطاقات القوائم) منذ القسم ح.12
+    // ليعرف المعلّم من غير فتح الجلسة أن حفظها/مراجعتها تحتاج إعادة.
+    String? recitationOutcome,
     DateTime? createdAt,
     SessionMemorization? memorization,
     SessionRevision? revision,
@@ -69,6 +73,13 @@ abstract class SessionEvaluation with _$SessionEvaluation {
     @Default(0.0) double tajweedScore,
     @Default(0.0) double fluencyScore,
     @Default(0.0) double accuracyScore,
+    // القسم ح.12 (v8): تقييم منفصل للمراجعة — نفس المعايير الأربعة، لكن
+    // لأداء المراجعة لا الحفظ الجديد. مستقلّة تماماً عن الدرجات أعلاه لأن
+    // جلسة واحدة قد تحتوي حفظاً جديداً ومراجعة معاً بتقييمين مختلفين.
+    @Default(0.0) double revisionMemorizationScore,
+    @Default(0.0) double revisionTajweedScore,
+    @Default(0.0) double revisionFluencyScore,
+    @Default(0.0) double revisionAccuracyScore,
   }) = _SessionEvaluation;
 
   const SessionEvaluation._();
@@ -83,4 +94,22 @@ abstract class SessionEvaluation with _$SessionEvaluation {
     final sum = memorizationScore + tajweedScore + fluencyScore + accuracyScore;
     return (sum / 4 * 10).roundToDouble() / 10;
   }
+
+  // القسم ح.12: نفس حساب finalScore، لكن لدرجات المراجعة المنفصلة.
+  double get revisionFinalScore {
+    final sum = revisionMemorizationScore +
+        revisionTajweedScore +
+        revisionFluencyScore +
+        revisionAccuracyScore;
+    return (sum / 4 * 10).roundToDouble() / 10;
+  }
+
+  // true فقط لو أُدخلت أي درجة مراجعة فعلياً (لا كلها صفر افتراضي) — يميّز
+  // "جلسة فيها مراجعة مُقيَّمة" عن "جلسة بلا مراجعة إطلاقاً" لعرض بطاقة
+  // المراجعة في القوائم فقط عند الحاجة.
+  bool get hasRevisionEvaluation =>
+      revisionMemorizationScore > 0 ||
+      revisionTajweedScore > 0 ||
+      revisionFluencyScore > 0 ||
+      revisionAccuracyScore > 0;
 }

@@ -1,6 +1,6 @@
 // القسم ح.6 — الشاشة الجديدة اللي حلّت محل GroupRecitationSheet (ورقة
 // سفلية). بنفس تخطيط SessionCreateScreen: حضور + ملاحظات + حفظ + مراجعة +
-// تقييم (حفظ/تجويد/طلاقة/تشكيل)، وحفظ نهائي بزرَّين "ممتاز"/"يُعاد" بدل زر
+// تقييم (حفظ/تجويد/طلاقة/تشكيل)، وحفظ نهائي بزرَّين "اجتاز"/"يُعاد" بدل زر
 // حفظ واحد — كلاهما يكتب على SessionAttendances (بما فيها recitationOutcome
 // الجديد، v7) ويرجع للخلف.
 import 'package:drift/drift.dart' hide isNull, isNotNull;
@@ -81,22 +81,22 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('سالم'), findsOneWidget);
     expect(find.textContaining('17:00'), findsOneWidget);
-    expect(find.text('ممتاز'), findsOneWidget);
+    expect(find.text('اجتاز'), findsOneWidget);
     expect(find.text('يُعاد'), findsOneWidget);
   });
 
-  testWidgets('الضغط على "ممتاز" يحفظ التقييم ونتيجة "ممتاز" في SessionAttendances', (tester) async {
+  testWidgets('الضغط على "اجتاز" يحفظ التقييم ونتيجة "اجتاز" في SessionAttendances', (tester) async {
     await openScreen(tester);
 
     await tester.enterText(find.byType(TextFormField).first, 'ملاحظة تجريبية');
-    await tester.dragUntilVisible(find.text('ممتاز'), find.byType(Scrollable).first, const Offset(0, -300));
-    await tester.tap(find.text('ممتاز'));
+    await tester.dragUntilVisible(find.text('اجتاز'), find.byType(Scrollable).first, const Offset(0, -300));
+    await tester.tap(find.text('اجتاز'));
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
     final saved = await sessionDao.getAttendance(sessionId, studentId);
     expect(saved, isNotNull);
-    expect(saved!.recitationOutcome, 'ممتاز');
+    expect(saved!.recitationOutcome, 'اجتاز');
     expect(saved.notes, 'ملاحظة تجريبية');
     expect(saved.attendanceStatus, AttendanceStatus.present.arabic);
 
@@ -124,8 +124,8 @@ void main() {
     expect(find.text('الحفظ الجديد'), findsNothing);
     expect(find.text('التقييم'), findsNothing);
 
-    await tester.dragUntilVisible(find.text('ممتاز'), find.byType(Scrollable).first, const Offset(0, -300));
-    await tester.tap(find.text('ممتاز'));
+    await tester.dragUntilVisible(find.text('اجتاز'), find.byType(Scrollable).first, const Offset(0, -300));
+    await tester.tap(find.text('اجتاز'));
     await tester.pumpAndSettle();
 
     final saved = await sessionDao.getAttendance(sessionId, studentId);
@@ -133,6 +133,51 @@ void main() {
     expect(saved.memorizationSurahId, isNull);
     expect(saved.memorizationScore, 0);
   });
+
+  testWidgets(
+    'اختيار سورة مراجعة يُظهر قسم "تقييم المراجعة" منفصلاً، والحفظ يخزّن درجاته '
+    'في أعمدة revision*Score دون المساس بدرجات الحفظ',
+    (tester) async {
+      await openScreen(tester);
+
+      expect(find.text('تقييم المراجعة'), findsNothing, reason: 'لا سورة مراجعة مختارة بعد');
+
+      final surahs = await db.select(db.surahs).get();
+      final revSurah = surahs.firstWhere((s) => s.id == 2);
+
+      // ثاني SurahDropdown في الشاشة هو دروب داون المراجعة (الأول للحفظ الجديد).
+      final revisionDropdown = find.byType(DropdownButtonFormField<int?>).at(1);
+      await tester.dragUntilVisible(revisionDropdown, find.byType(Scrollable).first, const Offset(0, -300));
+      await tester.tap(revisionDropdown);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('${revSurah.number}. ${revSurah.name}').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('تقييم المراجعة'), findsOneWidget, reason: 'القسم لازم يظهر فور اختيار سورة المراجعة');
+
+      // أول 4 Slider هي تقييم الحفظ الجديد، آخر 4 هي تقييم المراجعة (بند
+      // ح.12) — نسحب آخر واحد (التشكيل) لأقصى اليمين (قيمة عالية).
+      final sliders = find.byType(Slider);
+      expect(sliders, findsNWidgets(8));
+      await tester.dragUntilVisible(sliders.at(7), find.byType(Scrollable).first, const Offset(0, -300));
+      await tester.drag(sliders.at(7), const Offset(300, 0));
+      await tester.pumpAndSettle();
+
+      await tester.dragUntilVisible(find.text('اجتاز'), find.byType(Scrollable).first, const Offset(0, -300));
+      await tester.tap(find.text('اجتاز'));
+      await tester.pumpAndSettle();
+
+      final saved = await sessionDao.getAttendance(sessionId, studentId);
+      expect(saved, isNotNull);
+      expect(saved!.revisionSurahId, revSurah.id);
+      expect(saved.revisionAccuracyScore, greaterThan(0), reason: 'آخر Slider هو تشكيل المراجعة');
+      // درجات تقييم الحفظ الجديد لم تتأثر إطلاقاً (كانت كلها 0 ولم تُلمَس).
+      expect(saved.memorizationScore, 0);
+      expect(saved.tajweedScore, 0);
+      expect(saved.fluencyScore, 0);
+      expect(saved.accuracyScore, 0);
+    },
+  );
 
   testWidgets('إعادة فتح الشاشة بعد حفظ سابق يُحمِّل البيانات المحفوظة', (tester) async {
     await sessionDao.upsertRecitation(SessionAttendancesCompanion(
@@ -145,6 +190,11 @@ void main() {
       tajweedScore: const Value(7),
       fluencyScore: const Value(9),
       accuracyScore: const Value(6),
+      revisionSurahId: const Value(2),
+      revisionMemorizationScore: const Value(5),
+      revisionTajweedScore: const Value(4),
+      revisionFluencyScore: const Value(3),
+      revisionAccuracyScore: const Value(2),
       recitationOutcome: const Value('يُعاد'),
     ));
 
@@ -154,5 +204,12 @@ void main() {
     expect(find.text('7.0'), findsOneWidget);
     expect(find.text('9.0'), findsOneWidget);
     expect(find.text('6.0'), findsOneWidget);
+    // درجات تقييم المراجعة (بند ح.12) مُحمَّلة أيضاً — القسم ظاهر بما أن
+    // revisionSurahId محفوظ.
+    expect(find.text('تقييم المراجعة'), findsOneWidget);
+    expect(find.text('5.0'), findsOneWidget);
+    expect(find.text('4.0'), findsOneWidget);
+    expect(find.text('3.0'), findsOneWidget);
+    expect(find.text('2.0'), findsOneWidget);
   });
 }

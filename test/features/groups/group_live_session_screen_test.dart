@@ -186,8 +186,8 @@ void main() {
 
     expect(tester.takeException(), isNull);
     // القسم ح.6: بقت شاشة كاملة بنفس تخطيط SessionCreateScreen، لا ورقة
-    // سفلية — الزرّان "ممتاز"/"يُعاد" فريدان لهذه الشاشة تحديداً.
-    expect(find.text('ممتاز'), findsOneWidget);
+    // سفلية — الزرّان "اجتاز"/"يُعاد" فريدان لهذه الشاشة تحديداً.
+    expect(find.text('اجتاز'), findsOneWidget);
     expect(find.text('يُعاد'), findsOneWidget);
   });
 }

@@ -157,6 +157,8 @@ class _SelectedStudentReport extends ConsumerWidget {
                     timeDisplay: s.time,
                     attendanceStatus: s.attendanceStatus,
                     finalScore: s.evaluation?.finalScore ?? 0,
+                    recitationOutcome: s.recitationOutcome,
+                    revisionFinalScore: s.evaluation?.revisionFinalScore ?? 0,
                   ),
                   // القسم ح.10: جلسة الحلقة تفتح شاشة تسميع الطالب داخل
                   // الحلقة، لا شاشة الجلسة الفردية.

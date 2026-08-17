@@ -390,6 +390,8 @@ class _RecentSessionsList extends ConsumerWidget {
               finalScore: s.evaluation?.finalScore ?? 0,
               memorizationInfo: s.memorization != null ? 'حفظ: ${surahLabel(s.memorization!.surahId)} (${s.memorization!.fromAyah}-${s.memorization!.toAyah})' : '',
               revisionInfo: s.revision != null ? 'مراجعة: ${surahLabel(s.revision!.surahId)} (${s.revision!.fromAyah}-${s.revision!.toAyah})' : '',
+              recitationOutcome: s.recitationOutcome,
+              revisionFinalScore: s.evaluation?.revisionFinalScore ?? 0,
             ),
             onTap: () => context.goNamed('sessionEdit', pathParameters: {'id': '${s.id}'}),
           )).toList(),

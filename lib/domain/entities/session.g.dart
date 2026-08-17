@@ -18,6 +18,7 @@ _Session _$SessionFromJson(Map<String, dynamic> json) => _Session(
       time: json['time'] as String? ?? '00:00',
       attendanceStatus: json['attendanceStatus'] as String? ?? 'حاضر',
       notes: json['notes'] as String?,
+      recitationOutcome: json['recitationOutcome'] as String?,
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
@@ -44,6 +45,7 @@ Map<String, dynamic> _$SessionToJson(_Session instance) => <String, dynamic>{
       'time': instance.time,
       'attendanceStatus': instance.attendanceStatus,
       'notes': instance.notes,
+      'recitationOutcome': instance.recitationOutcome,
       'createdAt': instance.createdAt?.toIso8601String(),
       'memorization': instance.memorization,
       'revision': instance.revision,
@@ -95,6 +97,14 @@ _SessionEvaluation _$SessionEvaluationFromJson(Map<String, dynamic> json) =>
       tajweedScore: (json['tajweedScore'] as num?)?.toDouble() ?? 0.0,
       fluencyScore: (json['fluencyScore'] as num?)?.toDouble() ?? 0.0,
       accuracyScore: (json['accuracyScore'] as num?)?.toDouble() ?? 0.0,
+      revisionMemorizationScore:
+          (json['revisionMemorizationScore'] as num?)?.toDouble() ?? 0.0,
+      revisionTajweedScore:
+          (json['revisionTajweedScore'] as num?)?.toDouble() ?? 0.0,
+      revisionFluencyScore:
+          (json['revisionFluencyScore'] as num?)?.toDouble() ?? 0.0,
+      revisionAccuracyScore:
+          (json['revisionAccuracyScore'] as num?)?.toDouble() ?? 0.0,
     );
 
 Map<String, dynamic> _$SessionEvaluationToJson(_SessionEvaluation instance) =>
@@ -105,4 +115,8 @@ Map<String, dynamic> _$SessionEvaluationToJson(_SessionEvaluation instance) =>
       'tajweedScore': instance.tajweedScore,
       'fluencyScore': instance.fluencyScore,
       'accuracyScore': instance.accuracyScore,
+      'revisionMemorizationScore': instance.revisionMemorizationScore,
+      'revisionTajweedScore': instance.revisionTajweedScore,
+      'revisionFluencyScore': instance.revisionFluencyScore,
+      'revisionAccuracyScore': instance.revisionAccuracyScore,
     };

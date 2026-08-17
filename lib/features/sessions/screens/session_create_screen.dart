@@ -44,6 +44,11 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
   double _evalTajweed = 0;
   double _evalFluency = 0;
   double _evalTashkeel = 0;
+  // القسم ح.12: تقييم منفصل للمراجعة — يظهر فقط عند اختيار سورة مراجعة.
+  double _revEvalMem = 0;
+  double _revEvalTajweed = 0;
+  double _revEvalFluency = 0;
+  double _revEvalTashkeel = 0;
   int? _studentId;
   bool _isLoading = false;
   bool _isEdit = false;
@@ -91,6 +96,10 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
         _evalTajweed = evaluation.tajweedScore;
         _evalFluency = evaluation.fluencyScore;
         _evalTashkeel = evaluation.accuracyScore;
+        _revEvalMem = evaluation.revisionMemorizationScore;
+        _revEvalTajweed = evaluation.revisionTajweedScore;
+        _revEvalFluency = evaluation.revisionFluencyScore;
+        _revEvalTashkeel = evaluation.revisionAccuracyScore;
       }
       setState(() {});
       _isDirty = false;
@@ -139,11 +148,27 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
       _evalFluency = 0;
       _evalTashkeel = 0;
     }
+    // القسم ح.12: تقييم المراجعة يُصفَّر لو لا يوجد سورة مراجعة مختارة —
+    // مستقلّ عن تصفير الحضور أعلاه.
+    if (_revSurahId == null) {
+      _revEvalMem = 0;
+      _revEvalTajweed = 0;
+      _revEvalFluency = 0;
+      _revEvalTashkeel = 0;
+    }
     setState(() => _isLoading = true);
     try {
       final sessionDao = ref.read(sessionDaoProvider);
       final timeStr = '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
-      final hasEvaluation = _isPresent && (_evalMem > 0 || _evalTajweed > 0 || _evalFluency > 0 || _evalTashkeel > 0);
+      final hasEvaluation = _isPresent &&
+          (_evalMem > 0 ||
+              _evalTajweed > 0 ||
+              _evalFluency > 0 ||
+              _evalTashkeel > 0 ||
+              _revEvalMem > 0 ||
+              _revEvalTajweed > 0 ||
+              _revEvalFluency > 0 ||
+              _revEvalTashkeel > 0);
 
       late final int sessionId;
       if (_isEdit) {
@@ -183,6 +208,10 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
             tajweedScore: Value(_evalTajweed),
             fluencyScore: Value(_evalFluency),
             accuracyScore: Value(_evalTashkeel),
+            revisionMemorizationScore: Value(_revEvalMem),
+            revisionTajweedScore: Value(_revEvalTajweed),
+            revisionFluencyScore: Value(_revEvalFluency),
+            revisionAccuracyScore: Value(_revEvalTashkeel),
           ));
         }
       } else {
@@ -216,6 +245,10 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
             tajweedScore: Value(_evalTajweed),
             fluencyScore: Value(_evalFluency),
             accuracyScore: Value(_evalTashkeel),
+            revisionMemorizationScore: Value(_revEvalMem),
+            revisionTajweedScore: Value(_revEvalTajweed),
+            revisionFluencyScore: Value(_revEvalFluency),
+            revisionAccuracyScore: Value(_revEvalTashkeel),
           ));
         }
 
@@ -230,7 +263,7 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
         }
       }
 
-      // القسم ح.10: حالة الحضور والقرار السريع (ممتاز/يُعاد) بعد كل تفاصيل
+      // القسم ح.10: حالة الحضور والقرار السريع (اجتاز/يُعاد) بعد كل تفاصيل
       // الجلسة الأخرى — upsertAttendance أولاً (يحفظ الحضور)، ثم
       // upsertRecitation (تحفظ recitationOutcome فقط هنا؛ الجلسة الفردية
       // تخزّن الحفظ/المراجعة/التقييم في جداولها المنفصلة كالمعتاد، لا في
@@ -264,6 +297,9 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
   bool get _isPresent => _attendanceStatus == AttendanceStatus.present.arabic;
 
   double get _liveFinalScore => ((_evalMem + _evalTajweed + _evalFluency + _evalTashkeel) / 4 * 10).roundToDouble() / 10;
+
+  double get _liveRevisionFinalScore =>
+      ((_revEvalMem + _revEvalTajweed + _revEvalFluency + _revEvalTashkeel) / 4 * 10).roundToDouble() / 10;
 
   @override
   Widget build(BuildContext context) {
@@ -404,6 +440,34 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
                           _ScoreSlider(label: 'التجويد', value: _evalTajweed, onChanged: (v) => setState(() { _evalTajweed = v; _isDirty = true; })),
                           _ScoreSlider(label: 'الطلاقة', value: _evalFluency, onChanged: (v) => setState(() { _evalFluency = v; _isDirty = true; })),
                           _ScoreSlider(label: 'التشكيل', value: _evalTashkeel, onChanged: (v) => setState(() { _evalTashkeel = v; _isDirty = true; })),
+                          // القسم ح.12: تقييم مستقلّ للمراجعة، يظهر فقط عند
+                          // اختيار سورة مراجعة — مطلب المستخدم صراحةً.
+                          if (_revSurahId != null) ...[
+                            const SizedBox(height: 18),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('تقييم المراجعة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
+                                  decoration: BoxDecoration(color: const Color(0xFFE9F3EF), borderRadius: BorderRadius.circular(999)),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(_liveRevisionFinalScore.toStringAsFixed(1), style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                                      const SizedBox(width: 3),
+                                      const Text('/ ١٠', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, color: AppColors.textSecondary)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            _ScoreSlider(label: 'الحفظ', value: _revEvalMem, onChanged: (v) => setState(() { _revEvalMem = v; _isDirty = true; })),
+                            _ScoreSlider(label: 'التجويد', value: _revEvalTajweed, onChanged: (v) => setState(() { _revEvalTajweed = v; _isDirty = true; })),
+                            _ScoreSlider(label: 'الطلاقة', value: _revEvalFluency, onChanged: (v) => setState(() { _revEvalFluency = v; _isDirty = true; })),
+                            _ScoreSlider(label: 'التشكيل', value: _revEvalTashkeel, onChanged: (v) => setState(() { _revEvalTashkeel = v; _isDirty = true; })),
+                          ],
                         ],
                         const SizedBox(height: 24),
                         // القسم ح.10: بديل زر "حفظ الجلسة" الواحد — قرار سريع
@@ -431,7 +495,7 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
                                 onPressed: _isLoading ? null : () => _save(RecitationOutcome.excellent),
                                 child: _isLoading
                                     ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.onPrimary))
-                                    : const Text('ممتاز'),
+                                    : const Text('اجتاز'),
                               ),
                             ),
                           ],

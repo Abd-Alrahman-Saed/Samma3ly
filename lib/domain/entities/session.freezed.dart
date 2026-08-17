@@ -28,7 +28,11 @@ mixin _$Session {
 // فردية = صف حضور واحد بالضبط)؛ الـrepository هو المسؤول عن الـjoin.
 // راجع docs/DESIGN_SPEC.md وdocs/IMPLEMENTATION_PLAN.md القسم ب.
   String get attendanceStatus;
-  String? get notes;
+  String?
+      get notes; // القسم ح.6 (v7): قرار المعلّم السريع بعد التسميع — "اجتاز" أو "يُعاد".
+// يُعرَض في "معلومات الجلسة الخارجية" (بطاقات القوائم) منذ القسم ح.12
+// ليعرف المعلّم من غير فتح الجلسة أن حفظها/مراجعتها تحتاج إعادة.
+  String? get recitationOutcome;
   DateTime? get createdAt;
   SessionMemorization? get memorization;
   SessionRevision? get revision;
@@ -62,6 +66,8 @@ mixin _$Session {
             (identical(other.attendanceStatus, attendanceStatus) ||
                 other.attendanceStatus == attendanceStatus) &&
             (identical(other.notes, notes) || other.notes == notes) &&
+            (identical(other.recitationOutcome, recitationOutcome) ||
+                other.recitationOutcome == recitationOutcome) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.memorization, memorization) ||
@@ -85,6 +91,7 @@ mixin _$Session {
       time,
       attendanceStatus,
       notes,
+      recitationOutcome,
       createdAt,
       memorization,
       revision,
@@ -92,7 +99,7 @@ mixin _$Session {
 
   @override
   String toString() {
-    return 'Session(id: $id, studentId: $studentId, groupId: $groupId, sessionType: $sessionType, occurrenceDate: $occurrenceDate, date: $date, time: $time, attendanceStatus: $attendanceStatus, notes: $notes, createdAt: $createdAt, memorization: $memorization, revision: $revision, evaluation: $evaluation)';
+    return 'Session(id: $id, studentId: $studentId, groupId: $groupId, sessionType: $sessionType, occurrenceDate: $occurrenceDate, date: $date, time: $time, attendanceStatus: $attendanceStatus, notes: $notes, recitationOutcome: $recitationOutcome, createdAt: $createdAt, memorization: $memorization, revision: $revision, evaluation: $evaluation)';
   }
 }
 
@@ -111,6 +118,7 @@ abstract mixin class $SessionCopyWith<$Res> {
       String time,
       String attendanceStatus,
       String? notes,
+      String? recitationOutcome,
       DateTime? createdAt,
       SessionMemorization? memorization,
       SessionRevision? revision,
@@ -142,6 +150,7 @@ class _$SessionCopyWithImpl<$Res> implements $SessionCopyWith<$Res> {
     Object? time = null,
     Object? attendanceStatus = null,
     Object? notes = freezed,
+    Object? recitationOutcome = freezed,
     Object? createdAt = freezed,
     Object? memorization = freezed,
     Object? revision = freezed,
@@ -183,6 +192,10 @@ class _$SessionCopyWithImpl<$Res> implements $SessionCopyWith<$Res> {
       notes: freezed == notes
           ? _self.notes
           : notes // ignore: cast_nullable_to_non_nullable
+              as String?,
+      recitationOutcome: freezed == recitationOutcome
+          ? _self.recitationOutcome
+          : recitationOutcome // ignore: cast_nullable_to_non_nullable
               as String?,
       createdAt: freezed == createdAt
           ? _self.createdAt
@@ -349,6 +362,7 @@ extension SessionPatterns on Session {
             String time,
             String attendanceStatus,
             String? notes,
+            String? recitationOutcome,
             DateTime? createdAt,
             SessionMemorization? memorization,
             SessionRevision? revision,
@@ -369,6 +383,7 @@ extension SessionPatterns on Session {
             _that.time,
             _that.attendanceStatus,
             _that.notes,
+            _that.recitationOutcome,
             _that.createdAt,
             _that.memorization,
             _that.revision,
@@ -403,6 +418,7 @@ extension SessionPatterns on Session {
             String time,
             String attendanceStatus,
             String? notes,
+            String? recitationOutcome,
             DateTime? createdAt,
             SessionMemorization? memorization,
             SessionRevision? revision,
@@ -422,6 +438,7 @@ extension SessionPatterns on Session {
             _that.time,
             _that.attendanceStatus,
             _that.notes,
+            _that.recitationOutcome,
             _that.createdAt,
             _that.memorization,
             _that.revision,
@@ -455,6 +472,7 @@ extension SessionPatterns on Session {
             String time,
             String attendanceStatus,
             String? notes,
+            String? recitationOutcome,
             DateTime? createdAt,
             SessionMemorization? memorization,
             SessionRevision? revision,
@@ -474,6 +492,7 @@ extension SessionPatterns on Session {
             _that.time,
             _that.attendanceStatus,
             _that.notes,
+            _that.recitationOutcome,
             _that.createdAt,
             _that.memorization,
             _that.revision,
@@ -497,6 +516,7 @@ class _Session implements Session {
       this.time = '00:00',
       this.attendanceStatus = 'حاضر',
       this.notes,
+      this.recitationOutcome,
       this.createdAt,
       this.memorization,
       this.revision,
@@ -534,6 +554,11 @@ class _Session implements Session {
   final String attendanceStatus;
   @override
   final String? notes;
+// القسم ح.6 (v7): قرار المعلّم السريع بعد التسميع — "اجتاز" أو "يُعاد".
+// يُعرَض في "معلومات الجلسة الخارجية" (بطاقات القوائم) منذ القسم ح.12
+// ليعرف المعلّم من غير فتح الجلسة أن حفظها/مراجعتها تحتاج إعادة.
+  @override
+  final String? recitationOutcome;
   @override
   final DateTime? createdAt;
   @override
@@ -576,6 +601,8 @@ class _Session implements Session {
             (identical(other.attendanceStatus, attendanceStatus) ||
                 other.attendanceStatus == attendanceStatus) &&
             (identical(other.notes, notes) || other.notes == notes) &&
+            (identical(other.recitationOutcome, recitationOutcome) ||
+                other.recitationOutcome == recitationOutcome) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.memorization, memorization) ||
@@ -599,6 +626,7 @@ class _Session implements Session {
       time,
       attendanceStatus,
       notes,
+      recitationOutcome,
       createdAt,
       memorization,
       revision,
@@ -606,7 +634,7 @@ class _Session implements Session {
 
   @override
   String toString() {
-    return 'Session(id: $id, studentId: $studentId, groupId: $groupId, sessionType: $sessionType, occurrenceDate: $occurrenceDate, date: $date, time: $time, attendanceStatus: $attendanceStatus, notes: $notes, createdAt: $createdAt, memorization: $memorization, revision: $revision, evaluation: $evaluation)';
+    return 'Session(id: $id, studentId: $studentId, groupId: $groupId, sessionType: $sessionType, occurrenceDate: $occurrenceDate, date: $date, time: $time, attendanceStatus: $attendanceStatus, notes: $notes, recitationOutcome: $recitationOutcome, createdAt: $createdAt, memorization: $memorization, revision: $revision, evaluation: $evaluation)';
   }
 }
 
@@ -626,6 +654,7 @@ abstract mixin class _$SessionCopyWith<$Res> implements $SessionCopyWith<$Res> {
       String time,
       String attendanceStatus,
       String? notes,
+      String? recitationOutcome,
       DateTime? createdAt,
       SessionMemorization? memorization,
       SessionRevision? revision,
@@ -660,6 +689,7 @@ class __$SessionCopyWithImpl<$Res> implements _$SessionCopyWith<$Res> {
     Object? time = null,
     Object? attendanceStatus = null,
     Object? notes = freezed,
+    Object? recitationOutcome = freezed,
     Object? createdAt = freezed,
     Object? memorization = freezed,
     Object? revision = freezed,
@@ -701,6 +731,10 @@ class __$SessionCopyWithImpl<$Res> implements _$SessionCopyWith<$Res> {
       notes: freezed == notes
           ? _self.notes
           : notes // ignore: cast_nullable_to_non_nullable
+              as String?,
+      recitationOutcome: freezed == recitationOutcome
+          ? _self.recitationOutcome
+          : recitationOutcome // ignore: cast_nullable_to_non_nullable
               as String?,
       createdAt: freezed == createdAt
           ? _self.createdAt
@@ -1542,7 +1576,14 @@ mixin _$SessionEvaluation {
   double get memorizationScore;
   double get tajweedScore;
   double get fluencyScore;
-  double get accuracyScore;
+  double
+      get accuracyScore; // القسم ح.12 (v8): تقييم منفصل للمراجعة — نفس المعايير الأربعة، لكن
+// لأداء المراجعة لا الحفظ الجديد. مستقلّة تماماً عن الدرجات أعلاه لأن
+// جلسة واحدة قد تحتوي حفظاً جديداً ومراجعة معاً بتقييمين مختلفين.
+  double get revisionMemorizationScore;
+  double get revisionTajweedScore;
+  double get revisionFluencyScore;
+  double get revisionAccuracyScore;
 
   /// Create a copy of SessionEvaluation
   /// with the given fields replaced by the non-null parameter values.
@@ -1570,17 +1611,36 @@ mixin _$SessionEvaluation {
             (identical(other.fluencyScore, fluencyScore) ||
                 other.fluencyScore == fluencyScore) &&
             (identical(other.accuracyScore, accuracyScore) ||
-                other.accuracyScore == accuracyScore));
+                other.accuracyScore == accuracyScore) &&
+            (identical(other.revisionMemorizationScore,
+                    revisionMemorizationScore) ||
+                other.revisionMemorizationScore == revisionMemorizationScore) &&
+            (identical(other.revisionTajweedScore, revisionTajweedScore) ||
+                other.revisionTajweedScore == revisionTajweedScore) &&
+            (identical(other.revisionFluencyScore, revisionFluencyScore) ||
+                other.revisionFluencyScore == revisionFluencyScore) &&
+            (identical(other.revisionAccuracyScore, revisionAccuracyScore) ||
+                other.revisionAccuracyScore == revisionAccuracyScore));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, sessionId, memorizationScore,
-      tajweedScore, fluencyScore, accuracyScore);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      sessionId,
+      memorizationScore,
+      tajweedScore,
+      fluencyScore,
+      accuracyScore,
+      revisionMemorizationScore,
+      revisionTajweedScore,
+      revisionFluencyScore,
+      revisionAccuracyScore);
 
   @override
   String toString() {
-    return 'SessionEvaluation(id: $id, sessionId: $sessionId, memorizationScore: $memorizationScore, tajweedScore: $tajweedScore, fluencyScore: $fluencyScore, accuracyScore: $accuracyScore)';
+    return 'SessionEvaluation(id: $id, sessionId: $sessionId, memorizationScore: $memorizationScore, tajweedScore: $tajweedScore, fluencyScore: $fluencyScore, accuracyScore: $accuracyScore, revisionMemorizationScore: $revisionMemorizationScore, revisionTajweedScore: $revisionTajweedScore, revisionFluencyScore: $revisionFluencyScore, revisionAccuracyScore: $revisionAccuracyScore)';
   }
 }
 
@@ -1596,7 +1656,11 @@ abstract mixin class $SessionEvaluationCopyWith<$Res> {
       double memorizationScore,
       double tajweedScore,
       double fluencyScore,
-      double accuracyScore});
+      double accuracyScore,
+      double revisionMemorizationScore,
+      double revisionTajweedScore,
+      double revisionFluencyScore,
+      double revisionAccuracyScore});
 }
 
 /// @nodoc
@@ -1618,6 +1682,10 @@ class _$SessionEvaluationCopyWithImpl<$Res>
     Object? tajweedScore = null,
     Object? fluencyScore = null,
     Object? accuracyScore = null,
+    Object? revisionMemorizationScore = null,
+    Object? revisionTajweedScore = null,
+    Object? revisionFluencyScore = null,
+    Object? revisionAccuracyScore = null,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -1643,6 +1711,22 @@ class _$SessionEvaluationCopyWithImpl<$Res>
       accuracyScore: null == accuracyScore
           ? _self.accuracyScore
           : accuracyScore // ignore: cast_nullable_to_non_nullable
+              as double,
+      revisionMemorizationScore: null == revisionMemorizationScore
+          ? _self.revisionMemorizationScore
+          : revisionMemorizationScore // ignore: cast_nullable_to_non_nullable
+              as double,
+      revisionTajweedScore: null == revisionTajweedScore
+          ? _self.revisionTajweedScore
+          : revisionTajweedScore // ignore: cast_nullable_to_non_nullable
+              as double,
+      revisionFluencyScore: null == revisionFluencyScore
+          ? _self.revisionFluencyScore
+          : revisionFluencyScore // ignore: cast_nullable_to_non_nullable
+              as double,
+      revisionAccuracyScore: null == revisionAccuracyScore
+          ? _self.revisionAccuracyScore
+          : revisionAccuracyScore // ignore: cast_nullable_to_non_nullable
               as double,
     ));
   }
@@ -1741,16 +1825,34 @@ extension SessionEvaluationPatterns on SessionEvaluation {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(int id, int sessionId, double memorizationScore,
-            double tajweedScore, double fluencyScore, double accuracyScore)?
+    TResult Function(
+            int id,
+            int sessionId,
+            double memorizationScore,
+            double tajweedScore,
+            double fluencyScore,
+            double accuracyScore,
+            double revisionMemorizationScore,
+            double revisionTajweedScore,
+            double revisionFluencyScore,
+            double revisionAccuracyScore)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _SessionEvaluation() when $default != null:
-        return $default(_that.id, _that.sessionId, _that.memorizationScore,
-            _that.tajweedScore, _that.fluencyScore, _that.accuracyScore);
+        return $default(
+            _that.id,
+            _that.sessionId,
+            _that.memorizationScore,
+            _that.tajweedScore,
+            _that.fluencyScore,
+            _that.accuracyScore,
+            _that.revisionMemorizationScore,
+            _that.revisionTajweedScore,
+            _that.revisionFluencyScore,
+            _that.revisionAccuracyScore);
       case _:
         return orElse();
     }
@@ -1771,15 +1873,33 @@ extension SessionEvaluationPatterns on SessionEvaluation {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(int id, int sessionId, double memorizationScore,
-            double tajweedScore, double fluencyScore, double accuracyScore)
+    TResult Function(
+            int id,
+            int sessionId,
+            double memorizationScore,
+            double tajweedScore,
+            double fluencyScore,
+            double accuracyScore,
+            double revisionMemorizationScore,
+            double revisionTajweedScore,
+            double revisionFluencyScore,
+            double revisionAccuracyScore)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _SessionEvaluation():
-        return $default(_that.id, _that.sessionId, _that.memorizationScore,
-            _that.tajweedScore, _that.fluencyScore, _that.accuracyScore);
+        return $default(
+            _that.id,
+            _that.sessionId,
+            _that.memorizationScore,
+            _that.tajweedScore,
+            _that.fluencyScore,
+            _that.accuracyScore,
+            _that.revisionMemorizationScore,
+            _that.revisionTajweedScore,
+            _that.revisionFluencyScore,
+            _that.revisionAccuracyScore);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -1799,15 +1919,33 @@ extension SessionEvaluationPatterns on SessionEvaluation {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(int id, int sessionId, double memorizationScore,
-            double tajweedScore, double fluencyScore, double accuracyScore)?
+    TResult? Function(
+            int id,
+            int sessionId,
+            double memorizationScore,
+            double tajweedScore,
+            double fluencyScore,
+            double accuracyScore,
+            double revisionMemorizationScore,
+            double revisionTajweedScore,
+            double revisionFluencyScore,
+            double revisionAccuracyScore)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _SessionEvaluation() when $default != null:
-        return $default(_that.id, _that.sessionId, _that.memorizationScore,
-            _that.tajweedScore, _that.fluencyScore, _that.accuracyScore);
+        return $default(
+            _that.id,
+            _that.sessionId,
+            _that.memorizationScore,
+            _that.tajweedScore,
+            _that.fluencyScore,
+            _that.accuracyScore,
+            _that.revisionMemorizationScore,
+            _that.revisionTajweedScore,
+            _that.revisionFluencyScore,
+            _that.revisionAccuracyScore);
       case _:
         return null;
     }
@@ -1823,7 +1961,11 @@ class _SessionEvaluation extends SessionEvaluation {
       this.memorizationScore = 0.0,
       this.tajweedScore = 0.0,
       this.fluencyScore = 0.0,
-      this.accuracyScore = 0.0})
+      this.accuracyScore = 0.0,
+      this.revisionMemorizationScore = 0.0,
+      this.revisionTajweedScore = 0.0,
+      this.revisionFluencyScore = 0.0,
+      this.revisionAccuracyScore = 0.0})
       : super._();
   factory _SessionEvaluation.fromJson(Map<String, dynamic> json) =>
       _$SessionEvaluationFromJson(json);
@@ -1846,6 +1988,21 @@ class _SessionEvaluation extends SessionEvaluation {
   @override
   @JsonKey()
   final double accuracyScore;
+// القسم ح.12 (v8): تقييم منفصل للمراجعة — نفس المعايير الأربعة، لكن
+// لأداء المراجعة لا الحفظ الجديد. مستقلّة تماماً عن الدرجات أعلاه لأن
+// جلسة واحدة قد تحتوي حفظاً جديداً ومراجعة معاً بتقييمين مختلفين.
+  @override
+  @JsonKey()
+  final double revisionMemorizationScore;
+  @override
+  @JsonKey()
+  final double revisionTajweedScore;
+  @override
+  @JsonKey()
+  final double revisionFluencyScore;
+  @override
+  @JsonKey()
+  final double revisionAccuracyScore;
 
   /// Create a copy of SessionEvaluation
   /// with the given fields replaced by the non-null parameter values.
@@ -1877,17 +2034,36 @@ class _SessionEvaluation extends SessionEvaluation {
             (identical(other.fluencyScore, fluencyScore) ||
                 other.fluencyScore == fluencyScore) &&
             (identical(other.accuracyScore, accuracyScore) ||
-                other.accuracyScore == accuracyScore));
+                other.accuracyScore == accuracyScore) &&
+            (identical(other.revisionMemorizationScore,
+                    revisionMemorizationScore) ||
+                other.revisionMemorizationScore == revisionMemorizationScore) &&
+            (identical(other.revisionTajweedScore, revisionTajweedScore) ||
+                other.revisionTajweedScore == revisionTajweedScore) &&
+            (identical(other.revisionFluencyScore, revisionFluencyScore) ||
+                other.revisionFluencyScore == revisionFluencyScore) &&
+            (identical(other.revisionAccuracyScore, revisionAccuracyScore) ||
+                other.revisionAccuracyScore == revisionAccuracyScore));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, sessionId, memorizationScore,
-      tajweedScore, fluencyScore, accuracyScore);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      sessionId,
+      memorizationScore,
+      tajweedScore,
+      fluencyScore,
+      accuracyScore,
+      revisionMemorizationScore,
+      revisionTajweedScore,
+      revisionFluencyScore,
+      revisionAccuracyScore);
 
   @override
   String toString() {
-    return 'SessionEvaluation(id: $id, sessionId: $sessionId, memorizationScore: $memorizationScore, tajweedScore: $tajweedScore, fluencyScore: $fluencyScore, accuracyScore: $accuracyScore)';
+    return 'SessionEvaluation(id: $id, sessionId: $sessionId, memorizationScore: $memorizationScore, tajweedScore: $tajweedScore, fluencyScore: $fluencyScore, accuracyScore: $accuracyScore, revisionMemorizationScore: $revisionMemorizationScore, revisionTajweedScore: $revisionTajweedScore, revisionFluencyScore: $revisionFluencyScore, revisionAccuracyScore: $revisionAccuracyScore)';
   }
 }
 
@@ -1905,7 +2081,11 @@ abstract mixin class _$SessionEvaluationCopyWith<$Res>
       double memorizationScore,
       double tajweedScore,
       double fluencyScore,
-      double accuracyScore});
+      double accuracyScore,
+      double revisionMemorizationScore,
+      double revisionTajweedScore,
+      double revisionFluencyScore,
+      double revisionAccuracyScore});
 }
 
 /// @nodoc
@@ -1927,6 +2107,10 @@ class __$SessionEvaluationCopyWithImpl<$Res>
     Object? tajweedScore = null,
     Object? fluencyScore = null,
     Object? accuracyScore = null,
+    Object? revisionMemorizationScore = null,
+    Object? revisionTajweedScore = null,
+    Object? revisionFluencyScore = null,
+    Object? revisionAccuracyScore = null,
   }) {
     return _then(_SessionEvaluation(
       id: null == id
@@ -1952,6 +2136,22 @@ class __$SessionEvaluationCopyWithImpl<$Res>
       accuracyScore: null == accuracyScore
           ? _self.accuracyScore
           : accuracyScore // ignore: cast_nullable_to_non_nullable
+              as double,
+      revisionMemorizationScore: null == revisionMemorizationScore
+          ? _self.revisionMemorizationScore
+          : revisionMemorizationScore // ignore: cast_nullable_to_non_nullable
+              as double,
+      revisionTajweedScore: null == revisionTajweedScore
+          ? _self.revisionTajweedScore
+          : revisionTajweedScore // ignore: cast_nullable_to_non_nullable
+              as double,
+      revisionFluencyScore: null == revisionFluencyScore
+          ? _self.revisionFluencyScore
+          : revisionFluencyScore // ignore: cast_nullable_to_non_nullable
+              as double,
+      revisionAccuracyScore: null == revisionAccuracyScore
+          ? _self.revisionAccuracyScore
+          : revisionAccuracyScore // ignore: cast_nullable_to_non_nullable
               as double,
     ));
   }

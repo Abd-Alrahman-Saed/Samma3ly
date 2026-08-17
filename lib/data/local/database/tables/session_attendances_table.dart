@@ -17,8 +17,12 @@ import 'surahs_table.dart';
 /// واحدة، فردية كانت أو جماعية.
 ///
 /// v7 (القسم ح.6): `recitationOutcome` — قرار المعلّم السريع بعد التسميع
-/// ("ممتاز" أو "يُعاد")، مستقلّ عن تفاصيل التقييم الأربعة. لا يمثّل نتيجة
+/// ("اجتاز" أو "يُعاد")، مستقلّ عن تفاصيل التقييم الأربعة. لا يمثّل نتيجة
 /// اشتقاقاً آلياً (مثلاً من متوسط الدرجات) — هذا حكم المعلّم المباشر.
+///
+/// v8 (القسم ح.12): تقييم منفصل للمراجعة (revisionMemorizationScore...)
+/// — نفس المعايير الأربعة لكن لأداء المراجعة، مستقلّ تماماً عن تقييم
+/// الحفظ الجديد أعلاه. راجع نفس التعليق على SessionEvaluations.
 class SessionAttendances extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get sessionId => integer().references(Sessions, #id)();
@@ -37,6 +41,11 @@ class SessionAttendances extends Table {
   RealColumn get tajweedScore => real().withDefault(const Constant(0.0))();
   RealColumn get fluencyScore => real().withDefault(const Constant(0.0))();
   RealColumn get accuracyScore => real().withDefault(const Constant(0.0))();
+
+  RealColumn get revisionMemorizationScore => real().withDefault(const Constant(0.0))();
+  RealColumn get revisionTajweedScore => real().withDefault(const Constant(0.0))();
+  RealColumn get revisionFluencyScore => real().withDefault(const Constant(0.0))();
+  RealColumn get revisionAccuracyScore => real().withDefault(const Constant(0.0))();
 
   TextColumn? get notes => text().nullable()();
 

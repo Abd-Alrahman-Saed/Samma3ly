@@ -16,6 +16,12 @@ class SessionCardItem {
   final String memorizationInfo;
   final String revisionInfo;
   final bool isSchedule;
+  // القسم ح.12 — "معلومات الجلسة الخارجية": قرار المعلّم السريع
+  // (اجتاز/يُعاد) ودرجة تقييم المراجعة المنفصلة، معروضان على بطاقة
+  // الجلسة نفسها في كل قائمة (لا داخل الجلسة فقط) — الهدف أن يعرف
+  // المعلّم من غير فتح الجلسة أنها تحتاج إعادة.
+  final String? recitationOutcome;
+  final double revisionFinalScore;
 
   SessionCardItem({
     required this.id,
@@ -29,6 +35,8 @@ class SessionCardItem {
     this.memorizationInfo = '',
     this.revisionInfo = '',
     this.isSchedule = false,
+    this.recitationOutcome,
+    this.revisionFinalScore = 0,
   });
 }
 
@@ -47,6 +55,11 @@ class SessionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusColors = StatusColors.forAttendance(item.attendanceStatus);
     final hasScore = !item.isSchedule && item.finalScore > 0;
+    final hasRevisionScore = !item.isSchedule && item.revisionFinalScore > 0;
+    // القسم ح.12: "يُعاد" بنفس لون تحذير الحضور المتأخر (أصفر/برتقالي —
+    // يلفت النظر أن هذه الجلسة تحتاج إعادة)، و"اجتاز" بنفس لون "حاضر"
+    // الأخضر (نجاح)، بلا لون جديد في نظام التصميم.
+    final outcomeColors = item.recitationOutcome == 'يُعاد' ? StatusColors.attendanceLate : StatusColors.present;
 
     return Material(
       color: Colors.white,
@@ -95,6 +108,15 @@ class SessionCard extends StatelessWidget {
                   ),
                 ],
               ),
+              if (item.recitationOutcome != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(color: outcomeColors.bg, borderRadius: BorderRadius.circular(999)),
+                    child: Text(item.recitationOutcome!, style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w700, color: outcomeColors.fg)),
+                  ),
+                ),
               if (item.memorizationInfo.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
@@ -105,22 +127,44 @@ class SessionCard extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 3),
                   child: Text(item.revisionInfo, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.streakIconFg)),
                 ),
-              if (hasScore || onDelete != null)
+              if (hasScore || hasRevisionScore || onDelete != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      if (hasScore)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                          decoration: BoxDecoration(color: AppColors.dividerLight, borderRadius: BorderRadius.circular(999)),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ScoreDisplay(score: item.finalScore, style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w800)),
-                            ],
-                          ),
+                      if (hasScore || hasRevisionScore)
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            if (hasScore)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                                decoration: BoxDecoration(color: AppColors.dividerLight, borderRadius: BorderRadius.circular(999)),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    ScoreDisplay(score: item.finalScore, style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w800)),
+                                  ],
+                                ),
+                              ),
+                            // القسم ح.12: شريحة منفصلة لدرجة المراجعة — لا
+                            // تُدمَج مع درجة الحفظ لأنهما تقييمان مستقلّان.
+                            if (hasRevisionScore)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                                decoration: BoxDecoration(color: const Color(0xFFE9F3EF), borderRadius: BorderRadius.circular(999)),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text('مراجعة', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.streakIconFg)),
+                                    const SizedBox(width: 4),
+                                    ScoreDisplay(score: item.revisionFinalScore, style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w800)),
+                                  ],
+                                ),
+                              ),
+                          ],
                         )
                       else
                         const SizedBox.shrink(),

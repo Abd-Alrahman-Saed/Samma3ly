@@ -55,7 +55,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(QueryExecutor executor) : super(executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -176,9 +176,29 @@ class AppDatabase extends _$AppDatabase {
       // المرور (from < 4) بيبقى العمود موجود بالفعل، فكتلة addColumn هنا
       // المفروض تتخطّى تماماً زي v5 — وإلا "duplicate column name".
       if (from < 7 && to >= 7 && from >= 4) {
-        // القسم ح.6 (v7): قرار المعلّم السريع بعد التسميع الجماعي — "ممتاز"
+        // القسم ح.6 (v7): قرار المعلّم السريع بعد التسميع الجماعي — "اجتاز"
         // أو "يُعاد". عمود nullable إضافي فقط.
         await m.addColumn(sessionAttendances, sessionAttendances.recitationOutcome);
+      }
+      if (from < 8 && to >= 8) {
+        // القسم ح.12 (v8): تقييم منفصل للمراجعة — أربعة أعمدة إضافية على
+        // SessionEvaluations. هذا الجدول **لا** تُعيد أي كتلة onUpgrade
+        // إنشاءه بـcreateTable (خلافاً لـsession_attendances) — كان موجوداً
+        // منذ onCreate الأصلي فقط — فلا ينطبق هنا فخّ "الشكل الحيّ الحالي"،
+        // ولا حاجة لحارس `from >= N` إضافي.
+        await m.addColumn(sessionEvaluations, sessionEvaluations.revisionMemorizationScore);
+        await m.addColumn(sessionEvaluations, sessionEvaluations.revisionTajweedScore);
+        await m.addColumn(sessionEvaluations, sessionEvaluations.revisionFluencyScore);
+        await m.addColumn(sessionEvaluations, sessionEvaluations.revisionAccuracyScore);
+      }
+      // نفس فخّ v5/v7 بالضبط، ونفس الحارس `from >= 4`: أعمدة تقييم المراجعة
+      // على session_attendances (لجلسات الحلقات) — الجدول اللي أنشأته كتلة
+      // v4 بـcreateTable (يعكس الشكل الحيّ الحالي دائماً).
+      if (from < 8 && to >= 8 && from >= 4) {
+        await m.addColumn(sessionAttendances, sessionAttendances.revisionMemorizationScore);
+        await m.addColumn(sessionAttendances, sessionAttendances.revisionTajweedScore);
+        await m.addColumn(sessionAttendances, sessionAttendances.revisionFluencyScore);
+        await m.addColumn(sessionAttendances, sessionAttendances.revisionAccuracyScore);
       }
     },
     beforeOpen: (details) async {

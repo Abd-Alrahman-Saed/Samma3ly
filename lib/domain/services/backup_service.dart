@@ -175,7 +175,12 @@ class BackupService {
         tajweedScore: Value(a.tajweedScore),
         fluencyScore: Value(a.fluencyScore),
         accuracyScore: Value(a.accuracyScore),
+        revisionMemorizationScore: Value(a.revisionMemorizationScore),
+        revisionTajweedScore: Value(a.revisionTajweedScore),
+        revisionFluencyScore: Value(a.revisionFluencyScore),
+        revisionAccuracyScore: Value(a.revisionAccuracyScore),
         notes: Value(a.notes),
+        recitationOutcome: Value(a.recitationOutcome),
         createdAt: Value(a.createdAt),
       ));
     }
@@ -212,6 +217,10 @@ class BackupService {
         tajweedScore: Value(e.tajweedScore),
         fluencyScore: Value(e.fluencyScore),
         accuracyScore: Value(e.accuracyScore),
+        revisionMemorizationScore: Value(e.revisionMemorizationScore),
+        revisionTajweedScore: Value(e.revisionTajweedScore),
+        revisionFluencyScore: Value(e.revisionFluencyScore),
+        revisionAccuracyScore: Value(e.revisionAccuracyScore),
       ));
     }
     for (final s in data.schedules) {
@@ -494,7 +503,12 @@ class BackupData {
         'tajweedScore': e.tajweedScore,
         'fluencyScore': e.fluencyScore,
         'accuracyScore': e.accuracyScore,
+        'revisionMemorizationScore': e.revisionMemorizationScore,
+        'revisionTajweedScore': e.revisionTajweedScore,
+        'revisionFluencyScore': e.revisionFluencyScore,
+        'revisionAccuracyScore': e.revisionAccuracyScore,
         'notes': e.notes,
+        'recitationOutcome': e.recitationOutcome,
         'createdAt': e.createdAt.toIso8601String(),
       };
   static SessionAttendance _sessionAttendanceFromJson(Map<String, dynamic> m) => SessionAttendance(
@@ -512,7 +526,15 @@ class BackupData {
         tajweedScore: (m['tajweedScore'] as num?)?.toDouble() ?? 0.0,
         fluencyScore: (m['fluencyScore'] as num?)?.toDouble() ?? 0.0,
         accuracyScore: (m['accuracyScore'] as num?)?.toDouble() ?? 0.0,
+        // v8 (القسم ح.12): نسخ احتياطية أقدم لن تحتوي هذه المفاتيح.
+        revisionMemorizationScore: (m['revisionMemorizationScore'] as num?)?.toDouble() ?? 0.0,
+        revisionTajweedScore: (m['revisionTajweedScore'] as num?)?.toDouble() ?? 0.0,
+        revisionFluencyScore: (m['revisionFluencyScore'] as num?)?.toDouble() ?? 0.0,
+        revisionAccuracyScore: (m['revisionAccuracyScore'] as num?)?.toDouble() ?? 0.0,
         notes: m['notes'] as String?,
+        // v7 (القسم ح.6): كان مفقوداً من هذا التسلسل منذ إضافته — إصلاح
+        // عرَضي هنا بما أن هذا القسم بالذات قيد التعديل الآن لأجل v8.
+        recitationOutcome: m['recitationOutcome'] as String?,
         createdAt: DateTime.parse(m['createdAt'] as String),
       );
 
@@ -558,6 +580,10 @@ class BackupData {
         'tajweedScore': e.tajweedScore,
         'fluencyScore': e.fluencyScore,
         'accuracyScore': e.accuracyScore,
+        'revisionMemorizationScore': e.revisionMemorizationScore,
+        'revisionTajweedScore': e.revisionTajweedScore,
+        'revisionFluencyScore': e.revisionFluencyScore,
+        'revisionAccuracyScore': e.revisionAccuracyScore,
       };
   static SessionEvaluation _evaluationFromJson(Map<String, dynamic> m) =>
       SessionEvaluation(
@@ -567,6 +593,12 @@ class BackupData {
         tajweedScore: (m['tajweedScore'] as num).toDouble(),
         fluencyScore: (m['fluencyScore'] as num).toDouble(),
         accuracyScore: (m['accuracyScore'] as num).toDouble(),
+        // v8 (القسم ح.12): نسخ احتياطية أُخذت قبل هذا التحديث لن تحتوي هذه
+        // المفاتيح — 0.0 نفس القيمة الافتراضية الحقيقية على العمود.
+        revisionMemorizationScore: (m['revisionMemorizationScore'] as num?)?.toDouble() ?? 0.0,
+        revisionTajweedScore: (m['revisionTajweedScore'] as num?)?.toDouble() ?? 0.0,
+        revisionFluencyScore: (m['revisionFluencyScore'] as num?)?.toDouble() ?? 0.0,
+        revisionAccuracyScore: (m['revisionAccuracyScore'] as num?)?.toDouble() ?? 0.0,
       );
 
   // ---- Schedule ----
