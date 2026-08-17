@@ -56,6 +56,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.2
+  flutter_launcher_icons: ^0.14.4
   build_runner: ^2.4.9
   drift_dev: 2.34.0
   freezed: ^3.2.5
@@ -68,6 +69,18 @@ dev_dependencies:
   # support the Dart SDK's newer syntax (analyzer 7.6.0 doesn't know how
   # to serialize a "dot shorthand invocation" AST node, which crashed
   # build_runner while resolving lib/app.dart's dependency graph).
+
+# أيقونة التطبيق ("سمَّعلي") — نفس شعار المصحف المفتوح المستخدم فعلياً
+# داخل التطبيق (AppIcons.book)، على خلفية أخضر العلامة. راجع
+# assets/icon/README.md لتفاصيل التوليد وطريقة إعادة توليد الأيقونات
+# بعد أي تعديل على المصدر (`dart run flutter_launcher_icons`).
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#1B5E4A"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  remove_alpha_ios: true
 
 flutter:
   uses-material-design: true
