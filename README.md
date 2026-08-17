@@ -26,6 +26,35 @@ weekly scheduling, notifications, reports, and local JSON backup/restore.
 - نسخ احتياطي واستعادة (JSON) — كل البيانات على الجهاز، بلا خادم خارجي.
 - عربي بالكامل (RTL)، خط Cairo، تصميم مخصَّص (راجع `docs/DESIGN_SPEC.md`).
 
+## لقطات من التطبيق
+
+<table>
+<tr>
+<td align="center" width="25%"><img src="Screenshots/Dashboard.jpeg" width="200"/><br/>الرئيسية</td>
+<td align="center" width="25%"><img src="Screenshots/%D8%A7%D9%84%D8%AC%D9%84%D8%B3%D8%A7%D8%AA.jpeg" width="200"/><br/>الجلسات</td>
+<td align="center" width="25%"><img src="Screenshots/%D8%B4%D8%A7%D8%B4%D8%A9%20%D8%A7%D9%84%D8%AC%D9%84%D8%B3%D8%A9.jpeg" width="200"/><br/>شاشة الجلسة</td>
+<td align="center" width="25%"><img src="Screenshots/%D8%B4%D8%A7%D8%B4%D8%A9%20%D8%A7%D9%84%D8%AC%D9%84%D8%B3%D8%A9%202.jpeg" width="200"/><br/>شاشة الجلسة (تقييم)</td>
+</tr>
+<tr>
+<td align="center"><img src="Screenshots/%D8%A7%D9%84%D8%AD%D9%84%D9%82%D8%A7%D8%AA.jpeg" width="200"/><br/>الحلقات</td>
+<td align="center"><img src="Screenshots/%D9%85%D8%B9%D9%84%D9%88%D9%85%D8%A7%D8%AA%20%D8%A7%D9%84%D8%AD%D9%84%D9%82%D8%A9.jpeg" width="200"/><br/>معلومات الحلقة</td>
+<td align="center"><img src="Screenshots/%D9%85%D9%88%D8%A7%D8%B9%D9%8A%D8%AF%20%D8%A7%D9%84%D8%AD%D9%84%D9%82%D8%A7%D8%AA.jpeg" width="200"/><br/>مواعيد الحلقات</td>
+<td align="center"><img src="Screenshots/%D8%A7%D9%84%D8%B7%D9%84%D8%A7%D8%A8.jpeg" width="200"/><br/>الطلاب</td>
+</tr>
+<tr>
+<td align="center"><img src="Screenshots/%D8%B5%D9%81%D8%AD%D8%A9%20%D8%A7%D9%84%D8%B7%D8%A7%D9%84%D8%A8.jpeg" width="200"/><br/>صفحة الطالب</td>
+<td align="center"><img src="Screenshots/%D8%A7%D9%84%D9%85%D8%AD%D9%81%D9%88%D8%B8%20%D9%85%D9%86%20%D8%A7%D9%84%D9%82%D8%B1%D8%A7%D9%86.jpeg" width="200"/><br/>المحفوظ من القرآن</td>
+<td align="center"><img src="Screenshots/%D8%B4%D8%A7%D8%B4%D8%A9%20%D8%A7%D9%84%D9%87%D8%AF%D9%81.jpeg" width="200"/><br/>شاشة الهدف</td>
+<td align="center"><img src="Screenshots/%D8%A7%D9%84%D8%AA%D9%82%D9%88%D9%8A%D9%85%20%D8%A7%D9%84%D8%A7%D8%B3%D8%A8%D9%88%D8%B9%D9%8A.jpeg" width="200"/><br/>التقويم الأسبوعي</td>
+</tr>
+<tr>
+<td align="center"><img src="Screenshots/%D8%A7%D9%84%D8%AA%D9%82%D8%A7%D8%B1%D9%8A%D8%B1.jpeg" width="200"/><br/>التقارير</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</table>
+
 ## التقنيات
 
 - [Flutter](https://flutter.dev) + [Riverpod](https://riverpod.dev) لإدارة الحالة.
