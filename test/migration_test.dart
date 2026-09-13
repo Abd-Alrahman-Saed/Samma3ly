@@ -20,6 +20,7 @@ import 'generated_migrations/schema_v5.dart' as v5;
 import 'generated_migrations/schema_v6.dart' as v6;
 import 'generated_migrations/schema_v7.dart' as v7;
 import 'generated_migrations/schema_v8.dart' as v8;
+import 'generated_migrations/schema_v9.dart' as v9;
 
 void main() {
   late SchemaVerifier verifier;
@@ -376,8 +377,9 @@ void main() {
   );
 
   test(
-    'ترقية v7→v8 (القسم ح.12): تضيف أعمدة تقييم المراجعة على session_evaluations '
-    'وsession_attendances بأعمدة إضافية فقط، وتُبقي بيانات v7 سليمة',
+    'ترقية v7→v10 (تجميع v8 القديمة + v10): بيانات session_evaluations/'
+    'session_attendances v7 تبقى سليمة، وأعمدة تقييم المراجعة المؤقتة '
+    '(أُضيفت بكتلة v8 ثم حُذفت بكتلة v10 في نفس المرور) لا تترك أثراً',
     () async {
       final schema = await verifier.schemaAt(7);
       final oldDb = v7.DatabaseAtV7(schema.newConnection());
@@ -402,31 +404,103 @@ void main() {
       final migratedDb = AppDatabase.forTesting(schema.newConnection());
       addTearDown(migratedDb.close);
 
-      // بيانات v7 سليمة تماماً — لم تُلمَس.
+      // بيانات v7 سليمة تماماً — لم تُلمَس. session_attendances لم يتغيّر
+      // شكله في v10 (لسه بمراجعة واحدة لكل طالب)، فأعمدة تقييم المراجعة
+      // عليه ما زالت موجودة.
       final attendances = await migratedDb.select(migratedDb.sessionAttendances).get();
       expect(attendances, hasLength(1));
       expect(attendances.first.recitationOutcome, 'اجتاز');
       expect(attendances.first.revisionMemorizationScore, 0.0);
-      expect(attendances.first.revisionTajweedScore, 0.0);
-      expect(attendances.first.revisionFluencyScore, 0.0);
-      expect(attendances.first.revisionAccuracyScore, 0.0);
 
+      // القسم ح.14 (v10): session_evaluations لم يعد يحمل أعمدة تقييم
+      // المراجعة إطلاقاً — انتقلت إلى session_revisions.
       final evaluations = await migratedDb.select(migratedDb.sessionEvaluations).get();
       expect(evaluations, hasLength(1));
-      expect(evaluations.first.memorizationScore, 8.0);
-      expect(evaluations.first.revisionMemorizationScore, 0.0);
-      expect(evaluations.first.revisionTajweedScore, 0.0);
-      expect(evaluations.first.revisionFluencyScore, 0.0);
-      expect(evaluations.first.revisionAccuracyScore, 0.0);
+      expect(evaluations.first.memorizationScore, 8.0, reason: 'تقييم الحفظ v7 سليم');
+      final evalColumns = await migratedDb.customSelect("PRAGMA table_info('session_evaluations')").get();
+      final evalColumnNames = evalColumns.map((r) => r.data['name'] as String).toSet();
+      expect(
+        evalColumnNames,
+        isNot(anyOf(
+          contains('revision_memorization_score'),
+          contains('revision_tajweed_score'),
+          contains('revision_fluency_score'),
+          contains('revision_accuracy_score'),
+        )),
+        reason: 'أعمدة تقييم المراجعة القديمة على session_evaluations يجب أن تكون محذوفة تماماً',
+      );
 
-      // الأعمدة الجديدة فعلاً قابلة للكتابة بعد الترقية مباشرة.
-      await migratedDb.update(migratedDb.sessionEvaluations).replace(SessionEvaluationsCompanion(
-            id: const Value(1),
-            sessionId: const Value(1),
-            revisionMemorizationScore: const Value(5.0),
+      // ولا توجد جلسة v7 هذه أصلاً بدون صفّ مراجعة — الترقية لا تخترع
+      // مراجعة من العدم لمجرد وجود تقييم حفظ.
+      final revisions = await migratedDb.select(migratedDb.sessionRevisions).get();
+      expect(revisions, isEmpty);
+    },
+  );
+
+  test(
+    'ترقية v9→v10 (القسم ح.14): تنقل تقييم المراجعة من session_evaluations '
+    'إلى صفّ session_revisions المقابل، ثم تسمح بأكثر من مراجعة لنفس الجلسة',
+    () async {
+      final schema = await verifier.schemaAt(9);
+      final oldDb = v9.DatabaseAtV9(schema.newConnection());
+      await oldDb.customStatement('''
+        INSERT INTO students (id, full_name, age, phone, address)
+        VALUES (1, 'طالب حقيقي', 10, '0100000000', 'عنوان')
+      ''');
+      await oldDb.customStatement('''
+        INSERT INTO surahs (id, number, name, ayah_count) VALUES (1, 1, 'الفاتحة', 7)
+      ''');
+      await oldDb.customStatement('''
+        INSERT INTO sessions (id, student_id, session_type, date, time)
+        VALUES (1, 1, 'فردي', ${DateTime(2026, 1, 1).millisecondsSinceEpoch}, '18:00')
+      ''');
+      // مراجعة v9 حقيقية (سورة + مدى)، بلا تقييم مراجعة بعد — القيمة
+      // الحقيقية كانت مخزَّنة على session_evaluations وقتها، لا هنا.
+      await oldDb.customStatement('''
+        INSERT INTO session_revisions (id, session_id, surah_id, from_ayah, to_ayah)
+        VALUES (1, 1, 1, 1, 7)
+      ''');
+      await oldDb.customStatement('''
+        INSERT INTO session_evaluations (
+          id, session_id, memorization_score, tajweed_score, fluency_score, accuracy_score,
+          revision_memorization_score, revision_tajweed_score, revision_fluency_score, revision_accuracy_score
+        ) VALUES (1, 1, 8.0, 7.0, 9.0, 6.0, 9.0, 8.0, 10.0, 7.0)
+      ''');
+      await oldDb.close();
+
+      final migratedDb = AppDatabase.forTesting(schema.newConnection());
+      addTearDown(migratedDb.close);
+
+      // تقييم الحفظ سليم كما هو.
+      final evaluation = await migratedDb.select(migratedDb.sessionEvaluations).getSingle();
+      expect(evaluation.memorizationScore, 8.0);
+
+      // تقييم المراجعة القديم (كان على session_evaluations) انتقل فعلياً
+      // إلى صفّ session_revisions المقابل لنفس الجلسة.
+      final revisions = await migratedDb.select(migratedDb.sessionRevisions).get();
+      expect(revisions, hasLength(1));
+      expect(revisions.first.surahId, 1, reason: 'بيانات المراجعة v9 الأصلية (السورة/المدى) لم تُلمَس');
+      expect(revisions.first.fromAyah, 1);
+      expect(revisions.first.toAyah, 7);
+      expect(revisions.first.memorizationScore, 9.0, reason: 'انتقلت من revision_memorization_score');
+      expect(revisions.first.tajweedScore, 8.0);
+      expect(revisions.first.fluencyScore, 10.0);
+      expect(revisions.first.accuracyScore, 7.0);
+      // أعمدة جديدة افتراضية لصفّ كان موجوداً قبل v10.
+      expect(revisions.first.label, 'مراجعة');
+      expect(revisions.first.isFullSurah, false);
+
+      // القيد UNIQUE على session_id (v9) اختفى فعلاً — مراجعة ثانية لنفس
+      // الجلسة تُدرَج بلا رفض من قاعدة البيانات.
+      await migratedDb.into(migratedDb.sessionRevisions).insert(SessionRevisionsCompanion.insert(
+            sessionId: 1,
+            surahId: 1,
+            fromAyah: 1,
+            toAyah: 7,
+            label: const Value('مراجعة بعيدة'),
           ));
-      final updatedEval = await migratedDb.select(migratedDb.sessionEvaluations).getSingle();
-      expect(updatedEval.revisionMemorizationScore, 5.0);
+      final revisionsAfter = await migratedDb.select(migratedDb.sessionRevisions).get();
+      expect(revisionsAfter, hasLength(2), reason: 'أكثر من مراجعة لنفس الجلسة بقى ممكناً (القسم ح.14)');
     },
   );
 

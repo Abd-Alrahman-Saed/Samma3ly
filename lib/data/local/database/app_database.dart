@@ -55,7 +55,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(QueryExecutor executor) : super(executor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -186,10 +186,19 @@ class AppDatabase extends _$AppDatabase {
         // إنشاءه بـcreateTable (خلافاً لـsession_attendances) — كان موجوداً
         // منذ onCreate الأصلي فقط — فلا ينطبق هنا فخّ "الشكل الحيّ الحالي"،
         // ولا حاجة لحارس `from >= N` إضافي.
-        await m.addColumn(sessionEvaluations, sessionEvaluations.revisionMemorizationScore);
-        await m.addColumn(sessionEvaluations, sessionEvaluations.revisionTajweedScore);
-        await m.addColumn(sessionEvaluations, sessionEvaluations.revisionFluencyScore);
-        await m.addColumn(sessionEvaluations, sessionEvaluations.revisionAccuracyScore);
+        //
+        // 🔴 القسم ح.14 (v10) نقل هذه الأعمدة الأربعة إلى SessionRevisions
+        // ثم حذفها من هنا — فـ`sessionEvaluations.revisionMemorizationScore`
+        // إلخ لم تعد getters موجودة على تعريف الجدول الحيّ الحالي، ولا يصحّ
+        // استخدام `m.addColumn(table, table.column)` النمطي هنا (يشير إلى
+        // عمود غير موجود أصلاً في الكود). SQL خام بدلاً منه — نفس تأثير
+        // ALTER TABLE ADD COLUMN الذي كان `addColumn` سيولّده، بلا اعتماد
+        // على getter حيّ. كتلة v10 أدناه تحذف هذه الأعمدة بعد نقل بياناتها،
+        // فأي قيمة تُكتب هنا مؤقتة داخل نفس مرور onUpgrade فقط.
+        await customStatement('ALTER TABLE session_evaluations ADD COLUMN revision_memorization_score REAL NOT NULL DEFAULT 0.0');
+        await customStatement('ALTER TABLE session_evaluations ADD COLUMN revision_tajweed_score REAL NOT NULL DEFAULT 0.0');
+        await customStatement('ALTER TABLE session_evaluations ADD COLUMN revision_fluency_score REAL NOT NULL DEFAULT 0.0');
+        await customStatement('ALTER TABLE session_evaluations ADD COLUMN revision_accuracy_score REAL NOT NULL DEFAULT 0.0');
       }
       // نفس فخّ v5/v7 بالضبط، ونفس الحارس `from >= 4`: أعمدة تقييم المراجعة
       // على session_attendances (لجلسات الحلقات) — الجدول اللي أنشأته كتلة
@@ -217,6 +226,61 @@ class AppDatabase extends _$AppDatabase {
         await m.dropColumn(groupScheduleSlots, 'anchor_type');
         await m.dropColumn(groupScheduleSlots, 'prayer_name');
         await m.dropColumn(groupScheduleSlots, 'offset_minutes');
+      }
+      // القسم ح.14 (v10): مراجعات متعددة للجلسة الواحدة، كل واحدة بتقييمها
+      // المستقلّ + خيار "السورة كاملة".
+      //
+      // الجداول الثلاثة هنا (session_revisions/session_memorizations/
+      // session_evaluations) **لا** تُعيد أي كتلة onUpgrade إنشاءها
+      // بـ`createTable` — موجودة منذ onCreate الأصلي فقط — فلا ينطبق عليها
+      // فخّ "الشكل الحيّ الحالي" الموصوف فوق كتل v5/v7/v8/v9، ولا تحتاج
+      // حارس `from >= N` إضافي (خلافاً لـsession_attendances و
+      // group_schedule_slots). حارس `from < 10 && to >= 10` وحده كافٍ.
+      if (from < 10 && to >= 10) {
+        await transaction(() async {
+          // 1) session_revisions: حذف قيد UNIQUE عن session_id (مراجعة
+          //    واحدة لكل جلسة سابقاً) + الأعمدة الجديدة. SQLite لا يملك
+          //    ALTER لحذف قيد، فالتغيير يتطلّب إعادة بناء الجدول —
+          //    TableMigration تعيد بناءه على شكل تعريف Dart الحالي (بلا
+          //    UNIQUE) وتنسخ الصفوف. كل الأعمدة الجديدة لها قيم افتراضية،
+          //    فلا حاجة لـcolumnTransformer.
+          await m.alterTable(TableMigration(
+            sessionRevisions,
+            newColumns: [
+              sessionRevisions.label,
+              sessionRevisions.isFullSurah,
+              sessionRevisions.sortOrder,
+              sessionRevisions.memorizationScore,
+              sessionRevisions.tajweedScore,
+              sessionRevisions.fluencyScore,
+              sessionRevisions.accuracyScore,
+            ],
+          ));
+
+          await m.addColumn(sessionMemorizations, sessionMemorizations.isFullSurah);
+
+          // 2) نقل تقييم المراجعة من مستوى الجلسة (أعمدة v8 على
+          //    session_evaluations) إلى صفّ المراجعة نفسه. العلاقة كانت
+          //    واحد-لواحد قبل هذه الترقية بالضبط (session_id فريد في
+          //    الجدولين)، فالاستعلام المترابط هنا يطابق صفّاً واحداً على
+          //    الأكثر — بلا أي غموض في التوزيع.
+          await customStatement('''
+            UPDATE session_revisions SET
+              memorization_score = COALESCE((SELECT e.revision_memorization_score FROM session_evaluations e WHERE e.session_id = session_revisions.session_id), 0.0),
+              tajweed_score      = COALESCE((SELECT e.revision_tajweed_score      FROM session_evaluations e WHERE e.session_id = session_revisions.session_id), 0.0),
+              fluency_score      = COALESCE((SELECT e.revision_fluency_score      FROM session_evaluations e WHERE e.session_id = session_revisions.session_id), 0.0),
+              accuracy_score     = COALESCE((SELECT e.revision_accuracy_score     FROM session_evaluations e WHERE e.session_id = session_revisions.session_id), 0.0)
+          ''');
+
+          // 3) وبعد نقل البيانات فعلاً، تُحذف الأعمدة القديمة — لئلا يبقى
+          //    مصدران للحقيقة لنفس المعنى. نظيرتها على session_attendances
+          //    (جلسات الحلقات) تبقى كما هي: مسار منفصل، وما زالت مراجعة
+          //    واحدة لكل طالب هناك.
+          await m.dropColumn(sessionEvaluations, 'revision_memorization_score');
+          await m.dropColumn(sessionEvaluations, 'revision_tajweed_score');
+          await m.dropColumn(sessionEvaluations, 'revision_fluency_score');
+          await m.dropColumn(sessionEvaluations, 'revision_accuracy_score');
+        });
       }
     },
     beforeOpen: (details) async {

@@ -1,7 +1,13 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
 import 'package:drift/drift.dart' hide Column, Table, Index;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:quran_mobile/core/enums/attendance_status.dart';
 import 'package:quran_mobile/core/enums/recitation_outcome.dart';
 import 'package:quran_mobile/core/icons/app_icons.dart';
@@ -15,8 +21,40 @@ import 'package:quran_mobile/core/widgets/student_picker.dart';
 import 'package:quran_mobile/core/widgets/surah_dropdown.dart';
 import 'package:quran_mobile/data/local/database/app_database.dart' hide Student;
 import 'package:quran_mobile/features/sessions/providers/session_provider.dart';
+import 'package:quran_mobile/features/sessions/widgets/session_share_card.dart';
 import 'package:quran_mobile/features/students/providers/student_provider.dart';
 import 'package:quran_mobile/providers.dart';
+
+/// القسم ح.14 — أنواع المراجعة الجاهزة كأزرار سريعة (شرائح اختيار). أي
+/// تسمية أخرى (بما فيها القديمة "مراجعة" الافتراضية على بيانات ما قبل هذا
+/// التحديث) تُعرَض كـ"مخصّص" مع حقل نصّ حرّ.
+const _revisionLabelPresets = ['قريبة', 'بعيدة', 'عامة'];
+
+/// حالة مراجعة واحدة داخل الشاشة — الجلسة الواحدة تحتمل عدة مراجعات
+/// (القسم ح.14)، كل واحدة بسورتها/مداها/تقييمها المستقلّ تماماً عن الباقي.
+class _RevisionEntry {
+  int? surahId;
+  final TextEditingController fromController = TextEditingController(text: '1');
+  final TextEditingController toController = TextEditingController(text: '1');
+  bool isFullSurah = false;
+  String label = 'قريبة';
+  final TextEditingController customLabelController = TextEditingController();
+  double evalMem = 0;
+  double evalTajweed = 0;
+  double evalFluency = 0;
+  double evalTashkeel = 0;
+
+  double get finalScore {
+    final sum = evalMem + evalTajweed + evalFluency + evalTashkeel;
+    return (sum / 4 * 10).roundToDouble() / 10;
+  }
+
+  void dispose() {
+    fromController.dispose();
+    toController.dispose();
+    customLabelController.dispose();
+  }
+}
 
 class SessionCreateScreen extends ConsumerStatefulWidget {
   final int? studentId;
@@ -37,18 +75,14 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
   int? _memSurahId;
   final _memFromAyahController = TextEditingController();
   final _memToAyahController = TextEditingController();
-  int? _revSurahId;
-  final _revFromAyahController = TextEditingController();
-  final _revToAyahController = TextEditingController();
+  bool _memIsFullSurah = false;
   double _evalMem = 0;
   double _evalTajweed = 0;
   double _evalFluency = 0;
   double _evalTashkeel = 0;
-  // القسم ح.12: تقييم منفصل للمراجعة — يظهر فقط عند اختيار سورة مراجعة.
-  double _revEvalMem = 0;
-  double _revEvalTajweed = 0;
-  double _revEvalFluency = 0;
-  double _revEvalTashkeel = 0;
+  // القسم ح.14: أكثر من مراجعة للجلسة الواحدة، كل واحدة بتقييمها المستقلّ
+  // — كانت حقول `_rev*` مفردة قبل هذا التحديث.
+  final List<_RevisionEntry> _revisions = [];
   int? _studentId;
   bool _isLoading = false;
   bool _isEdit = false;
@@ -60,7 +94,7 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
     _isEdit = widget.sessionId != null;
     _studentId = widget.studentId;
     if (_isEdit) _loadSession();
-    for (final c in [_notesController, _memFromAyahController, _memToAyahController, _revFromAyahController, _revToAyahController]) {
+    for (final c in [_notesController, _memFromAyahController, _memToAyahController]) {
       c.addListener(() => _isDirty = true);
     }
   }
@@ -83,12 +117,27 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
         _memSurahId = memorization.surahId;
         _memFromAyahController.text = '${memorization.fromAyah}';
         _memToAyahController.text = '${memorization.toAyah}';
+        _memIsFullSurah = memorization.isFullSurah;
       }
-      final revision = await dao.getRevisionBySession(widget.sessionId!);
-      if (revision != null) {
-        _revSurahId = revision.surahId;
-        _revFromAyahController.text = '${revision.fromAyah}';
-        _revToAyahController.text = '${revision.toAyah}';
+      final revisions = await dao.getRevisionsBySession(widget.sessionId!);
+      for (final r in revisions) {
+        final entry = _RevisionEntry()
+          ..surahId = r.surahId
+          ..isFullSurah = r.isFullSurah
+          ..evalMem = r.memorizationScore
+          ..evalTajweed = r.tajweedScore
+          ..evalFluency = r.fluencyScore
+          ..evalTashkeel = r.accuracyScore;
+        entry.fromController.text = '${r.fromAyah}';
+        entry.toController.text = '${r.toAyah}';
+        if (_revisionLabelPresets.contains(r.label)) {
+          entry.label = r.label;
+        } else {
+          entry.label = r.label;
+          entry.customLabelController.text = r.label;
+        }
+        _wireRevisionEntry(entry);
+        _revisions.add(entry);
       }
       final evaluation = await dao.getEvaluationBySession(widget.sessionId!);
       if (evaluation != null) {
@@ -96,10 +145,6 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
         _evalTajweed = evaluation.tajweedScore;
         _evalFluency = evaluation.fluencyScore;
         _evalTashkeel = evaluation.accuracyScore;
-        _revEvalMem = evaluation.revisionMemorizationScore;
-        _revEvalTajweed = evaluation.revisionTajweedScore;
-        _revEvalFluency = evaluation.revisionFluencyScore;
-        _revEvalTashkeel = evaluation.revisionAccuracyScore;
       }
       setState(() {});
       _isDirty = false;
@@ -111,8 +156,9 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
     _notesController.dispose();
     _memFromAyahController.dispose();
     _memToAyahController.dispose();
-    _revFromAyahController.dispose();
-    _revToAyahController.dispose();
+    for (final r in _revisions) {
+      r.dispose();
+    }
     super.dispose();
   }
 
@@ -134,6 +180,51 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
     return null;
   }
 
+  /// يربط تغييرات حقول "من/إلى آية" الحرّة الكتابة بـ`_isDirty` — الحقول
+  /// الأخرى (السورة، السويتش، الشرائح، الـSlider) تُحدِّث `_isDirty` مباشرة
+  /// عبر `onChanged` في `_RevisionCard`، لكن هذين الحقلين نصّيان يُكتَب
+  /// فيهما مباشرة بلا callback وسيط.
+  void _wireRevisionEntry(_RevisionEntry entry) {
+    for (final c in [entry.fromController, entry.toController]) {
+      c.addListener(() => _isDirty = true);
+    }
+  }
+
+  void _addRevision() {
+    setState(() {
+      final entry = _RevisionEntry();
+      _wireRevisionEntry(entry);
+      _revisions.add(entry);
+      _isDirty = true;
+    });
+  }
+
+  void _removeRevision(_RevisionEntry entry) {
+    setState(() {
+      _revisions.remove(entry);
+      entry.dispose();
+      _isDirty = true;
+    });
+  }
+
+  void _setMemFullSurah(bool value) {
+    setState(() {
+      _memIsFullSurah = value;
+      _memFromAyahController.text = '1';
+      _memToAyahController.text = value && _memSurahId != null ? '${QuranUtils.getAyahCount(_memSurahId!)}' : '1';
+      _isDirty = true;
+    });
+  }
+
+  void _setRevisionFullSurah(_RevisionEntry entry, bool value) {
+    setState(() {
+      entry.isFullSurah = value;
+      entry.fromController.text = '1';
+      entry.toController.text = value && entry.surahId != null ? '${QuranUtils.getAyahCount(entry.surahId!)}' : '1';
+      _isDirty = true;
+    });
+  }
+
   Future<void> _save(RecitationOutcome outcome) async {
     if (!_formKey.currentState!.validate()) return;
     if (_studentId == null) {
@@ -142,33 +233,20 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
     }
     if (!_isPresent) {
       _memSurahId = null;
-      _revSurahId = null;
       _evalMem = 0;
       _evalTajweed = 0;
       _evalFluency = 0;
       _evalTashkeel = 0;
-    }
-    // القسم ح.12: تقييم المراجعة يُصفَّر لو لا يوجد سورة مراجعة مختارة —
-    // مستقلّ عن تصفير الحضور أعلاه.
-    if (_revSurahId == null) {
-      _revEvalMem = 0;
-      _revEvalTajweed = 0;
-      _revEvalFluency = 0;
-      _revEvalTashkeel = 0;
+      for (final r in List.of(_revisions)) {
+        r.dispose();
+      }
+      _revisions.clear();
     }
     setState(() => _isLoading = true);
     try {
       final sessionDao = ref.read(sessionDaoProvider);
       final timeStr = '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
-      final hasEvaluation = _isPresent &&
-          (_evalMem > 0 ||
-              _evalTajweed > 0 ||
-              _evalFluency > 0 ||
-              _evalTashkeel > 0 ||
-              _revEvalMem > 0 ||
-              _revEvalTajweed > 0 ||
-              _revEvalFluency > 0 ||
-              _revEvalTashkeel > 0);
+      final hasEvaluation = _isPresent && (_evalMem > 0 || _evalTajweed > 0 || _evalFluency > 0 || _evalTashkeel > 0);
 
       late final int sessionId;
       if (_isEdit) {
@@ -180,40 +258,6 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
           time: Value(timeStr),
           notes: Value(_notesController.text.trim().isEmpty ? null : _notesController.text.trim()),
         ));
-
-        if (_memSurahId != null) {
-          await sessionDao.upsertMemorization(SessionMemorizationsCompanion(
-            sessionId: Value(sessionId),
-            surahId: Value(_memSurahId!),
-            fromAyah: Value(int.parse(_memFromAyahController.text.trim().isEmpty ? '1' : _memFromAyahController.text.trim())),
-            toAyah: Value(int.parse(_memToAyahController.text.trim().isEmpty ? '1' : _memToAyahController.text.trim())),
-          ));
-        } else {
-          await sessionDao.deleteMemorization(sessionId);
-        }
-        if (_revSurahId != null) {
-          await sessionDao.upsertRevision(SessionRevisionsCompanion(
-            sessionId: Value(sessionId),
-            surahId: Value(_revSurahId!),
-            fromAyah: Value(int.parse(_revFromAyahController.text.trim().isEmpty ? '1' : _revFromAyahController.text.trim())),
-            toAyah: Value(int.parse(_revToAyahController.text.trim().isEmpty ? '1' : _revToAyahController.text.trim())),
-          ));
-        } else {
-          await sessionDao.deleteRevision(sessionId);
-        }
-        if (hasEvaluation) {
-          await sessionDao.upsertEvaluation(SessionEvaluationsCompanion(
-            sessionId: Value(sessionId),
-            memorizationScore: Value(_evalMem),
-            tajweedScore: Value(_evalTajweed),
-            fluencyScore: Value(_evalFluency),
-            accuracyScore: Value(_evalTashkeel),
-            revisionMemorizationScore: Value(_revEvalMem),
-            revisionTajweedScore: Value(_revEvalTajweed),
-            revisionFluencyScore: Value(_revEvalFluency),
-            revisionAccuracyScore: Value(_revEvalTashkeel),
-          ));
-        }
       } else {
         sessionId = await sessionDao.insert(SessionsCompanion(
           studentId: Value(_studentId!),
@@ -221,37 +265,56 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
           time: Value(timeStr),
           notes: Value(_notesController.text.trim().isEmpty ? null : _notesController.text.trim()),
         ));
+      }
 
-        if (_memSurahId != null) {
-          await sessionDao.upsertMemorization(SessionMemorizationsCompanion(
-            sessionId: Value(sessionId),
-            surahId: Value(_memSurahId!),
-            fromAyah: Value(int.parse(_memFromAyahController.text.trim().isEmpty ? '1' : _memFromAyahController.text.trim())),
-            toAyah: Value(int.parse(_memToAyahController.text.trim().isEmpty ? '1' : _memToAyahController.text.trim())),
-          ));
-        }
-        if (_revSurahId != null) {
-          await sessionDao.upsertRevision(SessionRevisionsCompanion(
-            sessionId: Value(sessionId),
-            surahId: Value(_revSurahId!),
-            fromAyah: Value(int.parse(_revFromAyahController.text.trim().isEmpty ? '1' : _revFromAyahController.text.trim())),
-            toAyah: Value(int.parse(_revToAyahController.text.trim().isEmpty ? '1' : _revToAyahController.text.trim())),
-          ));
-        }
-        if (hasEvaluation) {
-          await sessionDao.upsertEvaluation(SessionEvaluationsCompanion(
-            sessionId: Value(sessionId),
-            memorizationScore: Value(_evalMem),
-            tajweedScore: Value(_evalTajweed),
-            fluencyScore: Value(_evalFluency),
-            accuracyScore: Value(_evalTashkeel),
-            revisionMemorizationScore: Value(_revEvalMem),
-            revisionTajweedScore: Value(_revEvalTajweed),
-            revisionFluencyScore: Value(_revEvalFluency),
-            revisionAccuracyScore: Value(_revEvalTashkeel),
-          ));
-        }
+      if (_memSurahId != null) {
+        await sessionDao.upsertMemorization(SessionMemorizationsCompanion(
+          sessionId: Value(sessionId),
+          surahId: Value(_memSurahId!),
+          fromAyah: Value(int.parse(_memFromAyahController.text.trim().isEmpty ? '1' : _memFromAyahController.text.trim())),
+          toAyah: Value(int.parse(_memToAyahController.text.trim().isEmpty ? '1' : _memToAyahController.text.trim())),
+          isFullSurah: Value(_memIsFullSurah),
+        ));
+      } else if (_isEdit) {
+        await sessionDao.deleteMemorization(sessionId);
+      }
 
+      // القسم ح.14: استبدال كل مراجعات الجلسة دفعة واحدة — يعمل بنفس
+      // البساطة سواء كانت الجلسة جديدة (لا مراجعات قديمة أصلاً فتُحذَف
+      // مجموعة فارغة) أو مُعدَّلة (تستبدل القديمة بالكامل). صفوف بلا سورة
+      // مختارة (مراجعة أُضيفت ثم لم تُكمَل) تُستبعَد بصمت بدل إجبار
+      // المعلّم على حذفها يدوياً.
+      await sessionDao.replaceRevisions(sessionId, [
+        for (var i = 0; i < _revisions.length; i++)
+          if (_revisions[i].surahId != null)
+            SessionRevisionsCompanion(
+              sessionId: Value(sessionId),
+              surahId: Value(_revisions[i].surahId!),
+              fromAyah: Value(int.parse(_revisions[i].fromController.text.trim().isEmpty ? '1' : _revisions[i].fromController.text.trim())),
+              toAyah: Value(int.parse(_revisions[i].toController.text.trim().isEmpty ? '1' : _revisions[i].toController.text.trim())),
+              label: Value(_revisions[i].label.trim().isEmpty ? 'مراجعة' : _revisions[i].label.trim()),
+              isFullSurah: Value(_revisions[i].isFullSurah),
+              sortOrder: Value(i),
+              memorizationScore: Value(_revisions[i].evalMem),
+              tajweedScore: Value(_revisions[i].evalTajweed),
+              fluencyScore: Value(_revisions[i].evalFluency),
+              accuracyScore: Value(_revisions[i].evalTashkeel),
+            ),
+      ]);
+
+      if (hasEvaluation) {
+        await sessionDao.upsertEvaluation(SessionEvaluationsCompanion(
+          sessionId: Value(sessionId),
+          memorizationScore: Value(_evalMem),
+          tajweedScore: Value(_evalTajweed),
+          fluencyScore: Value(_evalFluency),
+          accuracyScore: Value(_evalTashkeel),
+        ));
+      } else if (_isEdit) {
+        await sessionDao.deleteEvaluation(sessionId);
+      }
+
+      if (!_isEdit) {
         await ref.read(progressServiceProvider).syncStudentProgress(_studentId!);
         if (_memSurahId != null) {
           await ref.read(memorizedRangeServiceProvider).syncFromSession(
@@ -281,8 +344,20 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
         ref.invalidate(sessionsByStudentProvider(_studentId!));
         ref.invalidate(studentByIdProvider(_studentId!));
         if (_isEdit) ref.invalidate(sessionByIdProvider(widget.sessionId!));
-        AppSnackbar.success(context, _isEdit ? 'تم تحديث الجلسة' : 'تم حفظ الجلسة');
         _isDirty = false;
+
+        // القسم ح.14 — زرار "مشاركة" داخل الـsnackbar: يلتقط الـoverlay
+        // وحاوية Riverpod *قبل* الخروج من الشاشة (context.pop أسفل)، عشان
+        // يبقى الزرار شغّالاً حتى لو ضُغِط بعد رجوع المستخدم للشاشة السابقة
+        // — لا يعتمد بعدها على state هذه الشاشة (المتوقَّع أن يُهدَم فوراً).
+        final overlay = Overlay.of(context, rootOverlay: true);
+        final container = ProviderScope.containerOf(context, listen: false);
+        AppSnackbar.success(
+          context,
+          _isEdit ? 'تم تحديث الجلسة' : 'تم حفظ الجلسة',
+          actionLabel: 'مشاركة',
+          onAction: () => _shareSession(sessionId, overlay: overlay, container: container),
+        );
         context.pop();
       }
     } catch (e) {
@@ -294,12 +369,64 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
     }
   }
 
+  /// القسم ح.14 — يبني بطاقة نتيجة الجلسة ([SessionShareCard]) ويلتقطها
+  /// كصورة PNG عبر `RepaintBoundary` مُدرَجة في [overlay] (لا في شجرة هذه
+  /// الشاشة نفسها — الزرار قد يُضغَط بعد أن تكون الشاشة قد أُغلقت فعلاً،
+  /// راجع التعليق في `_save`)، ثم يفتح شيت المشاركة الأصلي للنظام.
+  /// [container] بدل `ref` لنفس السبب — قد لا يبقى `State` هذه الشاشة حيّاً.
+  Future<void> _shareSession(int sessionId, {required OverlayState overlay, required ProviderContainer container}) async {
+    final repo = container.read(sessionRepositoryProvider);
+    final session = await repo.getById(sessionId);
+    if (session == null) return;
+
+    var studentName = 'الطالب';
+    final sid = session.studentId;
+    if (sid != null) {
+      final student = await container.read(studentByIdProvider(sid).future);
+      if (student != null) studentName = student.fullName;
+    }
+    final surahs = await container.read(surahListProvider.future);
+    final surahNames = {for (final s in surahs) s.id: s.name};
+    String surahLabel(int id) => surahNames[id] ?? 'سورة $id';
+
+    final boundaryKey = GlobalKey();
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => Positioned(
+        left: -2000,
+        top: 0,
+        child: Material(
+          color: Colors.transparent,
+          child: RepaintBoundary(
+            key: boundaryKey,
+            child: SessionShareCard(studentName: studentName, session: session, surahLabel: surahLabel),
+          ),
+        ),
+      ),
+    );
+    overlay.insert(entry);
+    try {
+      // فرصة لإتمام تخطيط/رسم الإطار الأول قبل الالتقاط — إدراج
+      // OverlayEntry وحده لا يعني أنه رُسِم فعلياً بعد.
+      await WidgetsBinding.instance.endOfFrame;
+      await WidgetsBinding.instance.endOfFrame;
+      final boundary = boundaryKey.currentContext?.findRenderObject();
+      if (boundary is! RenderRepaintBoundary) return;
+      final image = await boundary.toImage(pixelRatio: 3);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/session_share_$sessionId.png');
+      await file.writeAsBytes(byteData.buffer.asUint8List());
+      await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], subject: 'نتيجة جلسة $studentName'));
+    } finally {
+      entry.remove();
+    }
+  }
+
   bool get _isPresent => _attendanceStatus == AttendanceStatus.present.arabic;
 
   double get _liveFinalScore => ((_evalMem + _evalTajweed + _evalFluency + _evalTashkeel) / 4 * 10).roundToDouble() / 10;
-
-  double get _liveRevisionFinalScore =>
-      ((_revEvalMem + _revEvalTajweed + _revEvalFluency + _revEvalTashkeel) / 4 * 10).roundToDouble() / 10;
 
   @override
   Widget build(BuildContext context) {
@@ -336,7 +463,29 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Text(_isEdit ? 'تعديل جلسة' : 'جلسة جديدة', style: Theme.of(context).textTheme.titleLarge),
+                    Expanded(child: Text(_isEdit ? 'تعديل جلسة' : 'جلسة جديدة', style: Theme.of(context).textTheme.titleLarge)),
+                    // القسم ح.14 — مشاركة نتيجة جلسة محفوظة سلفاً مباشرة من
+                    // الهيدر (بلا حاجة للحفظ أولاً، الجلسة موجودة أصلاً).
+                    if (_isEdit)
+                      Material(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        child: InkWell(
+                          onTap: () => _shareSession(
+                            widget.sessionId!,
+                            overlay: Overlay.of(context, rootOverlay: true),
+                            container: ProviderScope.containerOf(context, listen: false),
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.inputBorder)),
+                            child: const AppIcon(AppIcons.share, size: 16, color: AppColors.textSecondary),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -386,75 +535,56 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
                           ],
                         ),
                         const SizedBox(height: 14),
-                        AppFormField(controller: _notesController, label: 'ملاحظات', hintText: 'ملاحظات', maxLines: 2),
+                        // القسم ح.14: صندوق ملاحظات أكبر (4 أسطر افتراضياً،
+                        // يتمدّد حتى 8) — يساعد على كتابة ملاحظة حقيقية بدل
+                        // سطر واحد ضيق.
+                        AppFormField(controller: _notesController, label: 'ملاحظات', hintText: 'ملاحظات', minLines: 4, maxLines: 8),
                         if (!_isPresent) ...[
                           const SizedBox(height: 14),
                           const Text('لا يمكن تسجيل الحفظ أو التقييم لجلسة غياب', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.textSecondary)),
                         ],
                         if (_isPresent) ...[
                           const SizedBox(height: 6),
-                          const Text('الحفظ الجديد', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                          const Text('الحفظ الجديد (اختياري)', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                           const SizedBox(height: 8),
-                          SurahDropdown(value: _memSurahId, onChanged: (v) => setState(() { _memSurahId = v; _isDirty = true; }), label: 'السورة', noneLabel: 'اختر السورة'),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(child: AppFormField(controller: _memFromAyahController, label: 'من آية', keyboardType: TextInputType.number, validator: (_) => _validateAyahRange(surahId: _memSurahId, fromController: _memFromAyahController, toController: _memToAyahController))),
-                              const SizedBox(width: 10),
-                              Expanded(child: AppFormField(controller: _memToAyahController, label: 'إلى آية', keyboardType: TextInputType.number, validator: (_) => _validateAyahRange(surahId: _memSurahId, fromController: _memFromAyahController, toController: _memToAyahController))),
-                            ],
+                          SurahDropdown(
+                            value: _memSurahId,
+                            onChanged: (v) => setState(() {
+                              _memSurahId = v;
+                              if (_memIsFullSurah) _memToAyahController.text = v != null ? '${QuranUtils.getAyahCount(v)}' : '1';
+                              _isDirty = true;
+                            }),
+                            label: 'السورة',
+                            noneLabel: 'اختر السورة',
                           ),
-                          const SizedBox(height: 18),
-                          const Text('المراجعة (اختياري)', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                          const SizedBox(height: 8),
-                          SurahDropdown(value: _revSurahId, onChanged: (v) => setState(() { _revSurahId = v; _isDirty = true; }), label: 'السورة', noneLabel: 'اختر السورة'),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(child: AppFormField(controller: _revFromAyahController, label: 'من آية', keyboardType: TextInputType.number, validator: (_) => _validateAyahRange(surahId: _revSurahId, fromController: _revFromAyahController, toController: _revToAyahController))),
-                              const SizedBox(width: 10),
-                              Expanded(child: AppFormField(controller: _revToAyahController, label: 'إلى آية', keyboardType: TextInputType.number, validator: (_) => _validateAyahRange(surahId: _revSurahId, fromController: _revFromAyahController, toController: _revToAyahController))),
-                            ],
-                          ),
-                          const SizedBox(height: 18),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('التقييم', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
-                                decoration: BoxDecoration(color: const Color(0xFFE9F3EF), borderRadius: BorderRadius.circular(999)),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(_liveFinalScore.toStringAsFixed(1), style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
-                                    const SizedBox(width: 3),
-                                    const Text('/ ١٠', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, color: AppColors.textSecondary)),
-                                  ],
-                                ),
+                          if (_memSurahId != null) ...[
+                            const SizedBox(height: 6),
+                            _FullSurahSwitch(value: _memIsFullSurah, onChanged: _setMemFullSurah),
+                            if (!_memIsFullSurah) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(child: AppFormField(controller: _memFromAyahController, label: 'من آية', keyboardType: TextInputType.number, validator: (_) => _validateAyahRange(surahId: _memSurahId, fromController: _memFromAyahController, toController: _memToAyahController))),
+                                  const SizedBox(width: 10),
+                                  Expanded(child: AppFormField(controller: _memToAyahController, label: 'إلى آية', keyboardType: TextInputType.number, validator: (_) => _validateAyahRange(surahId: _memSurahId, fromController: _memFromAyahController, toController: _memToAyahController))),
+                                ],
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 6),
-                          _ScoreSlider(label: 'الحفظ', value: _evalMem, onChanged: (v) => setState(() { _evalMem = v; _isDirty = true; })),
-                          _ScoreSlider(label: 'التجويد', value: _evalTajweed, onChanged: (v) => setState(() { _evalTajweed = v; _isDirty = true; })),
-                          _ScoreSlider(label: 'الطلاقة', value: _evalFluency, onChanged: (v) => setState(() { _evalFluency = v; _isDirty = true; })),
-                          _ScoreSlider(label: 'التشكيل', value: _evalTashkeel, onChanged: (v) => setState(() { _evalTashkeel = v; _isDirty = true; })),
-                          // القسم ح.12: تقييم مستقلّ للمراجعة، يظهر فقط عند
-                          // اختيار سورة مراجعة — مطلب المستخدم صراحةً.
-                          if (_revSurahId != null) ...[
+                            // القسم ح.1: التقييم يظهر فقط لما تُختار سورة
+                            // حفظ فعلياً — جلسة مراجعة فقط بلا حفظ متوفّر
+                            // ما تحمل أصفار تقييم حفظ وهمية.
                             const SizedBox(height: 18),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('تقييم المراجعة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                const Text('تقييم الحفظ', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
                                   decoration: BoxDecoration(color: const Color(0xFFE9F3EF), borderRadius: BorderRadius.circular(999)),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text(_liveRevisionFinalScore.toStringAsFixed(1), style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                                      Text(_liveFinalScore.toStringAsFixed(1), style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
                                       const SizedBox(width: 3),
                                       const Text('/ ١٠', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, color: AppColors.textSecondary)),
                                     ],
@@ -463,10 +593,35 @@ class _SessionCreateScreenState extends ConsumerState<SessionCreateScreen> {
                               ],
                             ),
                             const SizedBox(height: 6),
-                            _ScoreSlider(label: 'الحفظ', value: _revEvalMem, onChanged: (v) => setState(() { _revEvalMem = v; _isDirty = true; })),
-                            _ScoreSlider(label: 'التجويد', value: _revEvalTajweed, onChanged: (v) => setState(() { _revEvalTajweed = v; _isDirty = true; })),
-                            _ScoreSlider(label: 'الطلاقة', value: _revEvalFluency, onChanged: (v) => setState(() { _revEvalFluency = v; _isDirty = true; })),
-                            _ScoreSlider(label: 'التشكيل', value: _revEvalTashkeel, onChanged: (v) => setState(() { _revEvalTashkeel = v; _isDirty = true; })),
+                            _ScoreSlider(label: 'الحفظ', value: _evalMem, onChanged: (v) => setState(() { _evalMem = v; _isDirty = true; })),
+                            _ScoreSlider(label: 'التجويد', value: _evalTajweed, onChanged: (v) => setState(() { _evalTajweed = v; _isDirty = true; })),
+                            _ScoreSlider(label: 'الطلاقة', value: _evalFluency, onChanged: (v) => setState(() { _evalFluency = v; _isDirty = true; })),
+                            _ScoreSlider(label: 'التشكيل', value: _evalTashkeel, onChanged: (v) => setState(() { _evalTashkeel = v; _isDirty = true; })),
+                          ],
+                          const SizedBox(height: 22),
+                          // القسم ح.14: مراجعات متعددة — قريبة/بعيدة/عامة أو
+                          // مخصَّصة، كل واحدة بسورتها وتقييمها المستقلّ. لا
+                          // حاجة لحفظ جديد لإضافة مراجعة.
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('المراجعة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                              TextButton.icon(
+                                onPressed: _addRevision,
+                                icon: const AppIcon(AppIcons.plus, size: 13, color: AppColors.primary),
+                                label: const Text('إضافة مراجعة'),
+                              ),
+                            ],
+                          ),
+                          for (final entry in _revisions) ...[
+                            const SizedBox(height: 8),
+                            _RevisionCard(
+                              entry: entry,
+                              onChanged: () => setState(() => _isDirty = true),
+                              onFullSurahChanged: (v) => _setRevisionFullSurah(entry, v),
+                              onDelete: () => _removeRevision(entry),
+                              validator: () => _validateAyahRange(surahId: entry.surahId, fromController: entry.fromController, toController: entry.toController),
+                            ),
                           ],
                         ],
                         const SizedBox(height: 24),
@@ -619,6 +774,160 @@ class _ScoreSlider extends StatelessWidget {
           child: Slider(min: 0, max: 10, divisions: 20, value: value, onChanged: onChanged),
         ),
       ],
+    );
+  }
+}
+
+/// القسم ح.14 — مفتاح "السورة كاملة": يُخفي حقلَي "من/إلى آية" ويملأ
+/// المدى آلياً (١ → عدد آيات السورة) بدل إدخال الأرقام يدوياً في الحالة
+/// الشائعة (حفظ/مراجعة السورة بأكملها).
+class _FullSurahSwitch extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _FullSurahSwitch({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => onChanged(!value),
+      borderRadius: BorderRadius.circular(10),
+      child: Row(
+        children: [
+          Switch(value: value, onChanged: onChanged, activeTrackColor: AppColors.primary),
+          const SizedBox(width: 4),
+          const Text('السورة كاملة', style: TextStyle(fontFamily: 'Cairo', fontSize: 12.5, color: AppColors.textPrimary)),
+        ],
+      ),
+    );
+  }
+}
+
+/// القسم ح.14 — بطاقة مراجعة واحدة: نوع المراجعة (شرائح قريبة/بعيدة/عامة
+/// أو مخصَّص)، السورة والمدى (أو "كاملة")، وتقييم مستقلّ بأربعة معايير.
+class _RevisionCard extends StatelessWidget {
+  final _RevisionEntry entry;
+  final VoidCallback onChanged;
+  final ValueChanged<bool> onFullSurahChanged;
+  final VoidCallback onDelete;
+  final String? Function() validator;
+
+  const _RevisionCard({
+    required this.entry,
+    required this.onChanged,
+    required this.onFullSurahChanged,
+    required this.onDelete,
+    required this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isCustomLabel = !_revisionLabelPresets.contains(entry.label);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.inputBorder)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final preset in _revisionLabelPresets)
+                      ChoiceChip(
+                        label: Text(preset),
+                        selected: !isCustomLabel && entry.label == preset,
+                        onSelected: (_) {
+                          entry.label = preset;
+                          onChanged();
+                        },
+                      ),
+                    ChoiceChip(
+                      label: const Text('مخصّص'),
+                      selected: isCustomLabel,
+                      onSelected: (_) {
+                        entry.label = entry.customLabelController.text.trim();
+                        onChanged();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: onDelete,
+                tooltip: 'حذف المراجعة',
+                icon: const AppIcon(AppIcons.trash, size: 15, color: AppColors.deleteIcon),
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                padding: EdgeInsets.zero,
+              ),
+            ],
+          ),
+          if (isCustomLabel) ...[
+            const SizedBox(height: 8),
+            AppFormField(
+              controller: entry.customLabelController,
+              label: 'نوع المراجعة',
+              hintText: 'اكتب نوع المراجعة',
+              onChanged: (v) {
+                entry.label = v;
+                onChanged();
+              },
+            ),
+          ],
+          const SizedBox(height: 10),
+          SurahDropdown(
+            value: entry.surahId,
+            onChanged: (v) {
+              entry.surahId = v;
+              if (entry.isFullSurah) entry.toController.text = v != null ? '${QuranUtils.getAyahCount(v)}' : '1';
+              onChanged();
+            },
+            label: 'السورة',
+            noneLabel: 'اختر السورة',
+          ),
+          if (entry.surahId != null) ...[
+            const SizedBox(height: 6),
+            _FullSurahSwitch(value: entry.isFullSurah, onChanged: onFullSurahChanged),
+            if (!entry.isFullSurah) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(child: AppFormField(controller: entry.fromController, label: 'من آية', keyboardType: TextInputType.number, validator: (_) => validator())),
+                  const SizedBox(width: 10),
+                  Expanded(child: AppFormField(controller: entry.toController, label: 'إلى آية', keyboardType: TextInputType.number, validator: (_) => validator())),
+                ],
+              ),
+            ],
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('تقييم هذه المراجعة', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(color: const Color(0xFFE9F3EF), borderRadius: BorderRadius.circular(999)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(entry.finalScore.toStringAsFixed(1), style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                      const SizedBox(width: 3),
+                      const Text('/ ١٠', style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: AppColors.textSecondary)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            _ScoreSlider(label: 'الحفظ', value: entry.evalMem, onChanged: (v) { entry.evalMem = v; onChanged(); }),
+            _ScoreSlider(label: 'التجويد', value: entry.evalTajweed, onChanged: (v) { entry.evalTajweed = v; onChanged(); }),
+            _ScoreSlider(label: 'الطلاقة', value: entry.evalFluency, onChanged: (v) { entry.evalFluency = v; onChanged(); }),
+            _ScoreSlider(label: 'التشكيل', value: entry.evalTashkeel, onChanged: (v) { entry.evalTashkeel = v; onChanged(); }),
+          ],
+        ],
+      ),
     );
   }
 }

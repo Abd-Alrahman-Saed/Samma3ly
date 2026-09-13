@@ -25,6 +25,7 @@ SessionMemorization _memorizationToEntity(db.SessionMemorization m) =>
       surahId: m.surahId,
       fromAyah: m.fromAyah,
       toAyah: m.toAyah,
+      isFullSurah: m.isFullSurah,
     );
 
 SessionRevision _revisionToEntity(db.SessionRevision r) => SessionRevision(
@@ -33,6 +34,13 @@ SessionRevision _revisionToEntity(db.SessionRevision r) => SessionRevision(
       surahId: r.surahId,
       fromAyah: r.fromAyah,
       toAyah: r.toAyah,
+      label: r.label,
+      isFullSurah: r.isFullSurah,
+      sortOrder: r.sortOrder,
+      memorizationScore: r.memorizationScore,
+      tajweedScore: r.tajweedScore,
+      fluencyScore: r.fluencyScore,
+      accuracyScore: r.accuracyScore,
     );
 
 SessionEvaluation _evaluationToEntity(db.SessionEvaluation e) =>
@@ -43,10 +51,6 @@ SessionEvaluation _evaluationToEntity(db.SessionEvaluation e) =>
       tajweedScore: e.tajweedScore,
       fluencyScore: e.fluencyScore,
       accuracyScore: e.accuracyScore,
-      revisionMemorizationScore: e.revisionMemorizationScore,
-      revisionTajweedScore: e.revisionTajweedScore,
-      revisionFluencyScore: e.revisionFluencyScore,
-      revisionAccuracyScore: e.revisionAccuracyScore,
     );
 
 /// القسم ح.10 — تحويل جلسة حلقة + صفّ حضور طالب واحد فيها إلى `Session`
@@ -56,15 +60,10 @@ SessionEvaluation _evaluationToEntity(db.SessionEvaluation e) =>
 /// — تلك خاطئة هنا، لأن كل طالب في الحلقة له تسميع مستقلّ. راجع تعليق v5
 /// على `SessionAttendances` للسبب الكامل.
 Session _groupAttendanceToSession(db.Session groupSession, db.SessionAttendance attendance) {
-  final hasEvaluation = attendance.memorizationScore > 0 ||
+  final hasMemEvaluation = attendance.memorizationScore > 0 ||
       attendance.tajweedScore > 0 ||
       attendance.fluencyScore > 0 ||
-      attendance.accuracyScore > 0 ||
-      // القسم ح.12: جلسة قد تحمل تقييم مراجعة فقط بلا تقييم حفظ جديد.
-      attendance.revisionMemorizationScore > 0 ||
-      attendance.revisionTajweedScore > 0 ||
-      attendance.revisionFluencyScore > 0 ||
-      attendance.revisionAccuracyScore > 0;
+      attendance.accuracyScore > 0;
   return Session(
     id: groupSession.id,
     studentId: attendance.studentId,
@@ -85,15 +84,24 @@ Session _groupAttendanceToSession(db.Session groupSession, db.SessionAttendance 
             fromAyah: attendance.memorizationFromAyah ?? 1,
             toAyah: attendance.memorizationToAyah ?? 1,
           ),
-    revision: attendance.revisionSurahId == null
-        ? null
-        : SessionRevision(
-            sessionId: groupSession.id,
-            surahId: attendance.revisionSurahId!,
-            fromAyah: attendance.revisionFromAyah ?? 1,
-            toAyah: attendance.revisionToAyah ?? 1,
-          ),
-    evaluation: !hasEvaluation
+    // القسم ح.14: جلسات الحلقات لسه بمراجعة واحدة بالضبط (مصدرها
+    // SessionAttendances، لا SessionRevisions) — قائمة بعنصر واحد على
+    // الأكثر، لا مراجعات متعددة (تلك ميزة خاصة بالجلسات الفردية فقط).
+    revisions: attendance.revisionSurahId == null
+        ? const []
+        : [
+            SessionRevision(
+              sessionId: groupSession.id,
+              surahId: attendance.revisionSurahId!,
+              fromAyah: attendance.revisionFromAyah ?? 1,
+              toAyah: attendance.revisionToAyah ?? 1,
+              memorizationScore: attendance.revisionMemorizationScore,
+              tajweedScore: attendance.revisionTajweedScore,
+              fluencyScore: attendance.revisionFluencyScore,
+              accuracyScore: attendance.revisionAccuracyScore,
+            ),
+          ],
+    evaluation: !hasMemEvaluation
         ? null
         : SessionEvaluation(
             sessionId: groupSession.id,
@@ -101,10 +109,6 @@ Session _groupAttendanceToSession(db.Session groupSession, db.SessionAttendance 
             tajweedScore: attendance.tajweedScore,
             fluencyScore: attendance.fluencyScore,
             accuracyScore: attendance.accuracyScore,
-            revisionMemorizationScore: attendance.revisionMemorizationScore,
-            revisionTajweedScore: attendance.revisionTajweedScore,
-            revisionFluencyScore: attendance.revisionFluencyScore,
-            revisionAccuracyScore: attendance.revisionAccuracyScore,
           ),
   );
 }
@@ -123,7 +127,7 @@ class SessionRepositoryImpl implements SessionRepository {
   /// against `session.attendanceStatus` unchanged.
   Future<Session> _hydrate(Session session) async {
     final memorization = await _dao.getMemorizationBySession(session.id);
-    final revision = await _dao.getRevisionBySession(session.id);
+    final revisions = await _dao.getRevisionsBySession(session.id);
     final evaluation = await _dao.getEvaluationBySession(session.id);
     String attendanceStatus = 'حاضر';
     String? recitationOutcome;
@@ -138,7 +142,7 @@ class SessionRepositoryImpl implements SessionRepository {
       attendanceStatus: attendanceStatus,
       recitationOutcome: recitationOutcome,
       memorization: memorization == null ? null : _memorizationToEntity(memorization),
-      revision: revision == null ? null : _revisionToEntity(revision),
+      revisions: revisions.map(_revisionToEntity).toList(),
       evaluation: evaluation == null ? null : _evaluationToEntity(evaluation),
     );
   }
@@ -199,14 +203,23 @@ class SessionRepositoryImpl implements SessionRepository {
         surahId: Value(session.memorization!.surahId),
         fromAyah: Value(session.memorization!.fromAyah),
         toAyah: Value(session.memorization!.toAyah),
+        isFullSurah: Value(session.memorization!.isFullSurah),
       ));
     }
-    if (session.revision != null) {
+    for (var i = 0; i < session.revisions.length; i++) {
+      final r = session.revisions[i];
       await _dao.insertRevision(SessionRevisionsCompanion(
         sessionId: Value(sessionId),
-        surahId: Value(session.revision!.surahId),
-        fromAyah: Value(session.revision!.fromAyah),
-        toAyah: Value(session.revision!.toAyah),
+        surahId: Value(r.surahId),
+        fromAyah: Value(r.fromAyah),
+        toAyah: Value(r.toAyah),
+        label: Value(r.label),
+        isFullSurah: Value(r.isFullSurah),
+        sortOrder: Value(i),
+        memorizationScore: Value(r.memorizationScore),
+        tajweedScore: Value(r.tajweedScore),
+        fluencyScore: Value(r.fluencyScore),
+        accuracyScore: Value(r.accuracyScore),
       ));
     }
     if (session.evaluation != null) {
@@ -216,10 +229,6 @@ class SessionRepositoryImpl implements SessionRepository {
         tajweedScore: Value(session.evaluation!.tajweedScore),
         fluencyScore: Value(session.evaluation!.fluencyScore),
         accuracyScore: Value(session.evaluation!.accuracyScore),
-        revisionMemorizationScore: Value(session.evaluation!.revisionMemorizationScore),
-        revisionTajweedScore: Value(session.evaluation!.revisionTajweedScore),
-        revisionFluencyScore: Value(session.evaluation!.revisionFluencyScore),
-        revisionAccuracyScore: Value(session.evaluation!.revisionAccuracyScore),
       ));
     }
 
@@ -253,6 +262,7 @@ class SessionRepositoryImpl implements SessionRepository {
           surahId: Value(session.memorization!.surahId),
           fromAyah: Value(session.memorization!.fromAyah),
           toAyah: Value(session.memorization!.toAyah),
+          isFullSurah: Value(session.memorization!.isFullSurah),
         ));
       } else {
         await _dao.insertMemorization(SessionMemorizationsCompanion(
@@ -260,33 +270,32 @@ class SessionRepositoryImpl implements SessionRepository {
           surahId: Value(session.memorization!.surahId),
           fromAyah: Value(session.memorization!.fromAyah),
           toAyah: Value(session.memorization!.toAyah),
+          isFullSurah: Value(session.memorization!.isFullSurah),
         ));
       }
     } else {
       await _dao.deleteMemorization(session.id);
     }
 
-    if (session.revision != null) {
-      final existing = await _dao.getRevisionBySession(session.id);
-      if (existing != null) {
-        await _dao.updateRevision(SessionRevisionsCompanion(
-          id: Value(existing.id),
+    // القسم ح.14: استبدال كل مراجعات الجلسة دفعة واحدة أبسط من مطابقة كل
+    // صفّ قديم بجديد لتحديد أيها تغيّر/أُضيف/حُذف — وحجم البيانات هنا
+    // (بضع مراجعات على الأكثر) لا يبرّر التعقيد الإضافي.
+    await _dao.replaceRevisions(session.id, [
+      for (var i = 0; i < session.revisions.length; i++)
+        SessionRevisionsCompanion(
           sessionId: Value(session.id),
-          surahId: Value(session.revision!.surahId),
-          fromAyah: Value(session.revision!.fromAyah),
-          toAyah: Value(session.revision!.toAyah),
-        ));
-      } else {
-        await _dao.insertRevision(SessionRevisionsCompanion(
-          sessionId: Value(session.id),
-          surahId: Value(session.revision!.surahId),
-          fromAyah: Value(session.revision!.fromAyah),
-          toAyah: Value(session.revision!.toAyah),
-        ));
-      }
-    } else {
-      await _dao.deleteRevision(session.id);
-    }
+          surahId: Value(session.revisions[i].surahId),
+          fromAyah: Value(session.revisions[i].fromAyah),
+          toAyah: Value(session.revisions[i].toAyah),
+          label: Value(session.revisions[i].label),
+          isFullSurah: Value(session.revisions[i].isFullSurah),
+          sortOrder: Value(i),
+          memorizationScore: Value(session.revisions[i].memorizationScore),
+          tajweedScore: Value(session.revisions[i].tajweedScore),
+          fluencyScore: Value(session.revisions[i].fluencyScore),
+          accuracyScore: Value(session.revisions[i].accuracyScore),
+        ),
+    ]);
 
     if (session.evaluation != null) {
       final existing = await _dao.getEvaluationBySession(session.id);
@@ -298,10 +307,6 @@ class SessionRepositoryImpl implements SessionRepository {
           tajweedScore: Value(session.evaluation!.tajweedScore),
           fluencyScore: Value(session.evaluation!.fluencyScore),
           accuracyScore: Value(session.evaluation!.accuracyScore),
-          revisionMemorizationScore: Value(session.evaluation!.revisionMemorizationScore),
-          revisionTajweedScore: Value(session.evaluation!.revisionTajweedScore),
-          revisionFluencyScore: Value(session.evaluation!.revisionFluencyScore),
-          revisionAccuracyScore: Value(session.evaluation!.revisionAccuracyScore),
         ));
       } else {
         await _dao.insertEvaluation(SessionEvaluationsCompanion(
@@ -310,10 +315,6 @@ class SessionRepositoryImpl implements SessionRepository {
           tajweedScore: Value(session.evaluation!.tajweedScore),
           fluencyScore: Value(session.evaluation!.fluencyScore),
           accuracyScore: Value(session.evaluation!.accuracyScore),
-          revisionMemorizationScore: Value(session.evaluation!.revisionMemorizationScore),
-          revisionTajweedScore: Value(session.evaluation!.revisionTajweedScore),
-          revisionFluencyScore: Value(session.evaluation!.revisionFluencyScore),
-          revisionAccuracyScore: Value(session.evaluation!.revisionAccuracyScore),
         ));
       }
     } else {

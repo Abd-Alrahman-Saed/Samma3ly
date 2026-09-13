@@ -75,16 +75,31 @@ class DashboardService {
     final totalTeachers = await _userDao.countByRole(UserRole.admin.value) +
         await _userDao.countByRole(UserRole.teacher.value);
 
-    // Top 5 students by average evaluation score
+    // Top 5 students by average evaluation score.
+    //
+    // القسم ح.14 — إصلاح عرَضي: كانت هذه الحلقة (أ) تحسب المتوسط على 3
+    // معايير (حفظ/تجويد/طلاقة) بينما `SessionEvaluation.finalScore` على 4
+    // (يضيف التشكيل، منذ ح.10) — تعارض قائم بين مصدرين للمتوسط لم يُرصد
+    // قبل الآن؛ و(ب) كانت تتجاهل تماماً أي جلسة قُيِّمت مراجعتها فقط بلا
+    // تقييم حفظ (`eval == null`)، فتُستبعَد الجلسة كلها من متوسط الطالب
+    // رغم وجود تقييم فعلي فيها. كلاهما مُصلَح هنا بنفس معادلة
+    // `Session.overallScore`/`finalScore` (4 معايير، ومتوسط كل الأجزاء
+    // المُقيَّمة فعلاً — حفظ إن وُجد + كل مراجعة).
     final studentScores = <int, List<double>>{};
     for (final s in allSessions) {
       if (isPresent(s) && s.studentId != null) {
         final eval = await _sessionDao.getEvaluationBySession(s.id);
-        if (eval != null) {
-          final score =
-              (eval.memorizationScore + eval.tajweedScore + eval.fluencyScore) /
-                  3;
-          studentScores.putIfAbsent(s.studentId as int, () => []).add(score);
+        final revisions = await _sessionDao.getRevisionsBySession(s.id);
+        final parts = <double>[
+          if (eval != null && _hasScore(eval.memorizationScore, eval.tajweedScore, eval.fluencyScore, eval.accuracyScore))
+            _finalScore(eval.memorizationScore, eval.tajweedScore, eval.fluencyScore, eval.accuracyScore),
+          for (final r in revisions)
+            if (_hasScore(r.memorizationScore, r.tajweedScore, r.fluencyScore, r.accuracyScore))
+              _finalScore(r.memorizationScore, r.tajweedScore, r.fluencyScore, r.accuracyScore),
+        ];
+        if (parts.isNotEmpty) {
+          final overall = parts.reduce((a, b) => a + b) / parts.length;
+          studentScores.putIfAbsent(s.studentId as int, () => []).add(overall);
         }
       }
     }
@@ -136,5 +151,17 @@ class DashboardService {
       topStudents: topStudents,
       weeklyAttendance: weeklyAttendance,
     );
+  }
+
+  /// نفس معادلة `SessionEvaluation.finalScore`/`SessionRevision.finalScore`
+  /// — متوسط المعايير الأربعة × ١٠. مكرَّرة هنا (لا مستوردة من الكيان)
+  /// لأن هذه الحلقة تعمل مباشرة على صفوف DAO الخام تفادياً لـN+1 عبر
+  /// `SessionRepository`، لا على `Session` المُرطَّب.
+  static double _finalScore(double mem, double tajweed, double fluency, double accuracy) {
+    return ((mem + tajweed + fluency + accuracy) / 4 * 10).roundToDouble() / 10;
+  }
+
+  static bool _hasScore(double mem, double tajweed, double fluency, double accuracy) {
+    return mem > 0 || tajweed > 0 || fluency > 0 || accuracy > 0;
   }
 }

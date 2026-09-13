@@ -17,4 +17,10 @@ class QuranUtils {
     if (surahId >= 1 && surahId <= 114) return counts[surahId - 1];
     return 0;
   }
+
+  /// القسم ح.14: نصّ مدى الآيات المعروض على البطاقات/المشاركة — "(كاملة)"
+  /// لو اختير خيار "السورة كاملة"، وإلا المدى الرقمي المعتاد.
+  static String rangeLabel({required int fromAyah, required int toAyah, required bool isFullSurah}) {
+    return isFullSurah ? '(كاملة)' : '($fromAyah-$toAyah)';
+  }
 }

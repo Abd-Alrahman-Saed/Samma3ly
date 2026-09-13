@@ -16,7 +16,7 @@ Widget _harness(Widget child) => MaterialApp(
 void main() {
   setUpAll(() => initializeDateFormatting('ar'));
 
-  SessionCardItem baseItem({String? recitationOutcome, double revisionFinalScore = 0}) => SessionCardItem(
+  SessionCardItem baseItem({String? recitationOutcome, List<SessionRevisionCardInfo> revisions = const []}) => SessionCardItem(
         id: 1,
         studentId: 1,
         studentName: 'أحمد',
@@ -26,7 +26,7 @@ void main() {
         attendanceStatus: 'حاضر',
         finalScore: 8,
         recitationOutcome: recitationOutcome,
-        revisionFinalScore: revisionFinalScore,
+        revisions: revisions,
       );
 
   testWidgets('بلا recitationOutcome أو revisionFinalScore: لا شارة ولا شريحة مراجعة', (tester) async {
@@ -51,9 +51,23 @@ void main() {
     expect(find.text('اجتاز'), findsNothing);
   });
 
-  testWidgets('revisionFinalScore > 0: تظهر شريحة "مراجعة" منفصلة عن درجة الحفظ', (tester) async {
-    await tester.pumpWidget(_harness(SessionCard(item: baseItem(revisionFinalScore: 7.5))));
+  testWidgets('مراجعة واحدة مُقيَّمة: تظهر شريحة "مراجعة" منفصلة عن درجة الحفظ', (tester) async {
+    await tester.pumpWidget(_harness(SessionCard(
+      item: baseItem(revisions: const [SessionRevisionCardInfo(info: 'قريبة: الفاتحة (كاملة)', finalScore: 7.5)]),
+    )));
 
     expect(find.text('مراجعة'), findsOneWidget);
+  });
+
+  testWidgets('القسم ح.14: أكثر من مراجعة مُقيَّمة تُجمَع في شريحة واحدة بعدّاد ومتوسط', (tester) async {
+    await tester.pumpWidget(_harness(SessionCard(
+      item: baseItem(revisions: const [
+        SessionRevisionCardInfo(info: 'قريبة: الفاتحة (كاملة)', finalScore: 8),
+        SessionRevisionCardInfo(info: 'بعيدة: البقرة (1-10)', finalScore: 6),
+      ]),
+    )));
+
+    expect(find.text('مراجعة ×2'), findsOneWidget);
+    expect(find.text('مراجعة'), findsNothing, reason: 'مراجعتان فأكثر تُعرَضان بشريحة العدّاد لا بعنوان "مراجعة" المفرد');
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
+import 'package:quran_mobile/core/utils/quran_utils.dart';
 import 'package:quran_mobile/core/widgets/app_logo_mark.dart';
 import 'package:quran_mobile/core/widgets/empty_state.dart';
 import 'package:quran_mobile/core/widgets/error_banner.dart';
@@ -388,10 +389,17 @@ class _RecentSessionsList extends ConsumerWidget {
               timeDisplay: s.time,
               attendanceStatus: s.attendanceStatus,
               finalScore: s.evaluation?.finalScore ?? 0,
-              memorizationInfo: s.memorization != null ? 'حفظ: ${surahLabel(s.memorization!.surahId)} (${s.memorization!.fromAyah}-${s.memorization!.toAyah})' : '',
-              revisionInfo: s.revision != null ? 'مراجعة: ${surahLabel(s.revision!.surahId)} (${s.revision!.fromAyah}-${s.revision!.toAyah})' : '',
+              memorizationInfo: s.memorization != null
+                  ? 'حفظ: ${surahLabel(s.memorization!.surahId)} ${QuranUtils.rangeLabel(fromAyah: s.memorization!.fromAyah, toAyah: s.memorization!.toAyah, isFullSurah: s.memorization!.isFullSurah)}'
+                  : '',
               recitationOutcome: s.recitationOutcome,
-              revisionFinalScore: s.evaluation?.revisionFinalScore ?? 0,
+              revisions: [
+                for (final r in s.revisions)
+                  SessionRevisionCardInfo(
+                    info: '${r.label}: ${surahLabel(r.surahId)} ${QuranUtils.rangeLabel(fromAyah: r.fromAyah, toAyah: r.toAyah, isFullSurah: r.isFullSurah)}',
+                    finalScore: r.finalScore,
+                  ),
+              ],
             ),
             onTap: () => context.goNamed('sessionEdit', pathParameters: {'id': '${s.id}'}),
           )).toList(),

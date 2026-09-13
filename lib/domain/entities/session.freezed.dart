@@ -34,8 +34,14 @@ mixin _$Session {
 // ليعرف المعلّم من غير فتح الجلسة أن حفظها/مراجعتها تحتاج إعادة.
   String? get recitationOutcome;
   DateTime? get createdAt;
-  SessionMemorization? get memorization;
-  SessionRevision? get revision;
+  SessionMemorization?
+      get memorization; // القسم ح.14: مراجعات متعددة للجلسة الواحدة (قريبة/بعيدة/عامة…)، كل
+// واحدة بتقييمها المستقلّ — كانت `SessionRevision?` مفردة قبل هذا
+// التحديث. راجع getter `revision` أدناه للتوافق مع مسارات لا تزال
+// بحاجة "مراجعة واحدة" (جلسات الحلقات).
+  List<SessionRevision>
+      get revisions; // تقييم **الحفظ الجديد** فقط. تقييم كل مراجعة أصبح على صفّها في
+// [revisions] (القسم ح.14) — لم يعد هنا.
   SessionEvaluation? get evaluation;
 
   /// Create a copy of Session
@@ -72,8 +78,7 @@ mixin _$Session {
                 other.createdAt == createdAt) &&
             (identical(other.memorization, memorization) ||
                 other.memorization == memorization) &&
-            (identical(other.revision, revision) ||
-                other.revision == revision) &&
+            const DeepCollectionEquality().equals(other.revisions, revisions) &&
             (identical(other.evaluation, evaluation) ||
                 other.evaluation == evaluation));
   }
@@ -94,12 +99,12 @@ mixin _$Session {
       recitationOutcome,
       createdAt,
       memorization,
-      revision,
+      const DeepCollectionEquality().hash(revisions),
       evaluation);
 
   @override
   String toString() {
-    return 'Session(id: $id, studentId: $studentId, groupId: $groupId, sessionType: $sessionType, occurrenceDate: $occurrenceDate, date: $date, time: $time, attendanceStatus: $attendanceStatus, notes: $notes, recitationOutcome: $recitationOutcome, createdAt: $createdAt, memorization: $memorization, revision: $revision, evaluation: $evaluation)';
+    return 'Session(id: $id, studentId: $studentId, groupId: $groupId, sessionType: $sessionType, occurrenceDate: $occurrenceDate, date: $date, time: $time, attendanceStatus: $attendanceStatus, notes: $notes, recitationOutcome: $recitationOutcome, createdAt: $createdAt, memorization: $memorization, revisions: $revisions, evaluation: $evaluation)';
   }
 }
 
@@ -121,11 +126,10 @@ abstract mixin class $SessionCopyWith<$Res> {
       String? recitationOutcome,
       DateTime? createdAt,
       SessionMemorization? memorization,
-      SessionRevision? revision,
+      List<SessionRevision> revisions,
       SessionEvaluation? evaluation});
 
   $SessionMemorizationCopyWith<$Res>? get memorization;
-  $SessionRevisionCopyWith<$Res>? get revision;
   $SessionEvaluationCopyWith<$Res>? get evaluation;
 }
 
@@ -153,7 +157,7 @@ class _$SessionCopyWithImpl<$Res> implements $SessionCopyWith<$Res> {
     Object? recitationOutcome = freezed,
     Object? createdAt = freezed,
     Object? memorization = freezed,
-    Object? revision = freezed,
+    Object? revisions = null,
     Object? evaluation = freezed,
   }) {
     return _then(_self.copyWith(
@@ -205,10 +209,10 @@ class _$SessionCopyWithImpl<$Res> implements $SessionCopyWith<$Res> {
           ? _self.memorization
           : memorization // ignore: cast_nullable_to_non_nullable
               as SessionMemorization?,
-      revision: freezed == revision
-          ? _self.revision
-          : revision // ignore: cast_nullable_to_non_nullable
-              as SessionRevision?,
+      revisions: null == revisions
+          ? _self.revisions
+          : revisions // ignore: cast_nullable_to_non_nullable
+              as List<SessionRevision>,
       evaluation: freezed == evaluation
           ? _self.evaluation
           : evaluation // ignore: cast_nullable_to_non_nullable
@@ -227,20 +231,6 @@ class _$SessionCopyWithImpl<$Res> implements $SessionCopyWith<$Res> {
 
     return $SessionMemorizationCopyWith<$Res>(_self.memorization!, (value) {
       return _then(_self.copyWith(memorization: value));
-    });
-  }
-
-  /// Create a copy of Session
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $SessionRevisionCopyWith<$Res>? get revision {
-    if (_self.revision == null) {
-      return null;
-    }
-
-    return $SessionRevisionCopyWith<$Res>(_self.revision!, (value) {
-      return _then(_self.copyWith(revision: value));
     });
   }
 
@@ -365,7 +355,7 @@ extension SessionPatterns on Session {
             String? recitationOutcome,
             DateTime? createdAt,
             SessionMemorization? memorization,
-            SessionRevision? revision,
+            List<SessionRevision> revisions,
             SessionEvaluation? evaluation)?
         $default, {
     required TResult orElse(),
@@ -386,7 +376,7 @@ extension SessionPatterns on Session {
             _that.recitationOutcome,
             _that.createdAt,
             _that.memorization,
-            _that.revision,
+            _that.revisions,
             _that.evaluation);
       case _:
         return orElse();
@@ -421,7 +411,7 @@ extension SessionPatterns on Session {
             String? recitationOutcome,
             DateTime? createdAt,
             SessionMemorization? memorization,
-            SessionRevision? revision,
+            List<SessionRevision> revisions,
             SessionEvaluation? evaluation)
         $default,
   ) {
@@ -441,7 +431,7 @@ extension SessionPatterns on Session {
             _that.recitationOutcome,
             _that.createdAt,
             _that.memorization,
-            _that.revision,
+            _that.revisions,
             _that.evaluation);
       case _:
         throw StateError('Unexpected subclass');
@@ -475,7 +465,7 @@ extension SessionPatterns on Session {
             String? recitationOutcome,
             DateTime? createdAt,
             SessionMemorization? memorization,
-            SessionRevision? revision,
+            List<SessionRevision> revisions,
             SessionEvaluation? evaluation)?
         $default,
   ) {
@@ -495,7 +485,7 @@ extension SessionPatterns on Session {
             _that.recitationOutcome,
             _that.createdAt,
             _that.memorization,
-            _that.revision,
+            _that.revisions,
             _that.evaluation);
       case _:
         return null;
@@ -505,7 +495,7 @@ extension SessionPatterns on Session {
 
 /// @nodoc
 @JsonSerializable()
-class _Session implements Session {
+class _Session extends Session {
   const _Session(
       {this.id = 0,
       this.studentId,
@@ -519,8 +509,10 @@ class _Session implements Session {
       this.recitationOutcome,
       this.createdAt,
       this.memorization,
-      this.revision,
-      this.evaluation});
+      final List<SessionRevision> revisions = const <SessionRevision>[],
+      this.evaluation})
+      : _revisions = revisions,
+        super._();
   factory _Session.fromJson(Map<String, dynamic> json) =>
       _$SessionFromJson(json);
 
@@ -563,8 +555,25 @@ class _Session implements Session {
   final DateTime? createdAt;
   @override
   final SessionMemorization? memorization;
+// القسم ح.14: مراجعات متعددة للجلسة الواحدة (قريبة/بعيدة/عامة…)، كل
+// واحدة بتقييمها المستقلّ — كانت `SessionRevision?` مفردة قبل هذا
+// التحديث. راجع getter `revision` أدناه للتوافق مع مسارات لا تزال
+// بحاجة "مراجعة واحدة" (جلسات الحلقات).
+  final List<SessionRevision> _revisions;
+// القسم ح.14: مراجعات متعددة للجلسة الواحدة (قريبة/بعيدة/عامة…)، كل
+// واحدة بتقييمها المستقلّ — كانت `SessionRevision?` مفردة قبل هذا
+// التحديث. راجع getter `revision` أدناه للتوافق مع مسارات لا تزال
+// بحاجة "مراجعة واحدة" (جلسات الحلقات).
   @override
-  final SessionRevision? revision;
+  @JsonKey()
+  List<SessionRevision> get revisions {
+    if (_revisions is EqualUnmodifiableListView) return _revisions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_revisions);
+  }
+
+// تقييم **الحفظ الجديد** فقط. تقييم كل مراجعة أصبح على صفّها في
+// [revisions] (القسم ح.14) — لم يعد هنا.
   @override
   final SessionEvaluation? evaluation;
 
@@ -607,8 +616,8 @@ class _Session implements Session {
                 other.createdAt == createdAt) &&
             (identical(other.memorization, memorization) ||
                 other.memorization == memorization) &&
-            (identical(other.revision, revision) ||
-                other.revision == revision) &&
+            const DeepCollectionEquality()
+                .equals(other._revisions, _revisions) &&
             (identical(other.evaluation, evaluation) ||
                 other.evaluation == evaluation));
   }
@@ -629,12 +638,12 @@ class _Session implements Session {
       recitationOutcome,
       createdAt,
       memorization,
-      revision,
+      const DeepCollectionEquality().hash(_revisions),
       evaluation);
 
   @override
   String toString() {
-    return 'Session(id: $id, studentId: $studentId, groupId: $groupId, sessionType: $sessionType, occurrenceDate: $occurrenceDate, date: $date, time: $time, attendanceStatus: $attendanceStatus, notes: $notes, recitationOutcome: $recitationOutcome, createdAt: $createdAt, memorization: $memorization, revision: $revision, evaluation: $evaluation)';
+    return 'Session(id: $id, studentId: $studentId, groupId: $groupId, sessionType: $sessionType, occurrenceDate: $occurrenceDate, date: $date, time: $time, attendanceStatus: $attendanceStatus, notes: $notes, recitationOutcome: $recitationOutcome, createdAt: $createdAt, memorization: $memorization, revisions: $revisions, evaluation: $evaluation)';
   }
 }
 
@@ -657,13 +666,11 @@ abstract mixin class _$SessionCopyWith<$Res> implements $SessionCopyWith<$Res> {
       String? recitationOutcome,
       DateTime? createdAt,
       SessionMemorization? memorization,
-      SessionRevision? revision,
+      List<SessionRevision> revisions,
       SessionEvaluation? evaluation});
 
   @override
   $SessionMemorizationCopyWith<$Res>? get memorization;
-  @override
-  $SessionRevisionCopyWith<$Res>? get revision;
   @override
   $SessionEvaluationCopyWith<$Res>? get evaluation;
 }
@@ -692,7 +699,7 @@ class __$SessionCopyWithImpl<$Res> implements _$SessionCopyWith<$Res> {
     Object? recitationOutcome = freezed,
     Object? createdAt = freezed,
     Object? memorization = freezed,
-    Object? revision = freezed,
+    Object? revisions = null,
     Object? evaluation = freezed,
   }) {
     return _then(_Session(
@@ -744,10 +751,10 @@ class __$SessionCopyWithImpl<$Res> implements _$SessionCopyWith<$Res> {
           ? _self.memorization
           : memorization // ignore: cast_nullable_to_non_nullable
               as SessionMemorization?,
-      revision: freezed == revision
-          ? _self.revision
-          : revision // ignore: cast_nullable_to_non_nullable
-              as SessionRevision?,
+      revisions: null == revisions
+          ? _self._revisions
+          : revisions // ignore: cast_nullable_to_non_nullable
+              as List<SessionRevision>,
       evaluation: freezed == evaluation
           ? _self.evaluation
           : evaluation // ignore: cast_nullable_to_non_nullable
@@ -773,20 +780,6 @@ class __$SessionCopyWithImpl<$Res> implements _$SessionCopyWith<$Res> {
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  $SessionRevisionCopyWith<$Res>? get revision {
-    if (_self.revision == null) {
-      return null;
-    }
-
-    return $SessionRevisionCopyWith<$Res>(_self.revision!, (value) {
-      return _then(_self.copyWith(revision: value));
-    });
-  }
-
-  /// Create a copy of Session
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
   $SessionEvaluationCopyWith<$Res>? get evaluation {
     if (_self.evaluation == null) {
       return null;
@@ -804,7 +797,10 @@ mixin _$SessionMemorization {
   int get sessionId;
   int get surahId;
   int get fromAyah;
-  int get toAyah;
+  int get toAyah; // القسم ح.14 (v10): "السورة كاملة" — `fromAyah`/`toAyah` تُملآن آلياً
+// (1 → عدد آيات السورة عبر `QuranUtils.getAyahCount`)، والعلم هنا
+// لعرض "(كاملة)" بدل المدى الرقمي ولإعادة فتح الشاشة على نفس الاختيار.
+  bool get isFullSurah;
 
   /// Create a copy of SessionMemorization
   /// with the given fields replaced by the non-null parameter values.
@@ -828,17 +824,19 @@ mixin _$SessionMemorization {
             (identical(other.surahId, surahId) || other.surahId == surahId) &&
             (identical(other.fromAyah, fromAyah) ||
                 other.fromAyah == fromAyah) &&
-            (identical(other.toAyah, toAyah) || other.toAyah == toAyah));
+            (identical(other.toAyah, toAyah) || other.toAyah == toAyah) &&
+            (identical(other.isFullSurah, isFullSurah) ||
+                other.isFullSurah == isFullSurah));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, sessionId, surahId, fromAyah, toAyah);
+  int get hashCode => Object.hash(
+      runtimeType, id, sessionId, surahId, fromAyah, toAyah, isFullSurah);
 
   @override
   String toString() {
-    return 'SessionMemorization(id: $id, sessionId: $sessionId, surahId: $surahId, fromAyah: $fromAyah, toAyah: $toAyah)';
+    return 'SessionMemorization(id: $id, sessionId: $sessionId, surahId: $surahId, fromAyah: $fromAyah, toAyah: $toAyah, isFullSurah: $isFullSurah)';
   }
 }
 
@@ -848,7 +846,13 @@ abstract mixin class $SessionMemorizationCopyWith<$Res> {
           SessionMemorization value, $Res Function(SessionMemorization) _then) =
       _$SessionMemorizationCopyWithImpl;
   @useResult
-  $Res call({int id, int sessionId, int surahId, int fromAyah, int toAyah});
+  $Res call(
+      {int id,
+      int sessionId,
+      int surahId,
+      int fromAyah,
+      int toAyah,
+      bool isFullSurah});
 }
 
 /// @nodoc
@@ -869,6 +873,7 @@ class _$SessionMemorizationCopyWithImpl<$Res>
     Object? surahId = null,
     Object? fromAyah = null,
     Object? toAyah = null,
+    Object? isFullSurah = null,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -891,6 +896,10 @@ class _$SessionMemorizationCopyWithImpl<$Res>
           ? _self.toAyah
           : toAyah // ignore: cast_nullable_to_non_nullable
               as int,
+      isFullSurah: null == isFullSurah
+          ? _self.isFullSurah
+          : isFullSurah // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -988,8 +997,8 @@ extension SessionMemorizationPatterns on SessionMemorization {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(
-            int id, int sessionId, int surahId, int fromAyah, int toAyah)?
+    TResult Function(int id, int sessionId, int surahId, int fromAyah,
+            int toAyah, bool isFullSurah)?
         $default, {
     required TResult orElse(),
   }) {
@@ -997,7 +1006,7 @@ extension SessionMemorizationPatterns on SessionMemorization {
     switch (_that) {
       case _SessionMemorization() when $default != null:
         return $default(_that.id, _that.sessionId, _that.surahId,
-            _that.fromAyah, _that.toAyah);
+            _that.fromAyah, _that.toAyah, _that.isFullSurah);
       case _:
         return orElse();
     }
@@ -1018,15 +1027,15 @@ extension SessionMemorizationPatterns on SessionMemorization {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(
-            int id, int sessionId, int surahId, int fromAyah, int toAyah)
+    TResult Function(int id, int sessionId, int surahId, int fromAyah,
+            int toAyah, bool isFullSurah)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _SessionMemorization():
         return $default(_that.id, _that.sessionId, _that.surahId,
-            _that.fromAyah, _that.toAyah);
+            _that.fromAyah, _that.toAyah, _that.isFullSurah);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -1046,15 +1055,15 @@ extension SessionMemorizationPatterns on SessionMemorization {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(
-            int id, int sessionId, int surahId, int fromAyah, int toAyah)?
+    TResult? Function(int id, int sessionId, int surahId, int fromAyah,
+            int toAyah, bool isFullSurah)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _SessionMemorization() when $default != null:
         return $default(_that.id, _that.sessionId, _that.surahId,
-            _that.fromAyah, _that.toAyah);
+            _that.fromAyah, _that.toAyah, _that.isFullSurah);
       case _:
         return null;
     }
@@ -1069,7 +1078,8 @@ class _SessionMemorization implements SessionMemorization {
       this.sessionId = 0,
       required this.surahId,
       this.fromAyah = 1,
-      this.toAyah = 1});
+      this.toAyah = 1,
+      this.isFullSurah = false});
   factory _SessionMemorization.fromJson(Map<String, dynamic> json) =>
       _$SessionMemorizationFromJson(json);
 
@@ -1087,6 +1097,12 @@ class _SessionMemorization implements SessionMemorization {
   @override
   @JsonKey()
   final int toAyah;
+// القسم ح.14 (v10): "السورة كاملة" — `fromAyah`/`toAyah` تُملآن آلياً
+// (1 → عدد آيات السورة عبر `QuranUtils.getAyahCount`)، والعلم هنا
+// لعرض "(كاملة)" بدل المدى الرقمي ولإعادة فتح الشاشة على نفس الاختيار.
+  @override
+  @JsonKey()
+  final bool isFullSurah;
 
   /// Create a copy of SessionMemorization
   /// with the given fields replaced by the non-null parameter values.
@@ -1115,17 +1131,19 @@ class _SessionMemorization implements SessionMemorization {
             (identical(other.surahId, surahId) || other.surahId == surahId) &&
             (identical(other.fromAyah, fromAyah) ||
                 other.fromAyah == fromAyah) &&
-            (identical(other.toAyah, toAyah) || other.toAyah == toAyah));
+            (identical(other.toAyah, toAyah) || other.toAyah == toAyah) &&
+            (identical(other.isFullSurah, isFullSurah) ||
+                other.isFullSurah == isFullSurah));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, sessionId, surahId, fromAyah, toAyah);
+  int get hashCode => Object.hash(
+      runtimeType, id, sessionId, surahId, fromAyah, toAyah, isFullSurah);
 
   @override
   String toString() {
-    return 'SessionMemorization(id: $id, sessionId: $sessionId, surahId: $surahId, fromAyah: $fromAyah, toAyah: $toAyah)';
+    return 'SessionMemorization(id: $id, sessionId: $sessionId, surahId: $surahId, fromAyah: $fromAyah, toAyah: $toAyah, isFullSurah: $isFullSurah)';
   }
 }
 
@@ -1137,7 +1155,13 @@ abstract mixin class _$SessionMemorizationCopyWith<$Res>
       __$SessionMemorizationCopyWithImpl;
   @override
   @useResult
-  $Res call({int id, int sessionId, int surahId, int fromAyah, int toAyah});
+  $Res call(
+      {int id,
+      int sessionId,
+      int surahId,
+      int fromAyah,
+      int toAyah,
+      bool isFullSurah});
 }
 
 /// @nodoc
@@ -1158,6 +1182,7 @@ class __$SessionMemorizationCopyWithImpl<$Res>
     Object? surahId = null,
     Object? fromAyah = null,
     Object? toAyah = null,
+    Object? isFullSurah = null,
   }) {
     return _then(_SessionMemorization(
       id: null == id
@@ -1180,6 +1205,10 @@ class __$SessionMemorizationCopyWithImpl<$Res>
           ? _self.toAyah
           : toAyah // ignore: cast_nullable_to_non_nullable
               as int,
+      isFullSurah: null == isFullSurah
+          ? _self.isFullSurah
+          : isFullSurah // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -1190,7 +1219,17 @@ mixin _$SessionRevision {
   int get sessionId;
   int get surahId;
   int get fromAyah;
-  int get toAyah;
+  int get toAyah; // القسم ح.14 (v10): نوع المراجعة كما اختاره المعلّم — "قريبة"/"بعيدة"/
+// "عامة" أو نصّ مخصَّص. تسمية حرّة عمداً (لا enum).
+  String get label;
+  bool get isFullSurah;
+  int get sortOrder; // القسم ح.14 (v10): تقييم هذه المراجعة بعينها — كان مشتركاً على مستوى
+// الجلسة كلها (`SessionEvaluation.revision*Score`) قبل دعم أكثر من
+// مراجعة واحدة؛ الآن كل مراجعة تحمل تقييمها المستقلّ.
+  double get memorizationScore;
+  double get tajweedScore;
+  double get fluencyScore;
+  double get accuracyScore;
 
   /// Create a copy of SessionRevision
   /// with the given fields replaced by the non-null parameter values.
@@ -1214,17 +1253,42 @@ mixin _$SessionRevision {
             (identical(other.surahId, surahId) || other.surahId == surahId) &&
             (identical(other.fromAyah, fromAyah) ||
                 other.fromAyah == fromAyah) &&
-            (identical(other.toAyah, toAyah) || other.toAyah == toAyah));
+            (identical(other.toAyah, toAyah) || other.toAyah == toAyah) &&
+            (identical(other.label, label) || other.label == label) &&
+            (identical(other.isFullSurah, isFullSurah) ||
+                other.isFullSurah == isFullSurah) &&
+            (identical(other.sortOrder, sortOrder) ||
+                other.sortOrder == sortOrder) &&
+            (identical(other.memorizationScore, memorizationScore) ||
+                other.memorizationScore == memorizationScore) &&
+            (identical(other.tajweedScore, tajweedScore) ||
+                other.tajweedScore == tajweedScore) &&
+            (identical(other.fluencyScore, fluencyScore) ||
+                other.fluencyScore == fluencyScore) &&
+            (identical(other.accuracyScore, accuracyScore) ||
+                other.accuracyScore == accuracyScore));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, sessionId, surahId, fromAyah, toAyah);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      sessionId,
+      surahId,
+      fromAyah,
+      toAyah,
+      label,
+      isFullSurah,
+      sortOrder,
+      memorizationScore,
+      tajweedScore,
+      fluencyScore,
+      accuracyScore);
 
   @override
   String toString() {
-    return 'SessionRevision(id: $id, sessionId: $sessionId, surahId: $surahId, fromAyah: $fromAyah, toAyah: $toAyah)';
+    return 'SessionRevision(id: $id, sessionId: $sessionId, surahId: $surahId, fromAyah: $fromAyah, toAyah: $toAyah, label: $label, isFullSurah: $isFullSurah, sortOrder: $sortOrder, memorizationScore: $memorizationScore, tajweedScore: $tajweedScore, fluencyScore: $fluencyScore, accuracyScore: $accuracyScore)';
   }
 }
 
@@ -1234,7 +1298,19 @@ abstract mixin class $SessionRevisionCopyWith<$Res> {
           SessionRevision value, $Res Function(SessionRevision) _then) =
       _$SessionRevisionCopyWithImpl;
   @useResult
-  $Res call({int id, int sessionId, int surahId, int fromAyah, int toAyah});
+  $Res call(
+      {int id,
+      int sessionId,
+      int surahId,
+      int fromAyah,
+      int toAyah,
+      String label,
+      bool isFullSurah,
+      int sortOrder,
+      double memorizationScore,
+      double tajweedScore,
+      double fluencyScore,
+      double accuracyScore});
 }
 
 /// @nodoc
@@ -1255,6 +1331,13 @@ class _$SessionRevisionCopyWithImpl<$Res>
     Object? surahId = null,
     Object? fromAyah = null,
     Object? toAyah = null,
+    Object? label = null,
+    Object? isFullSurah = null,
+    Object? sortOrder = null,
+    Object? memorizationScore = null,
+    Object? tajweedScore = null,
+    Object? fluencyScore = null,
+    Object? accuracyScore = null,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -1277,6 +1360,34 @@ class _$SessionRevisionCopyWithImpl<$Res>
           ? _self.toAyah
           : toAyah // ignore: cast_nullable_to_non_nullable
               as int,
+      label: null == label
+          ? _self.label
+          : label // ignore: cast_nullable_to_non_nullable
+              as String,
+      isFullSurah: null == isFullSurah
+          ? _self.isFullSurah
+          : isFullSurah // ignore: cast_nullable_to_non_nullable
+              as bool,
+      sortOrder: null == sortOrder
+          ? _self.sortOrder
+          : sortOrder // ignore: cast_nullable_to_non_nullable
+              as int,
+      memorizationScore: null == memorizationScore
+          ? _self.memorizationScore
+          : memorizationScore // ignore: cast_nullable_to_non_nullable
+              as double,
+      tajweedScore: null == tajweedScore
+          ? _self.tajweedScore
+          : tajweedScore // ignore: cast_nullable_to_non_nullable
+              as double,
+      fluencyScore: null == fluencyScore
+          ? _self.fluencyScore
+          : fluencyScore // ignore: cast_nullable_to_non_nullable
+              as double,
+      accuracyScore: null == accuracyScore
+          ? _self.accuracyScore
+          : accuracyScore // ignore: cast_nullable_to_non_nullable
+              as double,
     ));
   }
 }
@@ -1375,15 +1486,37 @@ extension SessionRevisionPatterns on SessionRevision {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(
-            int id, int sessionId, int surahId, int fromAyah, int toAyah)?
+            int id,
+            int sessionId,
+            int surahId,
+            int fromAyah,
+            int toAyah,
+            String label,
+            bool isFullSurah,
+            int sortOrder,
+            double memorizationScore,
+            double tajweedScore,
+            double fluencyScore,
+            double accuracyScore)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _SessionRevision() when $default != null:
-        return $default(_that.id, _that.sessionId, _that.surahId,
-            _that.fromAyah, _that.toAyah);
+        return $default(
+            _that.id,
+            _that.sessionId,
+            _that.surahId,
+            _that.fromAyah,
+            _that.toAyah,
+            _that.label,
+            _that.isFullSurah,
+            _that.sortOrder,
+            _that.memorizationScore,
+            _that.tajweedScore,
+            _that.fluencyScore,
+            _that.accuracyScore);
       case _:
         return orElse();
     }
@@ -1405,14 +1538,36 @@ extension SessionRevisionPatterns on SessionRevision {
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
     TResult Function(
-            int id, int sessionId, int surahId, int fromAyah, int toAyah)
+            int id,
+            int sessionId,
+            int surahId,
+            int fromAyah,
+            int toAyah,
+            String label,
+            bool isFullSurah,
+            int sortOrder,
+            double memorizationScore,
+            double tajweedScore,
+            double fluencyScore,
+            double accuracyScore)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _SessionRevision():
-        return $default(_that.id, _that.sessionId, _that.surahId,
-            _that.fromAyah, _that.toAyah);
+        return $default(
+            _that.id,
+            _that.sessionId,
+            _that.surahId,
+            _that.fromAyah,
+            _that.toAyah,
+            _that.label,
+            _that.isFullSurah,
+            _that.sortOrder,
+            _that.memorizationScore,
+            _that.tajweedScore,
+            _that.fluencyScore,
+            _that.accuracyScore);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -1433,14 +1588,36 @@ extension SessionRevisionPatterns on SessionRevision {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(
-            int id, int sessionId, int surahId, int fromAyah, int toAyah)?
+            int id,
+            int sessionId,
+            int surahId,
+            int fromAyah,
+            int toAyah,
+            String label,
+            bool isFullSurah,
+            int sortOrder,
+            double memorizationScore,
+            double tajweedScore,
+            double fluencyScore,
+            double accuracyScore)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _SessionRevision() when $default != null:
-        return $default(_that.id, _that.sessionId, _that.surahId,
-            _that.fromAyah, _that.toAyah);
+        return $default(
+            _that.id,
+            _that.sessionId,
+            _that.surahId,
+            _that.fromAyah,
+            _that.toAyah,
+            _that.label,
+            _that.isFullSurah,
+            _that.sortOrder,
+            _that.memorizationScore,
+            _that.tajweedScore,
+            _that.fluencyScore,
+            _that.accuracyScore);
       case _:
         return null;
     }
@@ -1449,13 +1626,21 @@ extension SessionRevisionPatterns on SessionRevision {
 
 /// @nodoc
 @JsonSerializable()
-class _SessionRevision implements SessionRevision {
+class _SessionRevision extends SessionRevision {
   const _SessionRevision(
       {this.id = 0,
       this.sessionId = 0,
       required this.surahId,
       this.fromAyah = 1,
-      this.toAyah = 1});
+      this.toAyah = 1,
+      this.label = 'مراجعة',
+      this.isFullSurah = false,
+      this.sortOrder = 0,
+      this.memorizationScore = 0.0,
+      this.tajweedScore = 0.0,
+      this.fluencyScore = 0.0,
+      this.accuracyScore = 0.0})
+      : super._();
   factory _SessionRevision.fromJson(Map<String, dynamic> json) =>
       _$SessionRevisionFromJson(json);
 
@@ -1473,6 +1658,32 @@ class _SessionRevision implements SessionRevision {
   @override
   @JsonKey()
   final int toAyah;
+// القسم ح.14 (v10): نوع المراجعة كما اختاره المعلّم — "قريبة"/"بعيدة"/
+// "عامة" أو نصّ مخصَّص. تسمية حرّة عمداً (لا enum).
+  @override
+  @JsonKey()
+  final String label;
+  @override
+  @JsonKey()
+  final bool isFullSurah;
+  @override
+  @JsonKey()
+  final int sortOrder;
+// القسم ح.14 (v10): تقييم هذه المراجعة بعينها — كان مشتركاً على مستوى
+// الجلسة كلها (`SessionEvaluation.revision*Score`) قبل دعم أكثر من
+// مراجعة واحدة؛ الآن كل مراجعة تحمل تقييمها المستقلّ.
+  @override
+  @JsonKey()
+  final double memorizationScore;
+  @override
+  @JsonKey()
+  final double tajweedScore;
+  @override
+  @JsonKey()
+  final double fluencyScore;
+  @override
+  @JsonKey()
+  final double accuracyScore;
 
   /// Create a copy of SessionRevision
   /// with the given fields replaced by the non-null parameter values.
@@ -1500,17 +1711,42 @@ class _SessionRevision implements SessionRevision {
             (identical(other.surahId, surahId) || other.surahId == surahId) &&
             (identical(other.fromAyah, fromAyah) ||
                 other.fromAyah == fromAyah) &&
-            (identical(other.toAyah, toAyah) || other.toAyah == toAyah));
+            (identical(other.toAyah, toAyah) || other.toAyah == toAyah) &&
+            (identical(other.label, label) || other.label == label) &&
+            (identical(other.isFullSurah, isFullSurah) ||
+                other.isFullSurah == isFullSurah) &&
+            (identical(other.sortOrder, sortOrder) ||
+                other.sortOrder == sortOrder) &&
+            (identical(other.memorizationScore, memorizationScore) ||
+                other.memorizationScore == memorizationScore) &&
+            (identical(other.tajweedScore, tajweedScore) ||
+                other.tajweedScore == tajweedScore) &&
+            (identical(other.fluencyScore, fluencyScore) ||
+                other.fluencyScore == fluencyScore) &&
+            (identical(other.accuracyScore, accuracyScore) ||
+                other.accuracyScore == accuracyScore));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, sessionId, surahId, fromAyah, toAyah);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      sessionId,
+      surahId,
+      fromAyah,
+      toAyah,
+      label,
+      isFullSurah,
+      sortOrder,
+      memorizationScore,
+      tajweedScore,
+      fluencyScore,
+      accuracyScore);
 
   @override
   String toString() {
-    return 'SessionRevision(id: $id, sessionId: $sessionId, surahId: $surahId, fromAyah: $fromAyah, toAyah: $toAyah)';
+    return 'SessionRevision(id: $id, sessionId: $sessionId, surahId: $surahId, fromAyah: $fromAyah, toAyah: $toAyah, label: $label, isFullSurah: $isFullSurah, sortOrder: $sortOrder, memorizationScore: $memorizationScore, tajweedScore: $tajweedScore, fluencyScore: $fluencyScore, accuracyScore: $accuracyScore)';
   }
 }
 
@@ -1522,7 +1758,19 @@ abstract mixin class _$SessionRevisionCopyWith<$Res>
       __$SessionRevisionCopyWithImpl;
   @override
   @useResult
-  $Res call({int id, int sessionId, int surahId, int fromAyah, int toAyah});
+  $Res call(
+      {int id,
+      int sessionId,
+      int surahId,
+      int fromAyah,
+      int toAyah,
+      String label,
+      bool isFullSurah,
+      int sortOrder,
+      double memorizationScore,
+      double tajweedScore,
+      double fluencyScore,
+      double accuracyScore});
 }
 
 /// @nodoc
@@ -1543,6 +1791,13 @@ class __$SessionRevisionCopyWithImpl<$Res>
     Object? surahId = null,
     Object? fromAyah = null,
     Object? toAyah = null,
+    Object? label = null,
+    Object? isFullSurah = null,
+    Object? sortOrder = null,
+    Object? memorizationScore = null,
+    Object? tajweedScore = null,
+    Object? fluencyScore = null,
+    Object? accuracyScore = null,
   }) {
     return _then(_SessionRevision(
       id: null == id
@@ -1565,6 +1820,34 @@ class __$SessionRevisionCopyWithImpl<$Res>
           ? _self.toAyah
           : toAyah // ignore: cast_nullable_to_non_nullable
               as int,
+      label: null == label
+          ? _self.label
+          : label // ignore: cast_nullable_to_non_nullable
+              as String,
+      isFullSurah: null == isFullSurah
+          ? _self.isFullSurah
+          : isFullSurah // ignore: cast_nullable_to_non_nullable
+              as bool,
+      sortOrder: null == sortOrder
+          ? _self.sortOrder
+          : sortOrder // ignore: cast_nullable_to_non_nullable
+              as int,
+      memorizationScore: null == memorizationScore
+          ? _self.memorizationScore
+          : memorizationScore // ignore: cast_nullable_to_non_nullable
+              as double,
+      tajweedScore: null == tajweedScore
+          ? _self.tajweedScore
+          : tajweedScore // ignore: cast_nullable_to_non_nullable
+              as double,
+      fluencyScore: null == fluencyScore
+          ? _self.fluencyScore
+          : fluencyScore // ignore: cast_nullable_to_non_nullable
+              as double,
+      accuracyScore: null == accuracyScore
+          ? _self.accuracyScore
+          : accuracyScore // ignore: cast_nullable_to_non_nullable
+              as double,
     ));
   }
 }
@@ -1576,14 +1859,7 @@ mixin _$SessionEvaluation {
   double get memorizationScore;
   double get tajweedScore;
   double get fluencyScore;
-  double
-      get accuracyScore; // القسم ح.12 (v8): تقييم منفصل للمراجعة — نفس المعايير الأربعة، لكن
-// لأداء المراجعة لا الحفظ الجديد. مستقلّة تماماً عن الدرجات أعلاه لأن
-// جلسة واحدة قد تحتوي حفظاً جديداً ومراجعة معاً بتقييمين مختلفين.
-  double get revisionMemorizationScore;
-  double get revisionTajweedScore;
-  double get revisionFluencyScore;
-  double get revisionAccuracyScore;
+  double get accuracyScore;
 
   /// Create a copy of SessionEvaluation
   /// with the given fields replaced by the non-null parameter values.
@@ -1611,36 +1887,17 @@ mixin _$SessionEvaluation {
             (identical(other.fluencyScore, fluencyScore) ||
                 other.fluencyScore == fluencyScore) &&
             (identical(other.accuracyScore, accuracyScore) ||
-                other.accuracyScore == accuracyScore) &&
-            (identical(other.revisionMemorizationScore,
-                    revisionMemorizationScore) ||
-                other.revisionMemorizationScore == revisionMemorizationScore) &&
-            (identical(other.revisionTajweedScore, revisionTajweedScore) ||
-                other.revisionTajweedScore == revisionTajweedScore) &&
-            (identical(other.revisionFluencyScore, revisionFluencyScore) ||
-                other.revisionFluencyScore == revisionFluencyScore) &&
-            (identical(other.revisionAccuracyScore, revisionAccuracyScore) ||
-                other.revisionAccuracyScore == revisionAccuracyScore));
+                other.accuracyScore == accuracyScore));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      sessionId,
-      memorizationScore,
-      tajweedScore,
-      fluencyScore,
-      accuracyScore,
-      revisionMemorizationScore,
-      revisionTajweedScore,
-      revisionFluencyScore,
-      revisionAccuracyScore);
+  int get hashCode => Object.hash(runtimeType, id, sessionId, memorizationScore,
+      tajweedScore, fluencyScore, accuracyScore);
 
   @override
   String toString() {
-    return 'SessionEvaluation(id: $id, sessionId: $sessionId, memorizationScore: $memorizationScore, tajweedScore: $tajweedScore, fluencyScore: $fluencyScore, accuracyScore: $accuracyScore, revisionMemorizationScore: $revisionMemorizationScore, revisionTajweedScore: $revisionTajweedScore, revisionFluencyScore: $revisionFluencyScore, revisionAccuracyScore: $revisionAccuracyScore)';
+    return 'SessionEvaluation(id: $id, sessionId: $sessionId, memorizationScore: $memorizationScore, tajweedScore: $tajweedScore, fluencyScore: $fluencyScore, accuracyScore: $accuracyScore)';
   }
 }
 
@@ -1656,11 +1913,7 @@ abstract mixin class $SessionEvaluationCopyWith<$Res> {
       double memorizationScore,
       double tajweedScore,
       double fluencyScore,
-      double accuracyScore,
-      double revisionMemorizationScore,
-      double revisionTajweedScore,
-      double revisionFluencyScore,
-      double revisionAccuracyScore});
+      double accuracyScore});
 }
 
 /// @nodoc
@@ -1682,10 +1935,6 @@ class _$SessionEvaluationCopyWithImpl<$Res>
     Object? tajweedScore = null,
     Object? fluencyScore = null,
     Object? accuracyScore = null,
-    Object? revisionMemorizationScore = null,
-    Object? revisionTajweedScore = null,
-    Object? revisionFluencyScore = null,
-    Object? revisionAccuracyScore = null,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -1711,22 +1960,6 @@ class _$SessionEvaluationCopyWithImpl<$Res>
       accuracyScore: null == accuracyScore
           ? _self.accuracyScore
           : accuracyScore // ignore: cast_nullable_to_non_nullable
-              as double,
-      revisionMemorizationScore: null == revisionMemorizationScore
-          ? _self.revisionMemorizationScore
-          : revisionMemorizationScore // ignore: cast_nullable_to_non_nullable
-              as double,
-      revisionTajweedScore: null == revisionTajweedScore
-          ? _self.revisionTajweedScore
-          : revisionTajweedScore // ignore: cast_nullable_to_non_nullable
-              as double,
-      revisionFluencyScore: null == revisionFluencyScore
-          ? _self.revisionFluencyScore
-          : revisionFluencyScore // ignore: cast_nullable_to_non_nullable
-              as double,
-      revisionAccuracyScore: null == revisionAccuracyScore
-          ? _self.revisionAccuracyScore
-          : revisionAccuracyScore // ignore: cast_nullable_to_non_nullable
               as double,
     ));
   }
@@ -1825,34 +2058,16 @@ extension SessionEvaluationPatterns on SessionEvaluation {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(
-            int id,
-            int sessionId,
-            double memorizationScore,
-            double tajweedScore,
-            double fluencyScore,
-            double accuracyScore,
-            double revisionMemorizationScore,
-            double revisionTajweedScore,
-            double revisionFluencyScore,
-            double revisionAccuracyScore)?
+    TResult Function(int id, int sessionId, double memorizationScore,
+            double tajweedScore, double fluencyScore, double accuracyScore)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _SessionEvaluation() when $default != null:
-        return $default(
-            _that.id,
-            _that.sessionId,
-            _that.memorizationScore,
-            _that.tajweedScore,
-            _that.fluencyScore,
-            _that.accuracyScore,
-            _that.revisionMemorizationScore,
-            _that.revisionTajweedScore,
-            _that.revisionFluencyScore,
-            _that.revisionAccuracyScore);
+        return $default(_that.id, _that.sessionId, _that.memorizationScore,
+            _that.tajweedScore, _that.fluencyScore, _that.accuracyScore);
       case _:
         return orElse();
     }
@@ -1873,33 +2088,15 @@ extension SessionEvaluationPatterns on SessionEvaluation {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(
-            int id,
-            int sessionId,
-            double memorizationScore,
-            double tajweedScore,
-            double fluencyScore,
-            double accuracyScore,
-            double revisionMemorizationScore,
-            double revisionTajweedScore,
-            double revisionFluencyScore,
-            double revisionAccuracyScore)
+    TResult Function(int id, int sessionId, double memorizationScore,
+            double tajweedScore, double fluencyScore, double accuracyScore)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _SessionEvaluation():
-        return $default(
-            _that.id,
-            _that.sessionId,
-            _that.memorizationScore,
-            _that.tajweedScore,
-            _that.fluencyScore,
-            _that.accuracyScore,
-            _that.revisionMemorizationScore,
-            _that.revisionTajweedScore,
-            _that.revisionFluencyScore,
-            _that.revisionAccuracyScore);
+        return $default(_that.id, _that.sessionId, _that.memorizationScore,
+            _that.tajweedScore, _that.fluencyScore, _that.accuracyScore);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -1919,33 +2116,15 @@ extension SessionEvaluationPatterns on SessionEvaluation {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(
-            int id,
-            int sessionId,
-            double memorizationScore,
-            double tajweedScore,
-            double fluencyScore,
-            double accuracyScore,
-            double revisionMemorizationScore,
-            double revisionTajweedScore,
-            double revisionFluencyScore,
-            double revisionAccuracyScore)?
+    TResult? Function(int id, int sessionId, double memorizationScore,
+            double tajweedScore, double fluencyScore, double accuracyScore)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _SessionEvaluation() when $default != null:
-        return $default(
-            _that.id,
-            _that.sessionId,
-            _that.memorizationScore,
-            _that.tajweedScore,
-            _that.fluencyScore,
-            _that.accuracyScore,
-            _that.revisionMemorizationScore,
-            _that.revisionTajweedScore,
-            _that.revisionFluencyScore,
-            _that.revisionAccuracyScore);
+        return $default(_that.id, _that.sessionId, _that.memorizationScore,
+            _that.tajweedScore, _that.fluencyScore, _that.accuracyScore);
       case _:
         return null;
     }
@@ -1961,11 +2140,7 @@ class _SessionEvaluation extends SessionEvaluation {
       this.memorizationScore = 0.0,
       this.tajweedScore = 0.0,
       this.fluencyScore = 0.0,
-      this.accuracyScore = 0.0,
-      this.revisionMemorizationScore = 0.0,
-      this.revisionTajweedScore = 0.0,
-      this.revisionFluencyScore = 0.0,
-      this.revisionAccuracyScore = 0.0})
+      this.accuracyScore = 0.0})
       : super._();
   factory _SessionEvaluation.fromJson(Map<String, dynamic> json) =>
       _$SessionEvaluationFromJson(json);
@@ -1988,21 +2163,6 @@ class _SessionEvaluation extends SessionEvaluation {
   @override
   @JsonKey()
   final double accuracyScore;
-// القسم ح.12 (v8): تقييم منفصل للمراجعة — نفس المعايير الأربعة، لكن
-// لأداء المراجعة لا الحفظ الجديد. مستقلّة تماماً عن الدرجات أعلاه لأن
-// جلسة واحدة قد تحتوي حفظاً جديداً ومراجعة معاً بتقييمين مختلفين.
-  @override
-  @JsonKey()
-  final double revisionMemorizationScore;
-  @override
-  @JsonKey()
-  final double revisionTajweedScore;
-  @override
-  @JsonKey()
-  final double revisionFluencyScore;
-  @override
-  @JsonKey()
-  final double revisionAccuracyScore;
 
   /// Create a copy of SessionEvaluation
   /// with the given fields replaced by the non-null parameter values.
@@ -2034,36 +2194,17 @@ class _SessionEvaluation extends SessionEvaluation {
             (identical(other.fluencyScore, fluencyScore) ||
                 other.fluencyScore == fluencyScore) &&
             (identical(other.accuracyScore, accuracyScore) ||
-                other.accuracyScore == accuracyScore) &&
-            (identical(other.revisionMemorizationScore,
-                    revisionMemorizationScore) ||
-                other.revisionMemorizationScore == revisionMemorizationScore) &&
-            (identical(other.revisionTajweedScore, revisionTajweedScore) ||
-                other.revisionTajweedScore == revisionTajweedScore) &&
-            (identical(other.revisionFluencyScore, revisionFluencyScore) ||
-                other.revisionFluencyScore == revisionFluencyScore) &&
-            (identical(other.revisionAccuracyScore, revisionAccuracyScore) ||
-                other.revisionAccuracyScore == revisionAccuracyScore));
+                other.accuracyScore == accuracyScore));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      sessionId,
-      memorizationScore,
-      tajweedScore,
-      fluencyScore,
-      accuracyScore,
-      revisionMemorizationScore,
-      revisionTajweedScore,
-      revisionFluencyScore,
-      revisionAccuracyScore);
+  int get hashCode => Object.hash(runtimeType, id, sessionId, memorizationScore,
+      tajweedScore, fluencyScore, accuracyScore);
 
   @override
   String toString() {
-    return 'SessionEvaluation(id: $id, sessionId: $sessionId, memorizationScore: $memorizationScore, tajweedScore: $tajweedScore, fluencyScore: $fluencyScore, accuracyScore: $accuracyScore, revisionMemorizationScore: $revisionMemorizationScore, revisionTajweedScore: $revisionTajweedScore, revisionFluencyScore: $revisionFluencyScore, revisionAccuracyScore: $revisionAccuracyScore)';
+    return 'SessionEvaluation(id: $id, sessionId: $sessionId, memorizationScore: $memorizationScore, tajweedScore: $tajweedScore, fluencyScore: $fluencyScore, accuracyScore: $accuracyScore)';
   }
 }
 
@@ -2081,11 +2222,7 @@ abstract mixin class _$SessionEvaluationCopyWith<$Res>
       double memorizationScore,
       double tajweedScore,
       double fluencyScore,
-      double accuracyScore,
-      double revisionMemorizationScore,
-      double revisionTajweedScore,
-      double revisionFluencyScore,
-      double revisionAccuracyScore});
+      double accuracyScore});
 }
 
 /// @nodoc
@@ -2107,10 +2244,6 @@ class __$SessionEvaluationCopyWithImpl<$Res>
     Object? tajweedScore = null,
     Object? fluencyScore = null,
     Object? accuracyScore = null,
-    Object? revisionMemorizationScore = null,
-    Object? revisionTajweedScore = null,
-    Object? revisionFluencyScore = null,
-    Object? revisionAccuracyScore = null,
   }) {
     return _then(_SessionEvaluation(
       id: null == id
@@ -2136,22 +2269,6 @@ class __$SessionEvaluationCopyWithImpl<$Res>
       accuracyScore: null == accuracyScore
           ? _self.accuracyScore
           : accuracyScore // ignore: cast_nullable_to_non_nullable
-              as double,
-      revisionMemorizationScore: null == revisionMemorizationScore
-          ? _self.revisionMemorizationScore
-          : revisionMemorizationScore // ignore: cast_nullable_to_non_nullable
-              as double,
-      revisionTajweedScore: null == revisionTajweedScore
-          ? _self.revisionTajweedScore
-          : revisionTajweedScore // ignore: cast_nullable_to_non_nullable
-              as double,
-      revisionFluencyScore: null == revisionFluencyScore
-          ? _self.revisionFluencyScore
-          : revisionFluencyScore // ignore: cast_nullable_to_non_nullable
-              as double,
-      revisionAccuracyScore: null == revisionAccuracyScore
-          ? _self.revisionAccuracyScore
-          : revisionAccuracyScore // ignore: cast_nullable_to_non_nullable
               as double,
     ));
   }
