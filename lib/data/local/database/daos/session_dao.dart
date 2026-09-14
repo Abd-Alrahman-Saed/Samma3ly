@@ -10,7 +10,7 @@ part 'session_dao.g.dart';
 
 @DriftAccessor(tables: [Sessions, SessionMemorizations, SessionRevisions, SessionEvaluations, SessionAttendances])
 class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
-  SessionDao(AppDatabase db) : super(db);
+  SessionDao(super.db);
 
   Future<List<Session>> getAll({int? studentId, DateTime? from, DateTime? to}) {
     var query = select(sessions)..orderBy([(t) => OrderingTerm.desc(t.date)]);

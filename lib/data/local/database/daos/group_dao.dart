@@ -9,7 +9,7 @@ part 'group_dao.g.dart';
 
 @DriftAccessor(tables: [Groups, GroupMembers, GroupScheduleSlots, ScheduleExceptions])
 class GroupDao extends DatabaseAccessor<AppDatabase> with _$GroupDaoMixin {
-  GroupDao(AppDatabase db) : super(db);
+  GroupDao(super.db);
 
   // Groups
   Future<List<Group>> getAll() => select(groups).get();

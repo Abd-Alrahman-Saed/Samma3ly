@@ -356,11 +356,11 @@ void main() {
           surahDao: SurahDao(countedDb),
         );
 
-        final id = await countedDb.into(countedDb.students).insert(StudentsCompanion(
-              fullName: const Value('طالب أداء'),
-              age: const Value(10),
-              phone: const Value('0100000000'),
-              address: const Value('عنوان'),
+        final id = await countedDb.into(countedDb.students).insert(const StudentsCompanion(
+              fullName: Value('طالب أداء'),
+              age: Value(10),
+              phone: Value('0100000000'),
+              address: Value('عنوان'),
             ));
 
         const sessionCount = 12;
@@ -409,11 +409,11 @@ void main() {
         surahDao: SurahDao(countedDb),
       );
 
-      final id = await countedDb.into(countedDb.students).insert(StudentsCompanion(
-            fullName: const Value('طالب أداء ٢'),
-            age: const Value(10),
-            phone: const Value('0100000000'),
-            address: const Value('عنوان'),
+      final id = await countedDb.into(countedDb.students).insert(const StudentsCompanion(
+            fullName: Value('طالب أداء ٢'),
+            age: Value(10),
+            phone: Value('0100000000'),
+            address: Value('عنوان'),
           ));
 
       const sessionCount = 40; // أكبر بكثير من الاختبار السابق (١٢)

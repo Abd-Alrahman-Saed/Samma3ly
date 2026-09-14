@@ -6,7 +6,7 @@ part 'user_dao.g.dart';
 
 @DriftAccessor(tables: [Users])
 class UserDao extends DatabaseAccessor<AppDatabase> with _$UserDaoMixin {
-  UserDao(AppDatabase db) : super(db);
+  UserDao(super.db);
 
   Future<List<User>> getAll() => select(users).get();
 

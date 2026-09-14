@@ -52,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
   /// Test-only constructor — lets tests inject an in-memory or temp-file
   /// executor instead of the real on-disk database file.
   @visibleForTesting
-  AppDatabase.forTesting(QueryExecutor executor) : super(executor);
+  AppDatabase.forTesting(super.executor);
 
   @override
   int get schemaVersion => 10;

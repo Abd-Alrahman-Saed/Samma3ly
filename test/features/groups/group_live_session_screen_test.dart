@@ -97,7 +97,7 @@ void main() {
 
     sessionId = await sessionDao.insert(SessionsCompanion.insert(
       groupId: Value(groupId),
-      sessionType: Value('جماعي'),
+      sessionType: const Value('جماعي'),
       occurrenceDate: Value(DateTime(2026, 3, 9)),
       date: DateTime(2026, 3, 9),
       time: '17:00',

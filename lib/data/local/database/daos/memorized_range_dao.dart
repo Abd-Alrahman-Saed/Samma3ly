@@ -6,7 +6,7 @@ part 'memorized_range_dao.g.dart';
 
 @DriftAccessor(tables: [MemorizedRanges])
 class MemorizedRangeDao extends DatabaseAccessor<AppDatabase> with _$MemorizedRangeDaoMixin {
-  MemorizedRangeDao(AppDatabase db) : super(db);
+  MemorizedRangeDao(super.db);
 
   Future<List<MemorizedRange>> getByStudent(int studentId) =>
       (select(memorizedRanges)..where((t) => t.studentId.equals(studentId))).get();

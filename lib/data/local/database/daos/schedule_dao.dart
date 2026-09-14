@@ -6,7 +6,7 @@ part 'schedule_dao.g.dart';
 
 @DriftAccessor(tables: [Schedules])
 class ScheduleDao extends DatabaseAccessor<AppDatabase> with _$ScheduleDaoMixin {
-  ScheduleDao(AppDatabase db) : super(db);
+  ScheduleDao(super.db);
 
   Future<List<Schedule>> getUpcoming({int? studentId}) {
     final now = DateTime.now();

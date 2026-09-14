@@ -24,11 +24,11 @@ void main() {
   tearDown(() => db.close());
 
   Future<int> insertStudent(AppDatabase database) {
-    return database.into(database.students).insert(StudentsCompanion(
-          fullName: const Value('طالب تجريبي'),
-          age: const Value(10),
-          phone: const Value('0100000000'),
-          address: const Value('عنوان'),
+    return database.into(database.students).insert(const StudentsCompanion(
+          fullName: Value('طالب تجريبي'),
+          age: Value(10),
+          phone: Value('0100000000'),
+          address: Value('عنوان'),
         ));
   }
 

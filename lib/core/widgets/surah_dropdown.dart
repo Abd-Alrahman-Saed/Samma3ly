@@ -25,7 +25,7 @@ class SurahDropdown extends ConsumerWidget {
       data: (surahs) {
         final validValue = surahs.any((s) => s.id == value) ? value : null;
         return DropdownButtonFormField<int?>(
-          value: validValue,
+          initialValue: validValue,
           isExpanded: true,
           decoration: InputDecoration(labelText: label),
           items: [

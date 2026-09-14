@@ -6,7 +6,7 @@ part 'juz_surah_range_dao.g.dart';
 
 @DriftAccessor(tables: [JuzSurahRanges])
 class JuzSurahRangeDao extends DatabaseAccessor<AppDatabase> with _$JuzSurahRangeDaoMixin {
-  JuzSurahRangeDao(AppDatabase db) : super(db);
+  JuzSurahRangeDao(super.db);
 
   Future<List<JuzSurahRange>> getAll() => select(juzSurahRanges).get();
 

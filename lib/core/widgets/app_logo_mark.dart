@@ -52,7 +52,7 @@ class AppLogoMark extends StatelessWidget {
                 height: badgeSize,
                 alignment: Alignment.center,
                 decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
-                child: AppIcon(AppIcons.plus, size: 8, color: AppColors.onPrimary),
+                child: const AppIcon(AppIcons.plus, size: 8, color: AppColors.onPrimary),
               ),
             ),
         ],

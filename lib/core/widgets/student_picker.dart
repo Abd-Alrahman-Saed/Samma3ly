@@ -94,7 +94,7 @@ class _StudentPickerSheetState extends State<_StudentPickerSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('اختر الطالب', style: AppTextStyles.sectionTitle),
+              const Text('اختر الطالب', style: AppTextStyles.sectionTitle),
               const SizedBox(height: 12),
               TextField(
                 autofocus: true,

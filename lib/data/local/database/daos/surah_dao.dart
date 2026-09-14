@@ -6,7 +6,7 @@ part 'surah_dao.g.dart';
 
 @DriftAccessor(tables: [Surahs])
 class SurahDao extends DatabaseAccessor<AppDatabase> with _$SurahDaoMixin {
-  SurahDao(AppDatabase db) : super(db);
+  SurahDao(super.db);
 
   Future<List<Surah>> getAll() =>
       (select(surahs)..orderBy([(t) => OrderingTerm.asc(t.number)])).get();

@@ -76,8 +76,8 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
     try {
       final dao = ref.read(memorizedRangeDaoProvider);
       final now = DateTime.now();
-      final revisionDays = 7;
-      final nextReview = now.add(Duration(days: revisionDays));
+      const revisionDays = 7;
+      final nextReview = now.add(const Duration(days: revisionDays));
       int rangeId;
 
       if (_editId != null) {
@@ -98,7 +98,7 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
           fromAyah: Value(fromAyah),
           toAyah: Value(toAyah),
           status: Value(_status),
-          revisionCycleDays: Value(revisionDays),
+          revisionCycleDays: const Value(revisionDays),
           nextReviewDate: Value(nextReview),
         ));
       }
@@ -194,7 +194,7 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
                 children: [
                   Text(_editId != null ? 'تعديل نطاق الحفظ' : 'إضافة نطاق حفظ جديد', style: AppTextStyles.sectionTitle),
                   const SizedBox(height: 2),
-                  Text('يتم تحديد موعد المراجعة تلقائياً بعد 7 أيام من الحفظ', style: AppTextStyles.muted),
+                  const Text('يتم تحديد موعد المراجعة تلقائياً بعد 7 أيام من الحفظ', style: AppTextStyles.muted),
                   const SizedBox(height: 16),
                   SurahDropdown(
                     value: _surahId,
@@ -222,7 +222,7 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: _status,
+                    initialValue: _status,
                     decoration: const InputDecoration(labelText: 'الحالة'),
                     items: MemorizedStatus.values.map((s) => DropdownMenuItem(value: s.arabic, child: Text(s.arabic))).toList(),
                     onChanged: (v) => setState(() {
@@ -307,7 +307,7 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(icon: const Icon(Icons.edit, size: 20), tooltip: 'تعديل', onPressed: () => _edit(r)),
-                              IconButton(icon: const Icon(Icons.delete, size: 20, color: AppColors.error), tooltip: 'حذف', onPressed: () => _delete(r.id!)),
+                              IconButton(icon: const Icon(Icons.delete, size: 20, color: AppColors.error), tooltip: 'حذف', onPressed: () => _delete(r.id)),
                             ],
                           ),
                         ),

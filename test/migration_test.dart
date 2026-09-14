@@ -365,11 +365,11 @@ void main() {
       expect(attendances.first.recitationOutcome, isNull);
 
       // العمود الجديد فعلاً قابل للكتابة بعد الترقية مباشرة.
-      await migratedDb.update(migratedDb.sessionAttendances).replace(SessionAttendancesCompanion(
-            id: const Value(1),
-            sessionId: const Value(1),
-            studentId: const Value(1),
-            recitationOutcome: const Value('اجتاز'),
+      await migratedDb.update(migratedDb.sessionAttendances).replace(const SessionAttendancesCompanion(
+            id: Value(1),
+            sessionId: Value(1),
+            studentId: Value(1),
+            recitationOutcome: Value('اجتاز'),
           ));
       final updated = await migratedDb.select(migratedDb.sessionAttendances).getSingle();
       expect(updated.recitationOutcome, 'اجتاز');
