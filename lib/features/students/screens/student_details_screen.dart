@@ -7,6 +7,7 @@ import 'package:quran_mobile/core/enums/goal_status.dart';
 import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
 import 'package:quran_mobile/core/utils/date_utils.dart';
+import 'package:quran_mobile/core/utils/quran_utils.dart';
 import 'package:quran_mobile/core/widgets/app_snackbar.dart';
 import 'package:quran_mobile/core/widgets/convert_to_session_button.dart';
 import 'package:quran_mobile/core/widgets/error_banner.dart';
@@ -435,7 +436,13 @@ class _StudentSessionsList extends ConsumerWidget {
             // القسم ح.12: نفس منطق ألوان SessionCard — "يُعاد" تحذيري،
             // "اجتاز" نجاح.
             final outcomeColors = s.recitationOutcome == 'يُعاد' ? StatusColors.attendanceLate : StatusColors.present;
-            final revisionFinalScore = s.evaluation?.revisionFinalScore ?? 0;
+            // القسم ح.14: نفس منطق SessionCard — مراجعة واحدة مُقيَّمة تظهر
+            // بعنوان "مراجعة"، أكثر من واحدة تُجمَع في شريحة بعدّاد ومتوسط.
+            final revisionsWithScore = s.revisions.where((r) => r.finalScore > 0).toList();
+            final revisionChipLabel = revisionsWithScore.length <= 1 ? 'مراجعة' : 'مراجعة ×${revisionsWithScore.length}';
+            final revisionChipScore = revisionsWithScore.isEmpty
+                ? 0.0
+                : (revisionsWithScore.map((r) => r.finalScore).reduce((a, b) => a + b) / revisionsWithScore.length * 10).roundToDouble() / 10;
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Material(
@@ -465,8 +472,8 @@ class _StudentSessionsList extends ConsumerWidget {
                             Text(AppDateUtils.formatDate(s.date), style: const TextStyle(fontFamily: 'Cairo', fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                             Row(
                               children: [
-                                if (s.evaluation != null) ...[
-                                  ScoreDisplay(score: s.evaluation!.finalScore),
+                                if (s.overallScore != null) ...[
+                                  ScoreDisplay(score: s.overallScore!),
                                   const SizedBox(width: 8),
                                 ],
                                 Container(
@@ -492,7 +499,7 @@ class _StudentSessionsList extends ConsumerWidget {
                                   decoration: BoxDecoration(color: outcomeColors.bg, borderRadius: BorderRadius.circular(999)),
                                   child: Text(s.recitationOutcome!, style: TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w700, color: outcomeColors.fg)),
                                 ),
-                                if (revisionFinalScore > 0) ...[
+                                if (revisionsWithScore.isNotEmpty) ...[
                                   const SizedBox(width: 6),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
@@ -500,9 +507,9 @@ class _StudentSessionsList extends ConsumerWidget {
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Text('مراجعة', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.streakIconFg)),
+                                        Text(revisionChipLabel, style: const TextStyle(fontFamily: 'Cairo', fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.streakIconFg)),
                                         const SizedBox(width: 4),
-                                        ScoreDisplay(score: revisionFinalScore, style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w800)),
+                                        ScoreDisplay(score: revisionChipScore, style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w800)),
                                       ],
                                     ),
                                   ),
@@ -514,15 +521,15 @@ class _StudentSessionsList extends ConsumerWidget {
                           Padding(
                             padding: const EdgeInsets.only(top: 5),
                             child: Text(
-                              'حفظ: ${surahLabel(s.memorization!.surahId)} (${s.memorization!.fromAyah}-${s.memorization!.toAyah})',
+                              'حفظ: ${surahLabel(s.memorization!.surahId)} ${QuranUtils.rangeLabel(fromAyah: s.memorization!.fromAyah, toAyah: s.memorization!.toAyah, isFullSurah: s.memorization!.isFullSurah)}',
                               style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, color: AppColors.primary),
                             ),
                           ),
-                        if (s.revision != null)
+                        for (final r in s.revisions)
                           Padding(
                             padding: const EdgeInsets.only(top: 2),
                             child: Text(
-                              'مراجعة: ${surahLabel(s.revision!.surahId)} (${s.revision!.fromAyah}-${s.revision!.toAyah})',
+                              '${r.label}: ${surahLabel(r.surahId)} ${QuranUtils.rangeLabel(fromAyah: r.fromAyah, toAyah: r.toAyah, isFullSurah: r.isFullSurah)}',
                               style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, color: AppColors.streakIconFg),
                             ),
                           ),

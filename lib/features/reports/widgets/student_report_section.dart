@@ -98,8 +98,11 @@ class _SelectedStudentReport extends ConsumerWidget {
     final total = sessions.length;
     final present = sessions.where((s) => s.attendanceStatus == AttendanceStatus.present.arabic).length;
     final attendancePct = total > 0 ? present / total * 100 : 0.0;
-    final scored = sessions.where((s) => s.evaluation != null).toList();
-    final avgScore = scored.isEmpty ? 0.0 : scored.map((s) => s.evaluation!.finalScore).reduce((a, b) => a + b) / scored.length;
+    // القسم ح.14: المتوسط يشمل الآن أي جلسة قُيِّمت فعلياً — حفظاً أو
+    // مراجعة فقط بلا حفظ — بدل `evaluation != null` وحدها (كانت تتجاهل
+    // جلسات المراجعة-فقط، فتخفّض متوسط الطالب زوراً).
+    final scored = sessions.where((s) => s.overallScore != null).toList();
+    final avgScore = scored.isEmpty ? 0.0 : scored.map((s) => s.overallScore!).reduce((a, b) => a + b) / scored.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,7 +161,9 @@ class _SelectedStudentReport extends ConsumerWidget {
                     attendanceStatus: s.attendanceStatus,
                     finalScore: s.evaluation?.finalScore ?? 0,
                     recitationOutcome: s.recitationOutcome,
-                    revisionFinalScore: s.evaluation?.revisionFinalScore ?? 0,
+                    revisions: [
+                      for (final r in s.revisions) SessionRevisionCardInfo(info: r.label, finalScore: r.finalScore),
+                    ],
                   ),
                   // القسم ح.10: جلسة الحلقة تفتح شاشة تسميع الطالب داخل
                   // الحلقة، لا شاشة الجلسة الفردية.
@@ -185,7 +190,7 @@ class _SelectedStudentReport extends ConsumerWidget {
       buffer.writeln('\nآخر الجلسات:');
       for (final s in sessions.take(5)) {
         buffer.writeln('- ${AppDateUtils.formatDate(s.date)}: ${s.attendanceStatus}'
-            '${s.evaluation != null ? ' (${s.evaluation!.finalScore.toStringAsFixed(1)}/10)' : ''}');
+            '${s.overallScore != null ? ' (${s.overallScore!.toStringAsFixed(1)}/10)' : ''}');
       }
     }
     return SharePlus.instance.share(

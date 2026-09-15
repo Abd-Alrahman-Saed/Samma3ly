@@ -6,7 +6,7 @@ part 'student_dao.g.dart';
 
 @DriftAccessor(tables: [Students])
 class StudentDao extends DatabaseAccessor<AppDatabase> with _$StudentDaoMixin {
-  StudentDao(AppDatabase db) : super(db);
+  StudentDao(super.db);
 
   Future<List<Student>> getAll({String? search}) {
     if (search != null && search.isNotEmpty) {

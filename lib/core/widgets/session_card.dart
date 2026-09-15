@@ -4,6 +4,15 @@ import 'package:quran_mobile/core/theme/app_colors.dart';
 import 'package:quran_mobile/core/utils/date_utils.dart';
 import 'score_display.dart';
 
+/// القسم ح.14 — سطر مراجعة واحدة على بطاقة الجلسة الخارجية: نصّ
+/// المعلومات (السورة/المدى أو "كاملة") ودرجتها المستقلّة.
+class SessionRevisionCardInfo {
+  final String info;
+  final double finalScore;
+
+  const SessionRevisionCardInfo({required this.info, required this.finalScore});
+}
+
 class SessionCardItem {
   final int id;
   final int studentId;
@@ -14,14 +23,16 @@ class SessionCardItem {
   final String attendanceStatus;
   final double finalScore;
   final String memorizationInfo;
-  final String revisionInfo;
   final bool isSchedule;
   // القسم ح.12 — "معلومات الجلسة الخارجية": قرار المعلّم السريع
-  // (اجتاز/يُعاد) ودرجة تقييم المراجعة المنفصلة، معروضان على بطاقة
-  // الجلسة نفسها في كل قائمة (لا داخل الجلسة فقط) — الهدف أن يعرف
-  // المعلّم من غير فتح الجلسة أنها تحتاج إعادة.
+  // (اجتاز/يُعاد) معروض على بطاقة الجلسة نفسها في كل قائمة (لا داخل
+  // الجلسة فقط) — الهدف أن يعرف المعلّم من غير فتح الجلسة أنها تحتاج
+  // إعادة.
   final String? recitationOutcome;
-  final double revisionFinalScore;
+  // القسم ح.14 — جلسة قد تحمل أكثر من مراجعة (قريبة/بعيدة/…)، كل واحدة
+  // بتقييمها المستقلّ. كانت هذه `revisionInfo`/`revisionFinalScore`
+  // مفردتين قبل هذا التحديث.
+  final List<SessionRevisionCardInfo> revisions;
 
   SessionCardItem({
     required this.id,
@@ -33,10 +44,9 @@ class SessionCardItem {
     required this.attendanceStatus,
     this.finalScore = 0,
     this.memorizationInfo = '',
-    this.revisionInfo = '',
     this.isSchedule = false,
     this.recitationOutcome,
-    this.revisionFinalScore = 0,
+    this.revisions = const [],
   });
 }
 
@@ -55,7 +65,16 @@ class SessionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusColors = StatusColors.forAttendance(item.attendanceStatus);
     final hasScore = !item.isSchedule && item.finalScore > 0;
-    final hasRevisionScore = !item.isSchedule && item.revisionFinalScore > 0;
+    final revisionsWithScore = item.isSchedule ? const <SessionRevisionCardInfo>[] : item.revisions.where((r) => r.finalScore > 0).toList();
+    // القسم ح.14: مراجعة واحدة مُقيَّمة → شريحتها بعنوان "مراجعة" (نفس
+    // شكل ح.12 القديم بالضبط). أكثر من مراجعة → شريحة واحدة مجمَّعة بعدّاد
+    // ومتوسط الدرجات، بدل ازدحام البطاقة الخارجية بشريحة لكل مراجعة —
+    // التفاصيل الكاملة تظهر داخل الجلسة نفسها.
+    final hasRevisionScore = revisionsWithScore.isNotEmpty;
+    final revisionChipLabel = revisionsWithScore.length <= 1 ? 'مراجعة' : 'مراجعة ×${revisionsWithScore.length}';
+    final revisionChipScore = revisionsWithScore.isEmpty
+        ? 0.0
+        : (revisionsWithScore.map((r) => r.finalScore).reduce((a, b) => a + b) / revisionsWithScore.length * 10).roundToDouble() / 10;
     // القسم ح.12: "يُعاد" بنفس لون تحذير الحضور المتأخر (أصفر/برتقالي —
     // يلفت النظر أن هذه الجلسة تحتاج إعادة)، و"اجتاز" بنفس لون "حاضر"
     // الأخضر (نجاح)، بلا لون جديد في نظام التصميم.
@@ -122,10 +141,10 @@ class SessionCard extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(item.memorizationInfo, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.primary)),
                 ),
-              if (item.revisionInfo.isNotEmpty)
+              for (final r in item.revisions)
                 Padding(
                   padding: const EdgeInsets.only(top: 3),
-                  child: Text(item.revisionInfo, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.streakIconFg)),
+                  child: Text(r.info, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.streakIconFg)),
                 ),
               if (hasScore || hasRevisionScore || onDelete != null)
                 Padding(
@@ -149,8 +168,9 @@ class SessionCard extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                            // القسم ح.12: شريحة منفصلة لدرجة المراجعة — لا
-                            // تُدمَج مع درجة الحفظ لأنهما تقييمان مستقلّان.
+                            // القسم ح.12/ح.14: شريحة منفصلة لدرجة المراجعة
+                            // (أو متوسط المراجعات) — لا تُدمَج مع درجة
+                            // الحفظ لأنهما تقييمان مستقلّان.
                             if (hasRevisionScore)
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
@@ -158,9 +178,9 @@ class SessionCard extends StatelessWidget {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Text('مراجعة', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.streakIconFg)),
+                                    Text(revisionChipLabel, style: const TextStyle(fontFamily: 'Cairo', fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.streakIconFg)),
                                     const SizedBox(width: 4),
-                                    ScoreDisplay(score: item.revisionFinalScore, style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w800)),
+                                    ScoreDisplay(score: revisionChipScore, style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w800)),
                                   ],
                                 ),
                               ),

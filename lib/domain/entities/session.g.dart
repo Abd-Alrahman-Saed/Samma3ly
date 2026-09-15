@@ -26,9 +26,10 @@ _Session _$SessionFromJson(Map<String, dynamic> json) => _Session(
           ? null
           : SessionMemorization.fromJson(
               json['memorization'] as Map<String, dynamic>),
-      revision: json['revision'] == null
-          ? null
-          : SessionRevision.fromJson(json['revision'] as Map<String, dynamic>),
+      revisions: (json['revisions'] as List<dynamic>?)
+              ?.map((e) => SessionRevision.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <SessionRevision>[],
       evaluation: json['evaluation'] == null
           ? null
           : SessionEvaluation.fromJson(
@@ -48,7 +49,7 @@ Map<String, dynamic> _$SessionToJson(_Session instance) => <String, dynamic>{
       'recitationOutcome': instance.recitationOutcome,
       'createdAt': instance.createdAt?.toIso8601String(),
       'memorization': instance.memorization,
-      'revision': instance.revision,
+      'revisions': instance.revisions,
       'evaluation': instance.evaluation,
     };
 
@@ -59,6 +60,7 @@ _SessionMemorization _$SessionMemorizationFromJson(Map<String, dynamic> json) =>
       surahId: (json['surahId'] as num).toInt(),
       fromAyah: (json['fromAyah'] as num?)?.toInt() ?? 1,
       toAyah: (json['toAyah'] as num?)?.toInt() ?? 1,
+      isFullSurah: json['isFullSurah'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$SessionMemorizationToJson(
@@ -69,6 +71,7 @@ Map<String, dynamic> _$SessionMemorizationToJson(
       'surahId': instance.surahId,
       'fromAyah': instance.fromAyah,
       'toAyah': instance.toAyah,
+      'isFullSurah': instance.isFullSurah,
     };
 
 _SessionRevision _$SessionRevisionFromJson(Map<String, dynamic> json) =>
@@ -78,6 +81,13 @@ _SessionRevision _$SessionRevisionFromJson(Map<String, dynamic> json) =>
       surahId: (json['surahId'] as num).toInt(),
       fromAyah: (json['fromAyah'] as num?)?.toInt() ?? 1,
       toAyah: (json['toAyah'] as num?)?.toInt() ?? 1,
+      label: json['label'] as String? ?? 'مراجعة',
+      isFullSurah: json['isFullSurah'] as bool? ?? false,
+      sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
+      memorizationScore: (json['memorizationScore'] as num?)?.toDouble() ?? 0.0,
+      tajweedScore: (json['tajweedScore'] as num?)?.toDouble() ?? 0.0,
+      fluencyScore: (json['fluencyScore'] as num?)?.toDouble() ?? 0.0,
+      accuracyScore: (json['accuracyScore'] as num?)?.toDouble() ?? 0.0,
     );
 
 Map<String, dynamic> _$SessionRevisionToJson(_SessionRevision instance) =>
@@ -87,6 +97,13 @@ Map<String, dynamic> _$SessionRevisionToJson(_SessionRevision instance) =>
       'surahId': instance.surahId,
       'fromAyah': instance.fromAyah,
       'toAyah': instance.toAyah,
+      'label': instance.label,
+      'isFullSurah': instance.isFullSurah,
+      'sortOrder': instance.sortOrder,
+      'memorizationScore': instance.memorizationScore,
+      'tajweedScore': instance.tajweedScore,
+      'fluencyScore': instance.fluencyScore,
+      'accuracyScore': instance.accuracyScore,
     };
 
 _SessionEvaluation _$SessionEvaluationFromJson(Map<String, dynamic> json) =>
@@ -97,14 +114,6 @@ _SessionEvaluation _$SessionEvaluationFromJson(Map<String, dynamic> json) =>
       tajweedScore: (json['tajweedScore'] as num?)?.toDouble() ?? 0.0,
       fluencyScore: (json['fluencyScore'] as num?)?.toDouble() ?? 0.0,
       accuracyScore: (json['accuracyScore'] as num?)?.toDouble() ?? 0.0,
-      revisionMemorizationScore:
-          (json['revisionMemorizationScore'] as num?)?.toDouble() ?? 0.0,
-      revisionTajweedScore:
-          (json['revisionTajweedScore'] as num?)?.toDouble() ?? 0.0,
-      revisionFluencyScore:
-          (json['revisionFluencyScore'] as num?)?.toDouble() ?? 0.0,
-      revisionAccuracyScore:
-          (json['revisionAccuracyScore'] as num?)?.toDouble() ?? 0.0,
     );
 
 Map<String, dynamic> _$SessionEvaluationToJson(_SessionEvaluation instance) =>
@@ -115,8 +124,4 @@ Map<String, dynamic> _$SessionEvaluationToJson(_SessionEvaluation instance) =>
       'tajweedScore': instance.tajweedScore,
       'fluencyScore': instance.fluencyScore,
       'accuracyScore': instance.accuracyScore,
-      'revisionMemorizationScore': instance.revisionMemorizationScore,
-      'revisionTajweedScore': instance.revisionTajweedScore,
-      'revisionFluencyScore': instance.revisionFluencyScore,
-      'revisionAccuracyScore': instance.revisionAccuracyScore,
     };

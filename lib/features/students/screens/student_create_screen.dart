@@ -51,8 +51,8 @@ class _StudentCreateScreenState extends ConsumerState<StudentCreateScreen> {
     if (student != null && mounted) {
       _fullNameController.text = student.fullName;
       _ageController.text = '${student.age}';
-      _phoneController.text = student.phone ?? '';
-      _addressController.text = student.address ?? '';
+      _phoneController.text = student.phone;
+      _addressController.text = student.address;
       _parentNameController.text = student.parentName ?? '';
       _parentPhoneController.text = student.parentPhone ?? '';
       _selectedLevel = student.level;

@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_mobile/core/services/notification_service.dart';
-import 'package:quran_mobile/features/groups/providers/group_provider.dart';
 import 'package:quran_mobile/features/settings/providers/notification_settings_provider.dart';
 import 'package:quran_mobile/providers.dart';
 

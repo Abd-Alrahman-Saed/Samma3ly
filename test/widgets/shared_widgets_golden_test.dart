@@ -98,7 +98,7 @@ void main() {
             attendanceStatus: 'حاضر',
             finalScore: 9.2,
             memorizationInfo: 'حفظ: البقرة (١-٢٠)',
-            revisionInfo: 'مراجعة: آل عمران (١-١٠)',
+            revisions: const [SessionRevisionCardInfo(info: 'مراجعة: آل عمران (١-١٠)', finalScore: 8.5)],
           ),
         ),
         name: 'session_card',

@@ -6,6 +6,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
 import 'package:quran_mobile/core/utils/date_utils.dart';
+import 'package:quran_mobile/core/utils/quran_utils.dart';
 import 'package:quran_mobile/core/widgets/confirm_delete.dart';
 import 'package:quran_mobile/core/widgets/error_banner.dart';
 import 'package:quran_mobile/core/widgets/session_card.dart';
@@ -72,15 +73,23 @@ class _SessionListScreenState extends ConsumerState<SessionListScreen> {
           surahId: Value(mem.surahId),
           fromAyah: Value(mem.fromAyah),
           toAyah: Value(mem.toAyah),
+          isFullSurah: Value(mem.isFullSurah),
         ));
       }
-      final rev = session.revision;
-      if (rev != null) {
+      for (var i = 0; i < session.revisions.length; i++) {
+        final rev = session.revisions[i];
         await dao.insertRevision(SessionRevisionsCompanion(
           sessionId: Value(session.id),
           surahId: Value(rev.surahId),
           fromAyah: Value(rev.fromAyah),
           toAyah: Value(rev.toAyah),
+          label: Value(rev.label),
+          isFullSurah: Value(rev.isFullSurah),
+          sortOrder: Value(i),
+          memorizationScore: Value(rev.memorizationScore),
+          tajweedScore: Value(rev.tajweedScore),
+          fluencyScore: Value(rev.fluencyScore),
+          accuracyScore: Value(rev.accuracyScore),
         ));
       }
       final eval = session.evaluation;
@@ -215,10 +224,17 @@ class _SessionListScreenState extends ConsumerState<SessionListScreen> {
                                       timeDisplay: session.time,
                                       attendanceStatus: session.attendanceStatus,
                                       finalScore: session.evaluation?.finalScore ?? 0,
-                                      memorizationInfo: session.memorization != null ? 'حفظ: ${surahLabel(session.memorization!.surahId)} (${session.memorization!.fromAyah}-${session.memorization!.toAyah})' : '',
-                                      revisionInfo: session.revision != null ? 'مراجعة: ${surahLabel(session.revision!.surahId)} (${session.revision!.fromAyah}-${session.revision!.toAyah})' : '',
+                                      memorizationInfo: session.memorization != null
+                                          ? 'حفظ: ${surahLabel(session.memorization!.surahId)} ${QuranUtils.rangeLabel(fromAyah: session.memorization!.fromAyah, toAyah: session.memorization!.toAyah, isFullSurah: session.memorization!.isFullSurah)}'
+                                          : '',
                                       recitationOutcome: session.recitationOutcome,
-                                      revisionFinalScore: session.evaluation?.revisionFinalScore ?? 0,
+                                      revisions: [
+                                        for (final r in session.revisions)
+                                          SessionRevisionCardInfo(
+                                            info: '${r.label}: ${surahLabel(r.surahId)} ${QuranUtils.rangeLabel(fromAyah: r.fromAyah, toAyah: r.toAyah, isFullSurah: r.isFullSurah)}',
+                                            finalScore: r.finalScore,
+                                          ),
+                                      ],
                                     ),
                                     onTap: () => context.goNamed('sessionEdit', pathParameters: {'id': '${session.id}'}),
                                     onDelete: () => _deleteSession(session),

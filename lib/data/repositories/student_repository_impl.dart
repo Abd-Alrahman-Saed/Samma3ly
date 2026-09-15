@@ -22,9 +22,11 @@ Student _toEntity(dynamic s) => Student(
 
 class StudentRepositoryImpl implements StudentRepository {
   final StudentDao _dao;
-  final SurahDao _surahDao;
 
-  StudentRepositoryImpl(this._dao, this._surahDao);
+  // ignore: unused_element_parameter — يبقى مقبولاً في المُنشئ (نفس توقيع
+  // الحقن الحالي في providers.dart) رغم أنه غير مُستخدَم داخل هذا الصفّ
+  // فعلياً؛ إزالته من هنا فقط بلا الحاجة لتعديل نقطة الحقن.
+  StudentRepositoryImpl(this._dao, SurahDao surahDao);
 
   @override
   Future<List<Student>> getAll({String? search}) async {

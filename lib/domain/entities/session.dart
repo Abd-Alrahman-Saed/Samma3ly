@@ -29,11 +29,39 @@ abstract class Session with _$Session {
     String? recitationOutcome,
     DateTime? createdAt,
     SessionMemorization? memorization,
-    SessionRevision? revision,
+    // القسم ح.14: مراجعات متعددة للجلسة الواحدة (قريبة/بعيدة/عامة…)، كل
+    // واحدة بتقييمها المستقلّ — كانت `SessionRevision?` مفردة قبل هذا
+    // التحديث. راجع getter `revision` أدناه للتوافق مع مسارات لا تزال
+    // بحاجة "مراجعة واحدة" (جلسات الحلقات).
+    @Default(<SessionRevision>[]) List<SessionRevision> revisions,
+    // تقييم **الحفظ الجديد** فقط. تقييم كل مراجعة أصبح على صفّها في
+    // [revisions] (القسم ح.14) — لم يعد هنا.
     SessionEvaluation? evaluation,
   }) = _Session;
 
+  const Session._();
+
   factory Session.fromJson(Map<String, dynamic> json) => _$SessionFromJson(json);
+
+  /// أول مراجعة فقط — توافقية لمسارات لا تزال بمراجعة واحدة بالضبط (جلسات
+  /// الحلقات، مصدرها `SessionAttendances` لا `SessionRevisions`). الشاشات
+  /// التي تدعم مراجعات متعددة تستخدم [revisions] مباشرة.
+  SessionRevision? get revision => revisions.isEmpty ? null : revisions.first;
+
+  /// متوسط كل الأجزاء المُقيَّمة فعلاً في الجلسة — الحفظ الجديد (لو
+  /// قُيِّم) وكل مراجعة قُيِّمت، بمعزل عن أي جزء لم يُدخَل له تقييم (لا
+  /// صفر وهمي يخفّض المتوسط، بخلاف `finalScore` القديم الذي كان يفترض
+  /// دائماً وجود حفظ). `null` لو لا يوجد أي تقييم فعلي بالجلسة كلها —
+  /// يميّز "جلسة بلا أي تقييم" عن "جلسة بتقييم صفر فعلي".
+  double? get overallScore {
+    final parts = <double>[
+      if (evaluation != null && evaluation!.hasEvaluation) evaluation!.finalScore,
+      for (final r in revisions)
+        if (r.hasEvaluation) r.finalScore,
+    ];
+    if (parts.isEmpty) return null;
+    return (parts.reduce((a, b) => a + b) / parts.length * 10).roundToDouble() / 10;
+  }
 }
 
 @freezed
@@ -44,6 +72,10 @@ abstract class SessionMemorization with _$SessionMemorization {
     required int surahId,
     @Default(1) int fromAyah,
     @Default(1) int toAyah,
+    // القسم ح.14 (v10): "السورة كاملة" — `fromAyah`/`toAyah` تُملآن آلياً
+    // (1 → عدد آيات السورة عبر `QuranUtils.getAyahCount`)، والعلم هنا
+    // لعرض "(كاملة)" بدل المدى الرقمي ولإعادة فتح الشاشة على نفس الاختيار.
+    @Default(false) bool isFullSurah,
   }) = _SessionMemorization;
 
   factory SessionMemorization.fromJson(Map<String, dynamic> json) =>
@@ -58,10 +90,34 @@ abstract class SessionRevision with _$SessionRevision {
     required int surahId,
     @Default(1) int fromAyah,
     @Default(1) int toAyah,
+    // القسم ح.14 (v10): نوع المراجعة كما اختاره المعلّم — "قريبة"/"بعيدة"/
+    // "عامة" أو نصّ مخصَّص. تسمية حرّة عمداً (لا enum).
+    @Default('مراجعة') String label,
+    @Default(false) bool isFullSurah,
+    @Default(0) int sortOrder,
+    // القسم ح.14 (v10): تقييم هذه المراجعة بعينها — كان مشتركاً على مستوى
+    // الجلسة كلها (`SessionEvaluation.revision*Score`) قبل دعم أكثر من
+    // مراجعة واحدة؛ الآن كل مراجعة تحمل تقييمها المستقلّ.
+    @Default(0.0) double memorizationScore,
+    @Default(0.0) double tajweedScore,
+    @Default(0.0) double fluencyScore,
+    @Default(0.0) double accuracyScore,
   }) = _SessionRevision;
+
+  const SessionRevision._();
 
   factory SessionRevision.fromJson(Map<String, dynamic> json) =>
       _$SessionRevisionFromJson(json);
+
+  /// نفس معادلة `SessionEvaluation.finalScore`: متوسط المعايير الأربعة × ١٠.
+  double get finalScore {
+    final sum = memorizationScore + tajweedScore + fluencyScore + accuracyScore;
+    return (sum / 4 * 10).roundToDouble() / 10;
+  }
+
+  /// true فقط لو أُدخلت أي درجة فعلياً (لا كلها صفر افتراضي).
+  bool get hasEvaluation =>
+      memorizationScore > 0 || tajweedScore > 0 || fluencyScore > 0 || accuracyScore > 0;
 }
 
 @freezed
@@ -73,13 +129,6 @@ abstract class SessionEvaluation with _$SessionEvaluation {
     @Default(0.0) double tajweedScore,
     @Default(0.0) double fluencyScore,
     @Default(0.0) double accuracyScore,
-    // القسم ح.12 (v8): تقييم منفصل للمراجعة — نفس المعايير الأربعة، لكن
-    // لأداء المراجعة لا الحفظ الجديد. مستقلّة تماماً عن الدرجات أعلاه لأن
-    // جلسة واحدة قد تحتوي حفظاً جديداً ومراجعة معاً بتقييمين مختلفين.
-    @Default(0.0) double revisionMemorizationScore,
-    @Default(0.0) double revisionTajweedScore,
-    @Default(0.0) double revisionFluencyScore,
-    @Default(0.0) double revisionAccuracyScore,
   }) = _SessionEvaluation;
 
   const SessionEvaluation._();
@@ -95,21 +144,8 @@ abstract class SessionEvaluation with _$SessionEvaluation {
     return (sum / 4 * 10).roundToDouble() / 10;
   }
 
-  // القسم ح.12: نفس حساب finalScore، لكن لدرجات المراجعة المنفصلة.
-  double get revisionFinalScore {
-    final sum = revisionMemorizationScore +
-        revisionTajweedScore +
-        revisionFluencyScore +
-        revisionAccuracyScore;
-    return (sum / 4 * 10).roundToDouble() / 10;
-  }
-
-  // true فقط لو أُدخلت أي درجة مراجعة فعلياً (لا كلها صفر افتراضي) — يميّز
-  // "جلسة فيها مراجعة مُقيَّمة" عن "جلسة بلا مراجعة إطلاقاً" لعرض بطاقة
-  // المراجعة في القوائم فقط عند الحاجة.
-  bool get hasRevisionEvaluation =>
-      revisionMemorizationScore > 0 ||
-      revisionTajweedScore > 0 ||
-      revisionFluencyScore > 0 ||
-      revisionAccuracyScore > 0;
+  /// true فقط لو أُدخلت أي درجة حفظ فعلياً — يميّز "جلسة فيها تقييم حفظ"
+  /// عن "جلسة بلا تقييم حفظ إطلاقاً" (مثال: جلسة مراجعة فقط، القسم ح.14).
+  bool get hasEvaluation =>
+      memorizationScore > 0 || tajweedScore > 0 || fluencyScore > 0 || accuracyScore > 0;
 }

@@ -315,12 +315,12 @@ class _StatusChip extends StatelessWidget {
         height: 22,
         padding: const EdgeInsets.symmetric(horizontal: 9),
         decoration: BoxDecoration(color: AppColors.dividerLight, borderRadius: BorderRadius.circular(999)),
-        child: Row(
+        child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AppIcon(AppIcons.circleDash, size: 11, color: AppColors.textMuted),
-            const SizedBox(width: 4),
-            const Text('لم يُسجَّل', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+            AppIcon(AppIcons.circleDash, size: 11, color: AppColors.textMuted),
+            SizedBox(width: 4),
+            Text('لم يُسجَّل', style: TextStyle(fontFamily: 'Cairo', fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
           ],
         ),
       );

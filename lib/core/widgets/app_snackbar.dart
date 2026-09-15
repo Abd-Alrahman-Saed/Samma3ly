@@ -20,8 +20,8 @@ class AppSnackbar {
     );
   }
 
-  static void success(BuildContext context, String message) {
-    _show(context, message, Icons.check_circle, AppColors.success);
+  static void success(BuildContext context, String message, {String? actionLabel, VoidCallback? onAction}) {
+    _show(context, message, Icons.check_circle, AppColors.success, actionLabel: actionLabel, onAction: onAction);
   }
 
   /// Logs the raw [error] and shows a friendly Arabic message; never surfaces raw exception text.

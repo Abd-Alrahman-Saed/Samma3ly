@@ -86,6 +86,26 @@ class BackupService {
       }
     }
 
+    // القسم ح.14 (v10): قبل هذا التحديث كان تقييم المراجعة مخزَّناً على
+    // مستوى الجلسة كلها (SessionEvaluation.revision*Score)، لا على صفّ
+    // المراجعة نفسه. نسخة احتياطية أُخذت قبل v10 تحمل هذه الدرجات في
+    // مصفوفة 'evaluations' مربوطة بـsessionId — لا في صفّ المراجعة
+    // المقابل في 'revisions' (الذي لن يحمل هذه المفاتيح إطلاقاً). خريطة
+    // sessionId → درجات مراجعة قديمة، تُطبَّق أدناه عند الاستعادة على أول
+    // مراجعة لكل جلسة (كانت مراجعة واحدة بالضبط لكل جلسة وقتها).
+    final legacyRevisionScoresBySession = <int, ({double mem, double tajweed, double fluency, double accuracy})>{};
+    for (final raw in (rawJson['evaluations'] as List? ?? const [])) {
+      final e = raw as Map<String, dynamic>;
+      if (!e.containsKey('revisionMemorizationScore')) continue;
+      final sessionId = e['sessionId'] as int;
+      legacyRevisionScoresBySession[sessionId] = (
+        mem: (e['revisionMemorizationScore'] as num?)?.toDouble() ?? 0.0,
+        tajweed: (e['revisionTajweedScore'] as num?)?.toDouble() ?? 0.0,
+        fluency: (e['revisionFluencyScore'] as num?)?.toDouble() ?? 0.0,
+        accuracy: (e['revisionAccuracyScore'] as num?)?.toDouble() ?? 0.0,
+      );
+    }
+
     // Clear all data (respect FK constraints - delete in reverse dependency order)
     await _db.delete(_db.sessionEvaluations).go();
     await _db.delete(_db.sessionRevisions).go();
@@ -198,15 +218,30 @@ class BackupService {
         surahId: Value(m.surahId),
         fromAyah: Value(m.fromAyah),
         toAyah: Value(m.toAyah),
+        isFullSurah: Value(m.isFullSurah),
       ));
     }
+    // القسم ح.14 (v10): سجن sessionId اللي درجات مراجعته القديمة (من
+    // خريطة legacyRevisionScoresBySession أعلاه) اتطبّقت بالفعل — نسخة
+    // احتياطية قديمة كانت مراجعة واحدة بالضبط لكل جلسة، فالتطبيق مرة
+    // واحدة فقط لأول صفّ مراجعة يخصّ كل جلسة كافٍ ولا يكرّر الدرجات لو
+    // (لأي سبب) وُجد أكثر من صفّ لنفس sessionId في نسخة قديمة فعلاً.
+    final legacyRevisionScoresApplied = <int>{};
     for (final r in data.revisions) {
+      final legacy = legacyRevisionScoresApplied.add(r.sessionId) ? legacyRevisionScoresBySession[r.sessionId] : null;
       await _db.into(_db.sessionRevisions).insert(SessionRevisionsCompanion(
         id: Value(r.id),
         sessionId: Value(r.sessionId),
         surahId: Value(r.surahId),
         fromAyah: Value(r.fromAyah),
         toAyah: Value(r.toAyah),
+        label: Value(r.label),
+        isFullSurah: Value(r.isFullSurah),
+        sortOrder: Value(r.sortOrder),
+        memorizationScore: Value(legacy?.mem ?? r.memorizationScore),
+        tajweedScore: Value(legacy?.tajweed ?? r.tajweedScore),
+        fluencyScore: Value(legacy?.fluency ?? r.fluencyScore),
+        accuracyScore: Value(legacy?.accuracy ?? r.accuracyScore),
       ));
     }
     for (final e in data.evaluations) {
@@ -217,10 +252,6 @@ class BackupService {
         tajweedScore: Value(e.tajweedScore),
         fluencyScore: Value(e.fluencyScore),
         accuracyScore: Value(e.accuracyScore),
-        revisionMemorizationScore: Value(e.revisionMemorizationScore),
-        revisionTajweedScore: Value(e.revisionTajweedScore),
-        revisionFluencyScore: Value(e.revisionFluencyScore),
-        revisionAccuracyScore: Value(e.revisionAccuracyScore),
       ));
     }
     for (final s in data.schedules) {
@@ -284,8 +315,7 @@ class BackupService {
     final sessions = await _sessionDao.getAll();
     final result = <SessionRevision>[];
     for (final s in sessions) {
-      final rev = await _sessionDao.getRevisionBySession(s.id);
-      if (rev != null) result.add(rev);
+      result.addAll(await _sessionDao.getRevisionsBySession(s.id));
     }
     return result;
   }
@@ -545,6 +575,7 @@ class BackupData {
         'surahId': e.surahId,
         'fromAyah': e.fromAyah,
         'toAyah': e.toAyah,
+        'isFullSurah': e.isFullSurah,
       };
   static SessionMemorization _memorizationFromJson(Map<String, dynamic> m) =>
       SessionMemorization(
@@ -553,15 +584,27 @@ class BackupData {
         surahId: m['surahId'] as int,
         fromAyah: m['fromAyah'] as int,
         toAyah: m['toAyah'] as int,
+        // القسم ح.14 (v10): غائب من نسخ احتياطية أقدم.
+        isFullSurah: m['isFullSurah'] as bool? ?? false,
       );
 
   // ---- SessionRevision ----
+  // القسم ح.14 (v10): مراجعات متعددة لكل جلسة، كل واحدة بتسميتها
+  // ("قريبة"/"بعيدة"/…) وتقييمها المستقلّ (كانت هذه الدرجات على
+  // SessionEvaluation قبل هذا التحديث — راجع _evaluationToJson أسفله).
   static Map<String, dynamic> _revisionToJson(SessionRevision e) => {
         'id': e.id,
         'sessionId': e.sessionId,
         'surahId': e.surahId,
         'fromAyah': e.fromAyah,
         'toAyah': e.toAyah,
+        'label': e.label,
+        'isFullSurah': e.isFullSurah,
+        'sortOrder': e.sortOrder,
+        'memorizationScore': e.memorizationScore,
+        'tajweedScore': e.tajweedScore,
+        'fluencyScore': e.fluencyScore,
+        'accuracyScore': e.accuracyScore,
       };
   static SessionRevision _revisionFromJson(Map<String, dynamic> m) =>
       SessionRevision(
@@ -570,9 +613,23 @@ class BackupData {
         surahId: m['surahId'] as int,
         fromAyah: m['fromAyah'] as int,
         toAyah: m['toAyah'] as int,
+        // كل الحقول التالية غائبة من نسخ احتياطية أُخذت قبل v10 — نفس
+        // القيم الافتراضية الحقيقية على الأعمدة. الدرجات القديمة نفسها
+        // كانت مخزَّنة على مستوى الجلسة (SessionEvaluation.revision*Score)
+        // لا هنا — `BackupService.restore()` يطبّقها بعد هذا التحويل عبر
+        // خريطة sessionId، راجع `legacyRevisionScoresBySession`.
+        label: m['label'] as String? ?? 'مراجعة',
+        isFullSurah: m['isFullSurah'] as bool? ?? false,
+        sortOrder: m['sortOrder'] as int? ?? 0,
+        memorizationScore: (m['memorizationScore'] as num?)?.toDouble() ?? 0.0,
+        tajweedScore: (m['tajweedScore'] as num?)?.toDouble() ?? 0.0,
+        fluencyScore: (m['fluencyScore'] as num?)?.toDouble() ?? 0.0,
+        accuracyScore: (m['accuracyScore'] as num?)?.toDouble() ?? 0.0,
       );
 
   // ---- SessionEvaluation ----
+  // تقييم الحفظ الجديد فقط منذ v10 — تقييم المراجعة انتقل إلى
+  // SessionRevision نفسها (راجع _revisionToJson أعلاه).
   static Map<String, dynamic> _evaluationToJson(SessionEvaluation e) => {
         'id': e.id,
         'sessionId': e.sessionId,
@@ -580,10 +637,6 @@ class BackupData {
         'tajweedScore': e.tajweedScore,
         'fluencyScore': e.fluencyScore,
         'accuracyScore': e.accuracyScore,
-        'revisionMemorizationScore': e.revisionMemorizationScore,
-        'revisionTajweedScore': e.revisionTajweedScore,
-        'revisionFluencyScore': e.revisionFluencyScore,
-        'revisionAccuracyScore': e.revisionAccuracyScore,
       };
   static SessionEvaluation _evaluationFromJson(Map<String, dynamic> m) =>
       SessionEvaluation(
@@ -593,12 +646,6 @@ class BackupData {
         tajweedScore: (m['tajweedScore'] as num).toDouble(),
         fluencyScore: (m['fluencyScore'] as num).toDouble(),
         accuracyScore: (m['accuracyScore'] as num).toDouble(),
-        // v8 (القسم ح.12): نسخ احتياطية أُخذت قبل هذا التحديث لن تحتوي هذه
-        // المفاتيح — 0.0 نفس القيمة الافتراضية الحقيقية على العمود.
-        revisionMemorizationScore: (m['revisionMemorizationScore'] as num?)?.toDouble() ?? 0.0,
-        revisionTajweedScore: (m['revisionTajweedScore'] as num?)?.toDouble() ?? 0.0,
-        revisionFluencyScore: (m['revisionFluencyScore'] as num?)?.toDouble() ?? 0.0,
-        revisionAccuracyScore: (m['revisionAccuracyScore'] as num?)?.toDouble() ?? 0.0,
       );
 
   // ---- Schedule ----

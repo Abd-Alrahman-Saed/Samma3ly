@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
+import 'package:quran_mobile/core/utils/quran_utils.dart';
 import 'package:quran_mobile/core/widgets/app_logo_mark.dart';
 import 'package:quran_mobile/core/widgets/empty_state.dart';
 import 'package:quran_mobile/core/widgets/error_banner.dart';
@@ -64,9 +65,9 @@ class DashboardScreen extends ConsumerWidget {
                     child: _QuickLinks(),
                   ),
                   const SizedBox(height: 24),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: const Text('أفضل 5 طلاب', style: TextStyle(fontFamily: 'Cairo', fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Text('أفضل 5 طلاب', style: TextStyle(fontFamily: 'Cairo', fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                   ),
                   const SizedBox(height: 10),
                   if (data.topStudents.isEmpty)
@@ -87,9 +88,9 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                     ),
                   const SizedBox(height: 24),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: const Text('آخر الجلسات', style: TextStyle(fontFamily: 'Cairo', fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Text('آخر الجلسات', style: TextStyle(fontFamily: 'Cairo', fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                   ),
                   const SizedBox(height: 10),
                   Padding(
@@ -155,7 +156,7 @@ class _NewSessionButton extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(color: AppColors.onPrimary.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(10)),
                 alignment: Alignment.center,
-                child: AppIcon(AppIcons.plus, size: 18, color: AppColors.onPrimary),
+                child: const AppIcon(AppIcons.plus, size: 18, color: AppColors.onPrimary),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -168,7 +169,7 @@ class _NewSessionButton extends StatelessWidget {
                   ],
                 ),
               ),
-              AppIcon(AppIcons.chevronLeft, size: 16, color: AppColors.onPrimary),
+              const AppIcon(AppIcons.chevronLeft, size: 16, color: AppColors.onPrimary),
             ],
           ),
         ),
@@ -293,7 +294,7 @@ class _QuickLinkRow extends StatelessWidget {
               if (count != null)
                 Text('$count', style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
               const SizedBox(width: 4),
-              AppIcon(AppIcons.chevronLeft, size: 15, color: AppColors.textDisabled),
+              const AppIcon(AppIcons.chevronLeft, size: 15, color: AppColors.textDisabled),
             ],
           ),
         ),
@@ -337,7 +338,7 @@ class _TopStudentRow extends StatelessWidget {
                 child: Text(student.studentName, style: const TextStyle(fontFamily: 'Cairo', fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
               ),
               if (isTop) ...[
-                AppIcon(AppIcons.star, size: 14, color: AppColors.accent),
+                const AppIcon(AppIcons.star, size: 14, color: AppColors.accent),
                 const SizedBox(width: 6),
               ],
               ScoreDisplay(score: student.averageScore),
@@ -388,10 +389,17 @@ class _RecentSessionsList extends ConsumerWidget {
               timeDisplay: s.time,
               attendanceStatus: s.attendanceStatus,
               finalScore: s.evaluation?.finalScore ?? 0,
-              memorizationInfo: s.memorization != null ? 'حفظ: ${surahLabel(s.memorization!.surahId)} (${s.memorization!.fromAyah}-${s.memorization!.toAyah})' : '',
-              revisionInfo: s.revision != null ? 'مراجعة: ${surahLabel(s.revision!.surahId)} (${s.revision!.fromAyah}-${s.revision!.toAyah})' : '',
+              memorizationInfo: s.memorization != null
+                  ? 'حفظ: ${surahLabel(s.memorization!.surahId)} ${QuranUtils.rangeLabel(fromAyah: s.memorization!.fromAyah, toAyah: s.memorization!.toAyah, isFullSurah: s.memorization!.isFullSurah)}'
+                  : '',
               recitationOutcome: s.recitationOutcome,
-              revisionFinalScore: s.evaluation?.revisionFinalScore ?? 0,
+              revisions: [
+                for (final r in s.revisions)
+                  SessionRevisionCardInfo(
+                    info: '${r.label}: ${surahLabel(r.surahId)} ${QuranUtils.rangeLabel(fromAyah: r.fromAyah, toAyah: r.toAyah, isFullSurah: r.isFullSurah)}',
+                    finalScore: r.finalScore,
+                  ),
+              ],
             ),
             onTap: () => context.goNamed('sessionEdit', pathParameters: {'id': '${s.id}'}),
           )).toList(),

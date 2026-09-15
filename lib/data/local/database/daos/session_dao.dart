@@ -10,7 +10,7 @@ part 'session_dao.g.dart';
 
 @DriftAccessor(tables: [Sessions, SessionMemorizations, SessionRevisions, SessionEvaluations, SessionAttendances])
 class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
-  SessionDao(AppDatabase db) : super(db);
+  SessionDao(super.db);
 
   Future<List<Session>> getAll({int? studentId, DateTime? from, DateTime? to}) {
     var query = select(sessions)..orderBy([(t) => OrderingTerm.desc(t.date)]);
@@ -223,8 +223,13 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   }
 
   // Revision
-  Future<SessionRevision?> getRevisionBySession(int sessionId) =>
-      (select(sessionRevisions)..where((t) => t.sessionId.equals(sessionId))).getSingleOrNull();
+  // القسم ح.14 (v10): مراجعات متعددة لكل جلسة — كل الاستعلامات هنا بقت
+  // تتعامل مع قائمة بدل صفّ واحد.
+  Future<List<SessionRevision>> getRevisionsBySession(int sessionId) =>
+      (select(sessionRevisions)
+            ..where((t) => t.sessionId.equals(sessionId))
+            ..orderBy([(t) => OrderingTerm.asc(t.sortOrder), (t) => OrderingTerm.asc(t.id)]))
+          .get();
 
   Future<int> insertRevision(SessionRevisionsCompanion entry) =>
       into(sessionRevisions).insert(entry);
@@ -232,8 +237,26 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   Future<bool> updateRevision(SessionRevisionsCompanion entry) =>
       update(sessionRevisions).replace(entry);
 
-  Future<int> deleteRevision(int sessionId) =>
+  Future<int> deleteRevisionById(int id) =>
+      (delete(sessionRevisions)..where((t) => t.id.equals(id))).go();
+
+  /// يحذف كل مراجعات الجلسة دفعة واحدة — يُستخدَم عند إزالة كل المراجعات
+  /// (أو حذف الجلسة نفسها) بدل حذف كل صفّ على حدة.
+  Future<int> deleteRevisions(int sessionId) =>
       (delete(sessionRevisions)..where((t) => t.sessionId.equals(sessionId))).go();
+
+  /// يستبدل كل مراجعات [sessionId] بالقائمة الجديدة [entries] في معاملة
+  /// واحدة — أبسط من مطابقة كل صفّ قديم بجديد لتحديد أيها تغيّر/أُضيف/
+  /// حُذف، ومطابق لحجم البيانات الفعلي هنا (بضع مراجعات على الأكثر لكل
+  /// جلسة).
+  Future<void> replaceRevisions(int sessionId, List<SessionRevisionsCompanion> entries) async {
+    await transaction(() async {
+      await deleteRevisions(sessionId);
+      for (final entry in entries) {
+        await insertRevision(entry);
+      }
+    });
+  }
 
   // Evaluation
   Future<SessionEvaluation?> getEvaluationBySession(int sessionId) =>
@@ -255,15 +278,6 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
       await updateMemorization(entry.copyWith(id: Value(existing.id)));
     } else {
       await insertMemorization(entry);
-    }
-  }
-
-  Future<void> upsertRevision(SessionRevisionsCompanion entry) async {
-    final existing = await getRevisionBySession(entry.sessionId.value);
-    if (existing != null) {
-      await updateRevision(entry.copyWith(id: Value(existing.id)));
-    } else {
-      await insertRevision(entry);
     }
   }
 

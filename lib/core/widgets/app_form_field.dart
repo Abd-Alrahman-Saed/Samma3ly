@@ -16,6 +16,7 @@ class AppFormField extends StatelessWidget {
   final String? helperText;
   final String? hintText;
   final TextInputType? keyboardType;
+  final int? minLines;
   final int maxLines;
   final FormFieldValidator<String>? validator;
   final ValueChanged<String>? onChanged;
@@ -32,6 +33,7 @@ class AppFormField extends StatelessWidget {
     this.helperText,
     this.hintText,
     this.keyboardType,
+    this.minLines,
     this.maxLines = 1,
     this.validator,
     this.onChanged,
@@ -47,6 +49,7 @@ class AppFormField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      minLines: obscureText ? null : minLines,
       maxLines: obscureText ? 1 : maxLines,
       obscureText: obscureText,
       textInputAction: textInputAction,

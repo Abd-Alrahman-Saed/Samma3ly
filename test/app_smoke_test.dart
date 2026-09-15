@@ -3,7 +3,6 @@
 // This one actually exercises the app: boot QuranApp against an in-memory
 // database with zero users, and confirm the router lands on the initial
 // setup screen — the real first-run path.
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quran_mobile/app.dart';

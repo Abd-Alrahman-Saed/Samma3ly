@@ -6,7 +6,7 @@ part 'juz_quarter_progress_dao.g.dart';
 
 @DriftAccessor(tables: [JuzQuarterProgress])
 class JuzQuarterProgressDao extends DatabaseAccessor<AppDatabase> with _$JuzQuarterProgressDaoMixin {
-  JuzQuarterProgressDao(AppDatabase db) : super(db);
+  JuzQuarterProgressDao(super.db);
 
   /// كل الأرباع المحفوظة لطالب، كأزواج (رقم الجزء، رقم الربع).
   Future<Set<(int juz, int quarter)>> getCompletedByStudent(int studentId) async {

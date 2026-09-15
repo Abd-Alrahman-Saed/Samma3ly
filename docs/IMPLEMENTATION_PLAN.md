@@ -1401,6 +1401,101 @@ SQLite ≥ 3.35 — متوفر عبر `sqlite3_flutter_libs` المرفقة مع
 
 ---
 
+## ح.14 — مراجعة مستقلة بلا حفظ، "السورة كاملة"، مراجعات متعددة، ومشاركة نتيجة الجلسة كصورة
+
+**الطلب (نصّاً):** "عايز أعدل في شاشة الجلسة: ممكن يبقى فيه مراجعه لوحدها
+عادي مش شرط حفظ معاها ويتحسب التقييم على المراجعة فقط، أوبشن مراجعة/حفظ
+السورة كاملة بلا إدخال من/إلى يدوي، صندوق الملاحظات أكبر، أوبشن أكتر من
+سورة للمراجعة (قريب/بعيد) كل واحدة بتقييم منفصل، وزرار مشاركة نتيجة
+الجلسة كصورة يفتح شيت المشاركة الأصلي للنظام". خمسة أجزاء مترابطة عبر
+schema واحد (v10):
+
+1. **مراجعة بلا حفظ (ح.1)** — قسم "تقييم الحفظ" لا يظهر إلا عند اختيار
+   سورة حفظ فعلياً (بالظبط كما كان قسم "تقييم المراجعة" الشرطي من قبل،
+   القسم ح.12). `Session.overallScore` (getter جديد) = متوسط كل الأجزاء
+   المُقيَّمة فعلاً (حفظ إن وُجد + كل مراجعة)، `null` لا صفر لو لا يوجد أي
+   تقييم — يحلّ محل `evaluation.finalScore` في متوسطات التقارير/الداشبورد
+   (`dashboard_service.dart`, `student_report_section.dart`,
+   `student_details_screen.dart`) حتى لا تُستبعَد جلسة مراجعة-فقط من
+   متوسط الطالب. **إصلاح عرَضي مكتشَف بالتزامن:** متوسط "أفضل الطلاب" في
+   `DashboardService` كان يحسب على 3 معايير (حفظ/تجويد/طلاقة) لا 4 —
+   تعارض قائم منذ إضافة معيار التشكيل (ح.10) لم يُرصد قبل الآن؛ صُحِّح
+   لنفس معادلة `finalScore`.
+2. **"السورة كاملة" (ح.2)** — مفتاح تحت كل منتقي سورة (حفظ ومراجعة، وفي
+   شاشتي الجلسة الفردية وتسميع الحلقة): يُخفي حقلَي "من/إلى آية" ويملأ
+   المدى آلياً (١ → `QuranUtils.getAyahCount`). عمود `isFullSurah` جديد
+   على `SessionMemorizations`/`SessionRevisions` للعرض اللاحق ("(كاملة)"
+   بدل المدى الرقمي — `QuranUtils.rangeLabel`).
+3. **صندوق ملاحظات أكبر (ح.3)** — `AppFormField` اكتسب `minLines`
+   اختيارياً؛ حقل الملاحظات في `SessionCreateScreen` بقى `minLines: 4,
+   maxLines: 8` بدل `maxLines: 2` الثابت.
+4. **مراجعات متعددة، كل واحدة بتقييم منفصل (ح.4)** — أكبر تغيير Schema:
+   `SessionRevisions.sessionId` كان `.unique()` (مراجعة واحدة بالضبط لكل
+   جلسة) — أُزيل القيد، وأُضيفت أعمدة `label` (نوع المراجعة: "قريبة"/
+   "بعيدة"/"عامة" أو نصّ حرّ)، `sortOrder`، وأربعة أعمدة تقييم
+   (`memorizationScore`/`tajweedScore`/`fluencyScore`/`accuracyScore`) —
+   **منقولة من `SessionEvaluations.revision*Score`** (كانت "تقييم مراجعة
+   الجلسة" الواحد منذ ح.12؛ معنى لم يعد قائماً بوجود أكثر من مراجعة).
+   واجهة الشاشة: قسم "المراجعة" بقى قائمة بطاقات (`_RevisionCard`) + زرّ
+   "إضافة مراجعة"، كل بطاقة بشرائح اختيار نوع المراجعة (`ChoiceChip`) +
+   سورة/مدى + 4 Sliders + درجة نهائية حيّة خاصة بها. `Session.revision`
+   (مفردة) بقيت متاحة كـgetter توافقي (`revisions.firstOrNull`) لمسارات
+   لسه بمراجعة واحدة بالضبط — **جلسات الحلقات فقط**
+   (`GroupStudentRecitationScreen`، مصدرها `SessionAttendances` لا
+   `SessionRevisions` — مسار منفصل تماماً، لم يُمَسّ عمداً؛ بند مستقلّ لو
+   احتاج المستخدم مراجعات متعددة هناك أيضاً لاحقاً).
+   `SessionCardItem.revisionInfo`/`revisionFinalScore` (مفردتان) →
+   `revisions: List<SessionRevisionCardInfo>` — مراجعة واحدة مُقيَّمة
+   تُعرَض بعنوان "مراجعة" (نفس شكل ح.12)، أكثر من واحدة بشريحة مجمَّعة
+   بعدّاد ومتوسط ("مراجعة ×٢") بدل ازدحام البطاقة الخارجية.
+5. **مشاركة نتيجة الجلسة كصورة (ح.5)** — `SessionShareCard` ويدجت جديدة
+   (`lib/features/sessions/widgets/session_share_card.dart`): شعار
+   التطبيق، اسم الطالب، التاريخ، شارتا الحضور/القرار السريع، الحفظ الجديد
+   ودرجته، كل مراجعة ودرجتها، الملاحظات، الدرجة الإجمالية
+   (`overallScore`). تُلتقَط عبر `RepaintBoundary.toImage(pixelRatio: 3)`
+   → PNG في مجلد مؤقّت (`path_provider`) → `SharePlus.instance.share`
+   (`share_plus`، حزمة موجودة أصلاً) — يفتح شيت المشاركة الأصلي للنظام
+   (واتساب/ماسنجر/تيليجرام/أي تطبيق مثبَّت). **إتاحة الزرّ في موضعين**:
+   أيقونة في هيدر الشاشة عند فتح جلسة محفوظة سلفاً (`_isEdit`)، وزرّ
+   "مشاركة" داخل الـ`SnackBar` مباشرة بعد الحفظ (`AppSnackbar.success`
+   اكتسب `actionLabel`/`onAction` اختياريين). **تفصيل تقني لازم:** الزرّ
+   الثاني قد يُضغَط بعد أن تكون الشاشة نفسها قد أُغلقت فعلاً
+   (`context.pop()` ينفَّذ فور عرض الـSnackBar، وهي تبقى مرئية على
+   `ScaffoldMessenger` الجذر) — فالمشاركة تُدرَج داخل `Overlay` جذر
+   التطبيق (`Overlay.of(context, rootOverlay: true)`، يُلتقَط *قبل*
+   `context.pop()`) وتقرأ البيانات عبر `ProviderContainer` الجذر
+   (`ProviderScope.containerOf(context, listen: false)`) بدل `ref`/
+   `context` الخاصَّين بحالة الشاشة (يُهدَمان فوراً بعد الإغلاق) — كلاهما
+   يبقيان صالحين لأنهما ملك لعناصر دائمة (Overlay/ProviderScope الجذر)،
+   لا لشاشة `SessionCreateScreen` المؤقتة.
+
+**Schema v10:** `SessionRevisions` أُعيد بناؤها بالكامل عبر
+`m.alterTable(TableMigration(...))` (حذف `UNIQUE` على `session_id` يتطلّب
+إعادة بناء الجدول — SQLite لا يملك `ALTER` لحذف قيد). بيانات تقييم
+المراجعة القديمة على `SessionEvaluations` (v8) تُنقَل عبر `UPDATE
+session_revisions ... COALESCE(SELECT ... FROM session_evaluations)` ثم
+تُحذَف أعمدتها الأربعة (`m.dropColumn`) — لا مصدرين للحقيقة بعد الترقية.
+**فخّ إضافي مكتشَف هنا:** كتلة الترقية v7→v8 (`m.addColumn(sessionEvaluations,
+sessionEvaluations.revisionMemorizationScore)` إلخ) كانت تشير لأعمدة لم
+تعد موجودة على تعريف الجدول الحيّ بعد حذفها هنا — استُبدلت بـSQL خام
+(`ALTER TABLE ... ADD COLUMN`) بدل الاعتماد على getter حيّ، فتبقى ترقية
+v7→v10 (قفز عدّة إصدارات دفعة واحدة) تعمل بلا "duplicate column"/"no such
+column".
+
+**الاختبارات:** `test/migration_test.dart` — استبدال اختبار "v7→v8"
+بـ"v7→v10" (يثبت بقاء بيانات v7 سليمة وخلوّ `session_evaluations` من
+الأعمدة القديمة) و"v9→v10" جديد (نقل درجات مراجعة v9 الحقيقية إلى صفّ
+`session_revisions`، وأن مراجعة ثانية لنفس الجلسة تُقبَل الآن). اختبارات
+`session_create_screen_test.dart`/`session_card_test.dart`/
+`shared_widgets_golden_test.dart` عُدِّلت للواجهة الجديدة (تقييم الحفظ
+شرطي، تدفّق "إضافة مراجعة"، شريحة "مراجعة ×٢" المجمَّعة). Golden images
+أُعيد توليدها (`--update-goldens`) لتطابق القيم الجديدة.
+
+**التحقّق:** `flutter analyze` نظيف (38 issue — نفس خط الأساس تماماً، صفر
+أخطاء جديدة)؛ `flutter test` الحزمة الكاملة: 197/197 ناجحة.
+
+---
+
 ## الخلاصة
 
 **أهم قرارين في هذه الوثيقة:**

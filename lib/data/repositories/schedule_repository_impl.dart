@@ -92,6 +92,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
   @override
   Future<void> delete(int id) => _dao.deleteById(id);
 
+  @override
   Future<Session> convertToSession(int scheduleId) async {
     final schedule = await _dao.getById(scheduleId);
     if (schedule == null) throw Exception('الجدولة غير موجودة');
@@ -134,7 +135,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
       revisionFromAyah: Value(schedule.revisionFromAyah),
       revisionToAyah: Value(schedule.revisionToAyah),
       isCompleted: const Value(true),
-      createdAt: Value(schedule.createdAt ?? DateTime.now()),
+      createdAt: Value(schedule.createdAt),
     ));
 
     return _toSessionEntity((await _sessionDao.getById(sessionId))!, attendanceStatus: AttendanceStatus.present.arabic);

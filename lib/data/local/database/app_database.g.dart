@@ -2308,9 +2308,19 @@ class $SessionMemorizationsTable extends SessionMemorizations
   late final GeneratedColumn<int> toAyah = GeneratedColumn<int>(
       'to_ayah', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _isFullSurahMeta =
+      const VerificationMeta('isFullSurah');
+  @override
+  late final GeneratedColumn<bool> isFullSurah = GeneratedColumn<bool>(
+      'is_full_surah', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("is_full_surah" IN (0, 1))'),
+      defaultValue: const Constant(false));
   @override
   List<GeneratedColumn> get $columns =>
-      [id, sessionId, surahId, fromAyah, toAyah];
+      [id, sessionId, surahId, fromAyah, toAyah, isFullSurah];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2349,6 +2359,12 @@ class $SessionMemorizationsTable extends SessionMemorizations
     } else if (isInserting) {
       context.missing(_toAyahMeta);
     }
+    if (data.containsKey('is_full_surah')) {
+      context.handle(
+          _isFullSurahMeta,
+          isFullSurah.isAcceptableOrUnknown(
+              data['is_full_surah']!, _isFullSurahMeta));
+    }
     return context;
   }
 
@@ -2368,6 +2384,8 @@ class $SessionMemorizationsTable extends SessionMemorizations
           .read(DriftSqlType.int, data['${effectivePrefix}from_ayah'])!,
       toAyah: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}to_ayah'])!,
+      isFullSurah: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_full_surah'])!,
     );
   }
 
@@ -2384,12 +2402,19 @@ class SessionMemorization extends DataClass
   final int surahId;
   final int fromAyah;
   final int toAyah;
+
+  /// القسم ح.14 (v10): "السورة كاملة" — `fromAyah`/`toAyah` تُملآن آلياً
+  /// (1 → عدد آيات السورة)، والعلم هنا لعرض "(كاملة)" بدل المدى الرقمي
+  /// ولإعادة فتح الشاشة على نفس الاختيار. نفس الحقل على
+  /// `SessionRevisions`.
+  final bool isFullSurah;
   const SessionMemorization(
       {required this.id,
       required this.sessionId,
       required this.surahId,
       required this.fromAyah,
-      required this.toAyah});
+      required this.toAyah,
+      required this.isFullSurah});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2398,6 +2423,7 @@ class SessionMemorization extends DataClass
     map['surah_id'] = Variable<int>(surahId);
     map['from_ayah'] = Variable<int>(fromAyah);
     map['to_ayah'] = Variable<int>(toAyah);
+    map['is_full_surah'] = Variable<bool>(isFullSurah);
     return map;
   }
 
@@ -2408,6 +2434,7 @@ class SessionMemorization extends DataClass
       surahId: Value(surahId),
       fromAyah: Value(fromAyah),
       toAyah: Value(toAyah),
+      isFullSurah: Value(isFullSurah),
     );
   }
 
@@ -2420,6 +2447,7 @@ class SessionMemorization extends DataClass
       surahId: serializer.fromJson<int>(json['surahId']),
       fromAyah: serializer.fromJson<int>(json['fromAyah']),
       toAyah: serializer.fromJson<int>(json['toAyah']),
+      isFullSurah: serializer.fromJson<bool>(json['isFullSurah']),
     );
   }
   @override
@@ -2431,6 +2459,7 @@ class SessionMemorization extends DataClass
       'surahId': serializer.toJson<int>(surahId),
       'fromAyah': serializer.toJson<int>(fromAyah),
       'toAyah': serializer.toJson<int>(toAyah),
+      'isFullSurah': serializer.toJson<bool>(isFullSurah),
     };
   }
 
@@ -2439,13 +2468,15 @@ class SessionMemorization extends DataClass
           int? sessionId,
           int? surahId,
           int? fromAyah,
-          int? toAyah}) =>
+          int? toAyah,
+          bool? isFullSurah}) =>
       SessionMemorization(
         id: id ?? this.id,
         sessionId: sessionId ?? this.sessionId,
         surahId: surahId ?? this.surahId,
         fromAyah: fromAyah ?? this.fromAyah,
         toAyah: toAyah ?? this.toAyah,
+        isFullSurah: isFullSurah ?? this.isFullSurah,
       );
   SessionMemorization copyWithCompanion(SessionMemorizationsCompanion data) {
     return SessionMemorization(
@@ -2454,6 +2485,8 @@ class SessionMemorization extends DataClass
       surahId: data.surahId.present ? data.surahId.value : this.surahId,
       fromAyah: data.fromAyah.present ? data.fromAyah.value : this.fromAyah,
       toAyah: data.toAyah.present ? data.toAyah.value : this.toAyah,
+      isFullSurah:
+          data.isFullSurah.present ? data.isFullSurah.value : this.isFullSurah,
     );
   }
 
@@ -2464,13 +2497,15 @@ class SessionMemorization extends DataClass
           ..write('sessionId: $sessionId, ')
           ..write('surahId: $surahId, ')
           ..write('fromAyah: $fromAyah, ')
-          ..write('toAyah: $toAyah')
+          ..write('toAyah: $toAyah, ')
+          ..write('isFullSurah: $isFullSurah')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, sessionId, surahId, fromAyah, toAyah);
+  int get hashCode =>
+      Object.hash(id, sessionId, surahId, fromAyah, toAyah, isFullSurah);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2479,7 +2514,8 @@ class SessionMemorization extends DataClass
           other.sessionId == this.sessionId &&
           other.surahId == this.surahId &&
           other.fromAyah == this.fromAyah &&
-          other.toAyah == this.toAyah);
+          other.toAyah == this.toAyah &&
+          other.isFullSurah == this.isFullSurah);
 }
 
 class SessionMemorizationsCompanion
@@ -2489,12 +2525,14 @@ class SessionMemorizationsCompanion
   final Value<int> surahId;
   final Value<int> fromAyah;
   final Value<int> toAyah;
+  final Value<bool> isFullSurah;
   const SessionMemorizationsCompanion({
     this.id = const Value.absent(),
     this.sessionId = const Value.absent(),
     this.surahId = const Value.absent(),
     this.fromAyah = const Value.absent(),
     this.toAyah = const Value.absent(),
+    this.isFullSurah = const Value.absent(),
   });
   SessionMemorizationsCompanion.insert({
     this.id = const Value.absent(),
@@ -2502,6 +2540,7 @@ class SessionMemorizationsCompanion
     required int surahId,
     required int fromAyah,
     required int toAyah,
+    this.isFullSurah = const Value.absent(),
   })  : sessionId = Value(sessionId),
         surahId = Value(surahId),
         fromAyah = Value(fromAyah),
@@ -2512,6 +2551,7 @@ class SessionMemorizationsCompanion
     Expression<int>? surahId,
     Expression<int>? fromAyah,
     Expression<int>? toAyah,
+    Expression<bool>? isFullSurah,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2519,6 +2559,7 @@ class SessionMemorizationsCompanion
       if (surahId != null) 'surah_id': surahId,
       if (fromAyah != null) 'from_ayah': fromAyah,
       if (toAyah != null) 'to_ayah': toAyah,
+      if (isFullSurah != null) 'is_full_surah': isFullSurah,
     });
   }
 
@@ -2527,13 +2568,15 @@ class SessionMemorizationsCompanion
       Value<int>? sessionId,
       Value<int>? surahId,
       Value<int>? fromAyah,
-      Value<int>? toAyah}) {
+      Value<int>? toAyah,
+      Value<bool>? isFullSurah}) {
     return SessionMemorizationsCompanion(
       id: id ?? this.id,
       sessionId: sessionId ?? this.sessionId,
       surahId: surahId ?? this.surahId,
       fromAyah: fromAyah ?? this.fromAyah,
       toAyah: toAyah ?? this.toAyah,
+      isFullSurah: isFullSurah ?? this.isFullSurah,
     );
   }
 
@@ -2555,6 +2598,9 @@ class SessionMemorizationsCompanion
     if (toAyah.present) {
       map['to_ayah'] = Variable<int>(toAyah.value);
     }
+    if (isFullSurah.present) {
+      map['is_full_surah'] = Variable<bool>(isFullSurah.value);
+    }
     return map;
   }
 
@@ -2565,7 +2611,8 @@ class SessionMemorizationsCompanion
           ..write('sessionId: $sessionId, ')
           ..write('surahId: $surahId, ')
           ..write('fromAyah: $fromAyah, ')
-          ..write('toAyah: $toAyah')
+          ..write('toAyah: $toAyah, ')
+          ..write('isFullSurah: $isFullSurah')
           ..write(')'))
         .toString();
   }
@@ -2593,8 +2640,8 @@ class $SessionRevisionsTable extends SessionRevisions
       'session_id', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'UNIQUE REFERENCES sessions (id)'));
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES sessions (id)'));
   static const VerificationMeta _surahIdMeta =
       const VerificationMeta('surahId');
   @override
@@ -2615,9 +2662,79 @@ class $SessionRevisionsTable extends SessionRevisions
   late final GeneratedColumn<int> toAyah = GeneratedColumn<int>(
       'to_ayah', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, sessionId, surahId, fromAyah, toAyah];
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+      'label', aliasedName, false,
+      additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 40),
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('مراجعة'));
+  static const VerificationMeta _isFullSurahMeta =
+      const VerificationMeta('isFullSurah');
+  @override
+  late final GeneratedColumn<bool> isFullSurah = GeneratedColumn<bool>(
+      'is_full_surah', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("is_full_surah" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _sortOrderMeta =
+      const VerificationMeta('sortOrder');
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+      'sort_order', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _memorizationScoreMeta =
+      const VerificationMeta('memorizationScore');
+  @override
+  late final GeneratedColumn<double> memorizationScore =
+      GeneratedColumn<double>('memorization_score', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
+  static const VerificationMeta _tajweedScoreMeta =
+      const VerificationMeta('tajweedScore');
+  @override
+  late final GeneratedColumn<double> tajweedScore = GeneratedColumn<double>(
+      'tajweed_score', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _fluencyScoreMeta =
+      const VerificationMeta('fluencyScore');
+  @override
+  late final GeneratedColumn<double> fluencyScore = GeneratedColumn<double>(
+      'fluency_score', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _accuracyScoreMeta =
+      const VerificationMeta('accuracyScore');
+  @override
+  late final GeneratedColumn<double> accuracyScore = GeneratedColumn<double>(
+      'accuracy_score', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        sessionId,
+        surahId,
+        fromAyah,
+        toAyah,
+        label,
+        isFullSurah,
+        sortOrder,
+        memorizationScore,
+        tajweedScore,
+        fluencyScore,
+        accuracyScore
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2655,6 +2772,44 @@ class $SessionRevisionsTable extends SessionRevisions
     } else if (isInserting) {
       context.missing(_toAyahMeta);
     }
+    if (data.containsKey('label')) {
+      context.handle(
+          _labelMeta, label.isAcceptableOrUnknown(data['label']!, _labelMeta));
+    }
+    if (data.containsKey('is_full_surah')) {
+      context.handle(
+          _isFullSurahMeta,
+          isFullSurah.isAcceptableOrUnknown(
+              data['is_full_surah']!, _isFullSurahMeta));
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(_sortOrderMeta,
+          sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta));
+    }
+    if (data.containsKey('memorization_score')) {
+      context.handle(
+          _memorizationScoreMeta,
+          memorizationScore.isAcceptableOrUnknown(
+              data['memorization_score']!, _memorizationScoreMeta));
+    }
+    if (data.containsKey('tajweed_score')) {
+      context.handle(
+          _tajweedScoreMeta,
+          tajweedScore.isAcceptableOrUnknown(
+              data['tajweed_score']!, _tajweedScoreMeta));
+    }
+    if (data.containsKey('fluency_score')) {
+      context.handle(
+          _fluencyScoreMeta,
+          fluencyScore.isAcceptableOrUnknown(
+              data['fluency_score']!, _fluencyScoreMeta));
+    }
+    if (data.containsKey('accuracy_score')) {
+      context.handle(
+          _accuracyScoreMeta,
+          accuracyScore.isAcceptableOrUnknown(
+              data['accuracy_score']!, _accuracyScoreMeta));
+    }
     return context;
   }
 
@@ -2674,6 +2829,20 @@ class $SessionRevisionsTable extends SessionRevisions
           .read(DriftSqlType.int, data['${effectivePrefix}from_ayah'])!,
       toAyah: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}to_ayah'])!,
+      label: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}label'])!,
+      isFullSurah: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_full_surah'])!,
+      sortOrder: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
+      memorizationScore: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}memorization_score'])!,
+      tajweedScore: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}tajweed_score'])!,
+      fluencyScore: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}fluency_score'])!,
+      accuracyScore: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}accuracy_score'])!,
     );
   }
 
@@ -2689,12 +2858,36 @@ class SessionRevision extends DataClass implements Insertable<SessionRevision> {
   final int surahId;
   final int fromAyah;
   final int toAyah;
+
+  /// نوع المراجعة كما اختاره المعلّم: "قريبة"/"بعيدة"/"عامة" أو نصّ مخصَّص
+  /// — تسمية حرّة عمداً (لا enum) لأن المعلّمين يستخدمون مصطلحات مختلفة،
+  /// والقيم الثلاث مجرد اقتراحات سريعة في الواجهة.
+  final String label;
+
+  /// "السورة كاملة" — `fromAyah`/`toAyah` تُملآن آلياً (1 → عدد آيات
+  /// السورة)، والعلم هنا لعرض "(كاملة)" بدل "(1-7)" ولإعادة فتح الشاشة
+  /// على نفس الاختيار.
+  final bool isFullSurah;
+
+  /// ترتيب العرض داخل الجلسة — يحفظ ترتيب إدخال المعلّم للمراجعات.
+  final int sortOrder;
+  final double memorizationScore;
+  final double tajweedScore;
+  final double fluencyScore;
+  final double accuracyScore;
   const SessionRevision(
       {required this.id,
       required this.sessionId,
       required this.surahId,
       required this.fromAyah,
-      required this.toAyah});
+      required this.toAyah,
+      required this.label,
+      required this.isFullSurah,
+      required this.sortOrder,
+      required this.memorizationScore,
+      required this.tajweedScore,
+      required this.fluencyScore,
+      required this.accuracyScore});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2703,6 +2896,13 @@ class SessionRevision extends DataClass implements Insertable<SessionRevision> {
     map['surah_id'] = Variable<int>(surahId);
     map['from_ayah'] = Variable<int>(fromAyah);
     map['to_ayah'] = Variable<int>(toAyah);
+    map['label'] = Variable<String>(label);
+    map['is_full_surah'] = Variable<bool>(isFullSurah);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['memorization_score'] = Variable<double>(memorizationScore);
+    map['tajweed_score'] = Variable<double>(tajweedScore);
+    map['fluency_score'] = Variable<double>(fluencyScore);
+    map['accuracy_score'] = Variable<double>(accuracyScore);
     return map;
   }
 
@@ -2713,6 +2913,13 @@ class SessionRevision extends DataClass implements Insertable<SessionRevision> {
       surahId: Value(surahId),
       fromAyah: Value(fromAyah),
       toAyah: Value(toAyah),
+      label: Value(label),
+      isFullSurah: Value(isFullSurah),
+      sortOrder: Value(sortOrder),
+      memorizationScore: Value(memorizationScore),
+      tajweedScore: Value(tajweedScore),
+      fluencyScore: Value(fluencyScore),
+      accuracyScore: Value(accuracyScore),
     );
   }
 
@@ -2725,6 +2932,13 @@ class SessionRevision extends DataClass implements Insertable<SessionRevision> {
       surahId: serializer.fromJson<int>(json['surahId']),
       fromAyah: serializer.fromJson<int>(json['fromAyah']),
       toAyah: serializer.fromJson<int>(json['toAyah']),
+      label: serializer.fromJson<String>(json['label']),
+      isFullSurah: serializer.fromJson<bool>(json['isFullSurah']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      memorizationScore: serializer.fromJson<double>(json['memorizationScore']),
+      tajweedScore: serializer.fromJson<double>(json['tajweedScore']),
+      fluencyScore: serializer.fromJson<double>(json['fluencyScore']),
+      accuracyScore: serializer.fromJson<double>(json['accuracyScore']),
     );
   }
   @override
@@ -2736,6 +2950,13 @@ class SessionRevision extends DataClass implements Insertable<SessionRevision> {
       'surahId': serializer.toJson<int>(surahId),
       'fromAyah': serializer.toJson<int>(fromAyah),
       'toAyah': serializer.toJson<int>(toAyah),
+      'label': serializer.toJson<String>(label),
+      'isFullSurah': serializer.toJson<bool>(isFullSurah),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'memorizationScore': serializer.toJson<double>(memorizationScore),
+      'tajweedScore': serializer.toJson<double>(tajweedScore),
+      'fluencyScore': serializer.toJson<double>(fluencyScore),
+      'accuracyScore': serializer.toJson<double>(accuracyScore),
     };
   }
 
@@ -2744,13 +2965,27 @@ class SessionRevision extends DataClass implements Insertable<SessionRevision> {
           int? sessionId,
           int? surahId,
           int? fromAyah,
-          int? toAyah}) =>
+          int? toAyah,
+          String? label,
+          bool? isFullSurah,
+          int? sortOrder,
+          double? memorizationScore,
+          double? tajweedScore,
+          double? fluencyScore,
+          double? accuracyScore}) =>
       SessionRevision(
         id: id ?? this.id,
         sessionId: sessionId ?? this.sessionId,
         surahId: surahId ?? this.surahId,
         fromAyah: fromAyah ?? this.fromAyah,
         toAyah: toAyah ?? this.toAyah,
+        label: label ?? this.label,
+        isFullSurah: isFullSurah ?? this.isFullSurah,
+        sortOrder: sortOrder ?? this.sortOrder,
+        memorizationScore: memorizationScore ?? this.memorizationScore,
+        tajweedScore: tajweedScore ?? this.tajweedScore,
+        fluencyScore: fluencyScore ?? this.fluencyScore,
+        accuracyScore: accuracyScore ?? this.accuracyScore,
       );
   SessionRevision copyWithCompanion(SessionRevisionsCompanion data) {
     return SessionRevision(
@@ -2759,6 +2994,22 @@ class SessionRevision extends DataClass implements Insertable<SessionRevision> {
       surahId: data.surahId.present ? data.surahId.value : this.surahId,
       fromAyah: data.fromAyah.present ? data.fromAyah.value : this.fromAyah,
       toAyah: data.toAyah.present ? data.toAyah.value : this.toAyah,
+      label: data.label.present ? data.label.value : this.label,
+      isFullSurah:
+          data.isFullSurah.present ? data.isFullSurah.value : this.isFullSurah,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      memorizationScore: data.memorizationScore.present
+          ? data.memorizationScore.value
+          : this.memorizationScore,
+      tajweedScore: data.tajweedScore.present
+          ? data.tajweedScore.value
+          : this.tajweedScore,
+      fluencyScore: data.fluencyScore.present
+          ? data.fluencyScore.value
+          : this.fluencyScore,
+      accuracyScore: data.accuracyScore.present
+          ? data.accuracyScore.value
+          : this.accuracyScore,
     );
   }
 
@@ -2769,13 +3020,32 @@ class SessionRevision extends DataClass implements Insertable<SessionRevision> {
           ..write('sessionId: $sessionId, ')
           ..write('surahId: $surahId, ')
           ..write('fromAyah: $fromAyah, ')
-          ..write('toAyah: $toAyah')
+          ..write('toAyah: $toAyah, ')
+          ..write('label: $label, ')
+          ..write('isFullSurah: $isFullSurah, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('memorizationScore: $memorizationScore, ')
+          ..write('tajweedScore: $tajweedScore, ')
+          ..write('fluencyScore: $fluencyScore, ')
+          ..write('accuracyScore: $accuracyScore')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, sessionId, surahId, fromAyah, toAyah);
+  int get hashCode => Object.hash(
+      id,
+      sessionId,
+      surahId,
+      fromAyah,
+      toAyah,
+      label,
+      isFullSurah,
+      sortOrder,
+      memorizationScore,
+      tajweedScore,
+      fluencyScore,
+      accuracyScore);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2784,7 +3054,14 @@ class SessionRevision extends DataClass implements Insertable<SessionRevision> {
           other.sessionId == this.sessionId &&
           other.surahId == this.surahId &&
           other.fromAyah == this.fromAyah &&
-          other.toAyah == this.toAyah);
+          other.toAyah == this.toAyah &&
+          other.label == this.label &&
+          other.isFullSurah == this.isFullSurah &&
+          other.sortOrder == this.sortOrder &&
+          other.memorizationScore == this.memorizationScore &&
+          other.tajweedScore == this.tajweedScore &&
+          other.fluencyScore == this.fluencyScore &&
+          other.accuracyScore == this.accuracyScore);
 }
 
 class SessionRevisionsCompanion extends UpdateCompanion<SessionRevision> {
@@ -2793,12 +3070,26 @@ class SessionRevisionsCompanion extends UpdateCompanion<SessionRevision> {
   final Value<int> surahId;
   final Value<int> fromAyah;
   final Value<int> toAyah;
+  final Value<String> label;
+  final Value<bool> isFullSurah;
+  final Value<int> sortOrder;
+  final Value<double> memorizationScore;
+  final Value<double> tajweedScore;
+  final Value<double> fluencyScore;
+  final Value<double> accuracyScore;
   const SessionRevisionsCompanion({
     this.id = const Value.absent(),
     this.sessionId = const Value.absent(),
     this.surahId = const Value.absent(),
     this.fromAyah = const Value.absent(),
     this.toAyah = const Value.absent(),
+    this.label = const Value.absent(),
+    this.isFullSurah = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.memorizationScore = const Value.absent(),
+    this.tajweedScore = const Value.absent(),
+    this.fluencyScore = const Value.absent(),
+    this.accuracyScore = const Value.absent(),
   });
   SessionRevisionsCompanion.insert({
     this.id = const Value.absent(),
@@ -2806,6 +3097,13 @@ class SessionRevisionsCompanion extends UpdateCompanion<SessionRevision> {
     required int surahId,
     required int fromAyah,
     required int toAyah,
+    this.label = const Value.absent(),
+    this.isFullSurah = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.memorizationScore = const Value.absent(),
+    this.tajweedScore = const Value.absent(),
+    this.fluencyScore = const Value.absent(),
+    this.accuracyScore = const Value.absent(),
   })  : sessionId = Value(sessionId),
         surahId = Value(surahId),
         fromAyah = Value(fromAyah),
@@ -2816,6 +3114,13 @@ class SessionRevisionsCompanion extends UpdateCompanion<SessionRevision> {
     Expression<int>? surahId,
     Expression<int>? fromAyah,
     Expression<int>? toAyah,
+    Expression<String>? label,
+    Expression<bool>? isFullSurah,
+    Expression<int>? sortOrder,
+    Expression<double>? memorizationScore,
+    Expression<double>? tajweedScore,
+    Expression<double>? fluencyScore,
+    Expression<double>? accuracyScore,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2823,6 +3128,13 @@ class SessionRevisionsCompanion extends UpdateCompanion<SessionRevision> {
       if (surahId != null) 'surah_id': surahId,
       if (fromAyah != null) 'from_ayah': fromAyah,
       if (toAyah != null) 'to_ayah': toAyah,
+      if (label != null) 'label': label,
+      if (isFullSurah != null) 'is_full_surah': isFullSurah,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (memorizationScore != null) 'memorization_score': memorizationScore,
+      if (tajweedScore != null) 'tajweed_score': tajweedScore,
+      if (fluencyScore != null) 'fluency_score': fluencyScore,
+      if (accuracyScore != null) 'accuracy_score': accuracyScore,
     });
   }
 
@@ -2831,13 +3143,27 @@ class SessionRevisionsCompanion extends UpdateCompanion<SessionRevision> {
       Value<int>? sessionId,
       Value<int>? surahId,
       Value<int>? fromAyah,
-      Value<int>? toAyah}) {
+      Value<int>? toAyah,
+      Value<String>? label,
+      Value<bool>? isFullSurah,
+      Value<int>? sortOrder,
+      Value<double>? memorizationScore,
+      Value<double>? tajweedScore,
+      Value<double>? fluencyScore,
+      Value<double>? accuracyScore}) {
     return SessionRevisionsCompanion(
       id: id ?? this.id,
       sessionId: sessionId ?? this.sessionId,
       surahId: surahId ?? this.surahId,
       fromAyah: fromAyah ?? this.fromAyah,
       toAyah: toAyah ?? this.toAyah,
+      label: label ?? this.label,
+      isFullSurah: isFullSurah ?? this.isFullSurah,
+      sortOrder: sortOrder ?? this.sortOrder,
+      memorizationScore: memorizationScore ?? this.memorizationScore,
+      tajweedScore: tajweedScore ?? this.tajweedScore,
+      fluencyScore: fluencyScore ?? this.fluencyScore,
+      accuracyScore: accuracyScore ?? this.accuracyScore,
     );
   }
 
@@ -2859,6 +3185,27 @@ class SessionRevisionsCompanion extends UpdateCompanion<SessionRevision> {
     if (toAyah.present) {
       map['to_ayah'] = Variable<int>(toAyah.value);
     }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (isFullSurah.present) {
+      map['is_full_surah'] = Variable<bool>(isFullSurah.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (memorizationScore.present) {
+      map['memorization_score'] = Variable<double>(memorizationScore.value);
+    }
+    if (tajweedScore.present) {
+      map['tajweed_score'] = Variable<double>(tajweedScore.value);
+    }
+    if (fluencyScore.present) {
+      map['fluency_score'] = Variable<double>(fluencyScore.value);
+    }
+    if (accuracyScore.present) {
+      map['accuracy_score'] = Variable<double>(accuracyScore.value);
+    }
     return map;
   }
 
@@ -2869,7 +3216,14 @@ class SessionRevisionsCompanion extends UpdateCompanion<SessionRevision> {
           ..write('sessionId: $sessionId, ')
           ..write('surahId: $surahId, ')
           ..write('fromAyah: $fromAyah, ')
-          ..write('toAyah: $toAyah')
+          ..write('toAyah: $toAyah, ')
+          ..write('label: $label, ')
+          ..write('isFullSurah: $isFullSurah, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('memorizationScore: $memorizationScore, ')
+          ..write('tajweedScore: $tajweedScore, ')
+          ..write('fluencyScore: $fluencyScore, ')
+          ..write('accuracyScore: $accuracyScore')
           ..write(')'))
         .toString();
   }
@@ -2931,38 +3285,6 @@ class $SessionEvaluationsTable extends SessionEvaluations
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
-  static const VerificationMeta _revisionMemorizationScoreMeta =
-      const VerificationMeta('revisionMemorizationScore');
-  @override
-  late final GeneratedColumn<double> revisionMemorizationScore =
-      GeneratedColumn<double>('revision_memorization_score', aliasedName, false,
-          type: DriftSqlType.double,
-          requiredDuringInsert: false,
-          defaultValue: const Constant(0.0));
-  static const VerificationMeta _revisionTajweedScoreMeta =
-      const VerificationMeta('revisionTajweedScore');
-  @override
-  late final GeneratedColumn<double> revisionTajweedScore =
-      GeneratedColumn<double>('revision_tajweed_score', aliasedName, false,
-          type: DriftSqlType.double,
-          requiredDuringInsert: false,
-          defaultValue: const Constant(0.0));
-  static const VerificationMeta _revisionFluencyScoreMeta =
-      const VerificationMeta('revisionFluencyScore');
-  @override
-  late final GeneratedColumn<double> revisionFluencyScore =
-      GeneratedColumn<double>('revision_fluency_score', aliasedName, false,
-          type: DriftSqlType.double,
-          requiredDuringInsert: false,
-          defaultValue: const Constant(0.0));
-  static const VerificationMeta _revisionAccuracyScoreMeta =
-      const VerificationMeta('revisionAccuracyScore');
-  @override
-  late final GeneratedColumn<double> revisionAccuracyScore =
-      GeneratedColumn<double>('revision_accuracy_score', aliasedName, false,
-          type: DriftSqlType.double,
-          requiredDuringInsert: false,
-          defaultValue: const Constant(0.0));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -2970,11 +3292,7 @@ class $SessionEvaluationsTable extends SessionEvaluations
         memorizationScore,
         tajweedScore,
         fluencyScore,
-        accuracyScore,
-        revisionMemorizationScore,
-        revisionTajweedScore,
-        revisionFluencyScore,
-        revisionAccuracyScore
+        accuracyScore
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3019,31 +3337,6 @@ class $SessionEvaluationsTable extends SessionEvaluations
           accuracyScore.isAcceptableOrUnknown(
               data['accuracy_score']!, _accuracyScoreMeta));
     }
-    if (data.containsKey('revision_memorization_score')) {
-      context.handle(
-          _revisionMemorizationScoreMeta,
-          revisionMemorizationScore.isAcceptableOrUnknown(
-              data['revision_memorization_score']!,
-              _revisionMemorizationScoreMeta));
-    }
-    if (data.containsKey('revision_tajweed_score')) {
-      context.handle(
-          _revisionTajweedScoreMeta,
-          revisionTajweedScore.isAcceptableOrUnknown(
-              data['revision_tajweed_score']!, _revisionTajweedScoreMeta));
-    }
-    if (data.containsKey('revision_fluency_score')) {
-      context.handle(
-          _revisionFluencyScoreMeta,
-          revisionFluencyScore.isAcceptableOrUnknown(
-              data['revision_fluency_score']!, _revisionFluencyScoreMeta));
-    }
-    if (data.containsKey('revision_accuracy_score')) {
-      context.handle(
-          _revisionAccuracyScoreMeta,
-          revisionAccuracyScore.isAcceptableOrUnknown(
-              data['revision_accuracy_score']!, _revisionAccuracyScoreMeta));
-    }
     return context;
   }
 
@@ -3065,18 +3358,6 @@ class $SessionEvaluationsTable extends SessionEvaluations
           .read(DriftSqlType.double, data['${effectivePrefix}fluency_score'])!,
       accuracyScore: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}accuracy_score'])!,
-      revisionMemorizationScore: attachedDatabase.typeMapping.read(
-          DriftSqlType.double,
-          data['${effectivePrefix}revision_memorization_score'])!,
-      revisionTajweedScore: attachedDatabase.typeMapping.read(
-          DriftSqlType.double,
-          data['${effectivePrefix}revision_tajweed_score'])!,
-      revisionFluencyScore: attachedDatabase.typeMapping.read(
-          DriftSqlType.double,
-          data['${effectivePrefix}revision_fluency_score'])!,
-      revisionAccuracyScore: attachedDatabase.typeMapping.read(
-          DriftSqlType.double,
-          data['${effectivePrefix}revision_accuracy_score'])!,
     );
   }
 
@@ -3094,21 +3375,13 @@ class SessionEvaluation extends DataClass
   final double tajweedScore;
   final double fluencyScore;
   final double accuracyScore;
-  final double revisionMemorizationScore;
-  final double revisionTajweedScore;
-  final double revisionFluencyScore;
-  final double revisionAccuracyScore;
   const SessionEvaluation(
       {required this.id,
       required this.sessionId,
       required this.memorizationScore,
       required this.tajweedScore,
       required this.fluencyScore,
-      required this.accuracyScore,
-      required this.revisionMemorizationScore,
-      required this.revisionTajweedScore,
-      required this.revisionFluencyScore,
-      required this.revisionAccuracyScore});
+      required this.accuracyScore});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -3118,11 +3391,6 @@ class SessionEvaluation extends DataClass
     map['tajweed_score'] = Variable<double>(tajweedScore);
     map['fluency_score'] = Variable<double>(fluencyScore);
     map['accuracy_score'] = Variable<double>(accuracyScore);
-    map['revision_memorization_score'] =
-        Variable<double>(revisionMemorizationScore);
-    map['revision_tajweed_score'] = Variable<double>(revisionTajweedScore);
-    map['revision_fluency_score'] = Variable<double>(revisionFluencyScore);
-    map['revision_accuracy_score'] = Variable<double>(revisionAccuracyScore);
     return map;
   }
 
@@ -3134,10 +3402,6 @@ class SessionEvaluation extends DataClass
       tajweedScore: Value(tajweedScore),
       fluencyScore: Value(fluencyScore),
       accuracyScore: Value(accuracyScore),
-      revisionMemorizationScore: Value(revisionMemorizationScore),
-      revisionTajweedScore: Value(revisionTajweedScore),
-      revisionFluencyScore: Value(revisionFluencyScore),
-      revisionAccuracyScore: Value(revisionAccuracyScore),
     );
   }
 
@@ -3151,14 +3415,6 @@ class SessionEvaluation extends DataClass
       tajweedScore: serializer.fromJson<double>(json['tajweedScore']),
       fluencyScore: serializer.fromJson<double>(json['fluencyScore']),
       accuracyScore: serializer.fromJson<double>(json['accuracyScore']),
-      revisionMemorizationScore:
-          serializer.fromJson<double>(json['revisionMemorizationScore']),
-      revisionTajweedScore:
-          serializer.fromJson<double>(json['revisionTajweedScore']),
-      revisionFluencyScore:
-          serializer.fromJson<double>(json['revisionFluencyScore']),
-      revisionAccuracyScore:
-          serializer.fromJson<double>(json['revisionAccuracyScore']),
     );
   }
   @override
@@ -3171,11 +3427,6 @@ class SessionEvaluation extends DataClass
       'tajweedScore': serializer.toJson<double>(tajweedScore),
       'fluencyScore': serializer.toJson<double>(fluencyScore),
       'accuracyScore': serializer.toJson<double>(accuracyScore),
-      'revisionMemorizationScore':
-          serializer.toJson<double>(revisionMemorizationScore),
-      'revisionTajweedScore': serializer.toJson<double>(revisionTajweedScore),
-      'revisionFluencyScore': serializer.toJson<double>(revisionFluencyScore),
-      'revisionAccuracyScore': serializer.toJson<double>(revisionAccuracyScore),
     };
   }
 
@@ -3185,11 +3436,7 @@ class SessionEvaluation extends DataClass
           double? memorizationScore,
           double? tajweedScore,
           double? fluencyScore,
-          double? accuracyScore,
-          double? revisionMemorizationScore,
-          double? revisionTajweedScore,
-          double? revisionFluencyScore,
-          double? revisionAccuracyScore}) =>
+          double? accuracyScore}) =>
       SessionEvaluation(
         id: id ?? this.id,
         sessionId: sessionId ?? this.sessionId,
@@ -3197,12 +3444,6 @@ class SessionEvaluation extends DataClass
         tajweedScore: tajweedScore ?? this.tajweedScore,
         fluencyScore: fluencyScore ?? this.fluencyScore,
         accuracyScore: accuracyScore ?? this.accuracyScore,
-        revisionMemorizationScore:
-            revisionMemorizationScore ?? this.revisionMemorizationScore,
-        revisionTajweedScore: revisionTajweedScore ?? this.revisionTajweedScore,
-        revisionFluencyScore: revisionFluencyScore ?? this.revisionFluencyScore,
-        revisionAccuracyScore:
-            revisionAccuracyScore ?? this.revisionAccuracyScore,
       );
   SessionEvaluation copyWithCompanion(SessionEvaluationsCompanion data) {
     return SessionEvaluation(
@@ -3220,18 +3461,6 @@ class SessionEvaluation extends DataClass
       accuracyScore: data.accuracyScore.present
           ? data.accuracyScore.value
           : this.accuracyScore,
-      revisionMemorizationScore: data.revisionMemorizationScore.present
-          ? data.revisionMemorizationScore.value
-          : this.revisionMemorizationScore,
-      revisionTajweedScore: data.revisionTajweedScore.present
-          ? data.revisionTajweedScore.value
-          : this.revisionTajweedScore,
-      revisionFluencyScore: data.revisionFluencyScore.present
-          ? data.revisionFluencyScore.value
-          : this.revisionFluencyScore,
-      revisionAccuracyScore: data.revisionAccuracyScore.present
-          ? data.revisionAccuracyScore.value
-          : this.revisionAccuracyScore,
     );
   }
 
@@ -3243,27 +3472,14 @@ class SessionEvaluation extends DataClass
           ..write('memorizationScore: $memorizationScore, ')
           ..write('tajweedScore: $tajweedScore, ')
           ..write('fluencyScore: $fluencyScore, ')
-          ..write('accuracyScore: $accuracyScore, ')
-          ..write('revisionMemorizationScore: $revisionMemorizationScore, ')
-          ..write('revisionTajweedScore: $revisionTajweedScore, ')
-          ..write('revisionFluencyScore: $revisionFluencyScore, ')
-          ..write('revisionAccuracyScore: $revisionAccuracyScore')
+          ..write('accuracyScore: $accuracyScore')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id,
-      sessionId,
-      memorizationScore,
-      tajweedScore,
-      fluencyScore,
-      accuracyScore,
-      revisionMemorizationScore,
-      revisionTajweedScore,
-      revisionFluencyScore,
-      revisionAccuracyScore);
+  int get hashCode => Object.hash(id, sessionId, memorizationScore,
+      tajweedScore, fluencyScore, accuracyScore);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3273,11 +3489,7 @@ class SessionEvaluation extends DataClass
           other.memorizationScore == this.memorizationScore &&
           other.tajweedScore == this.tajweedScore &&
           other.fluencyScore == this.fluencyScore &&
-          other.accuracyScore == this.accuracyScore &&
-          other.revisionMemorizationScore == this.revisionMemorizationScore &&
-          other.revisionTajweedScore == this.revisionTajweedScore &&
-          other.revisionFluencyScore == this.revisionFluencyScore &&
-          other.revisionAccuracyScore == this.revisionAccuracyScore);
+          other.accuracyScore == this.accuracyScore);
 }
 
 class SessionEvaluationsCompanion extends UpdateCompanion<SessionEvaluation> {
@@ -3287,10 +3499,6 @@ class SessionEvaluationsCompanion extends UpdateCompanion<SessionEvaluation> {
   final Value<double> tajweedScore;
   final Value<double> fluencyScore;
   final Value<double> accuracyScore;
-  final Value<double> revisionMemorizationScore;
-  final Value<double> revisionTajweedScore;
-  final Value<double> revisionFluencyScore;
-  final Value<double> revisionAccuracyScore;
   const SessionEvaluationsCompanion({
     this.id = const Value.absent(),
     this.sessionId = const Value.absent(),
@@ -3298,10 +3506,6 @@ class SessionEvaluationsCompanion extends UpdateCompanion<SessionEvaluation> {
     this.tajweedScore = const Value.absent(),
     this.fluencyScore = const Value.absent(),
     this.accuracyScore = const Value.absent(),
-    this.revisionMemorizationScore = const Value.absent(),
-    this.revisionTajweedScore = const Value.absent(),
-    this.revisionFluencyScore = const Value.absent(),
-    this.revisionAccuracyScore = const Value.absent(),
   });
   SessionEvaluationsCompanion.insert({
     this.id = const Value.absent(),
@@ -3310,10 +3514,6 @@ class SessionEvaluationsCompanion extends UpdateCompanion<SessionEvaluation> {
     this.tajweedScore = const Value.absent(),
     this.fluencyScore = const Value.absent(),
     this.accuracyScore = const Value.absent(),
-    this.revisionMemorizationScore = const Value.absent(),
-    this.revisionTajweedScore = const Value.absent(),
-    this.revisionFluencyScore = const Value.absent(),
-    this.revisionAccuracyScore = const Value.absent(),
   }) : sessionId = Value(sessionId);
   static Insertable<SessionEvaluation> custom({
     Expression<int>? id,
@@ -3322,10 +3522,6 @@ class SessionEvaluationsCompanion extends UpdateCompanion<SessionEvaluation> {
     Expression<double>? tajweedScore,
     Expression<double>? fluencyScore,
     Expression<double>? accuracyScore,
-    Expression<double>? revisionMemorizationScore,
-    Expression<double>? revisionTajweedScore,
-    Expression<double>? revisionFluencyScore,
-    Expression<double>? revisionAccuracyScore,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3334,14 +3530,6 @@ class SessionEvaluationsCompanion extends UpdateCompanion<SessionEvaluation> {
       if (tajweedScore != null) 'tajweed_score': tajweedScore,
       if (fluencyScore != null) 'fluency_score': fluencyScore,
       if (accuracyScore != null) 'accuracy_score': accuracyScore,
-      if (revisionMemorizationScore != null)
-        'revision_memorization_score': revisionMemorizationScore,
-      if (revisionTajweedScore != null)
-        'revision_tajweed_score': revisionTajweedScore,
-      if (revisionFluencyScore != null)
-        'revision_fluency_score': revisionFluencyScore,
-      if (revisionAccuracyScore != null)
-        'revision_accuracy_score': revisionAccuracyScore,
     });
   }
 
@@ -3351,11 +3539,7 @@ class SessionEvaluationsCompanion extends UpdateCompanion<SessionEvaluation> {
       Value<double>? memorizationScore,
       Value<double>? tajweedScore,
       Value<double>? fluencyScore,
-      Value<double>? accuracyScore,
-      Value<double>? revisionMemorizationScore,
-      Value<double>? revisionTajweedScore,
-      Value<double>? revisionFluencyScore,
-      Value<double>? revisionAccuracyScore}) {
+      Value<double>? accuracyScore}) {
     return SessionEvaluationsCompanion(
       id: id ?? this.id,
       sessionId: sessionId ?? this.sessionId,
@@ -3363,12 +3547,6 @@ class SessionEvaluationsCompanion extends UpdateCompanion<SessionEvaluation> {
       tajweedScore: tajweedScore ?? this.tajweedScore,
       fluencyScore: fluencyScore ?? this.fluencyScore,
       accuracyScore: accuracyScore ?? this.accuracyScore,
-      revisionMemorizationScore:
-          revisionMemorizationScore ?? this.revisionMemorizationScore,
-      revisionTajweedScore: revisionTajweedScore ?? this.revisionTajweedScore,
-      revisionFluencyScore: revisionFluencyScore ?? this.revisionFluencyScore,
-      revisionAccuracyScore:
-          revisionAccuracyScore ?? this.revisionAccuracyScore,
     );
   }
 
@@ -3393,22 +3571,6 @@ class SessionEvaluationsCompanion extends UpdateCompanion<SessionEvaluation> {
     if (accuracyScore.present) {
       map['accuracy_score'] = Variable<double>(accuracyScore.value);
     }
-    if (revisionMemorizationScore.present) {
-      map['revision_memorization_score'] =
-          Variable<double>(revisionMemorizationScore.value);
-    }
-    if (revisionTajweedScore.present) {
-      map['revision_tajweed_score'] =
-          Variable<double>(revisionTajweedScore.value);
-    }
-    if (revisionFluencyScore.present) {
-      map['revision_fluency_score'] =
-          Variable<double>(revisionFluencyScore.value);
-    }
-    if (revisionAccuracyScore.present) {
-      map['revision_accuracy_score'] =
-          Variable<double>(revisionAccuracyScore.value);
-    }
     return map;
   }
 
@@ -3420,11 +3582,7 @@ class SessionEvaluationsCompanion extends UpdateCompanion<SessionEvaluation> {
           ..write('memorizationScore: $memorizationScore, ')
           ..write('tajweedScore: $tajweedScore, ')
           ..write('fluencyScore: $fluencyScore, ')
-          ..write('accuracyScore: $accuracyScore, ')
-          ..write('revisionMemorizationScore: $revisionMemorizationScore, ')
-          ..write('revisionTajweedScore: $revisionTajweedScore, ')
-          ..write('revisionFluencyScore: $revisionFluencyScore, ')
-          ..write('revisionAccuracyScore: $revisionAccuracyScore')
+          ..write('accuracyScore: $accuracyScore')
           ..write(')'))
         .toString();
   }
@@ -10861,6 +11019,7 @@ typedef $$SessionMemorizationsTableCreateCompanionBuilder
   required int surahId,
   required int fromAyah,
   required int toAyah,
+  Value<bool> isFullSurah,
 });
 typedef $$SessionMemorizationsTableUpdateCompanionBuilder
     = SessionMemorizationsCompanion Function({
@@ -10869,6 +11028,7 @@ typedef $$SessionMemorizationsTableUpdateCompanionBuilder
   Value<int> surahId,
   Value<int> fromAyah,
   Value<int> toAyah,
+  Value<bool> isFullSurah,
 });
 
 final class $$SessionMemorizationsTableReferences extends BaseReferences<
@@ -10922,6 +11082,9 @@ class $$SessionMemorizationsTableFilterComposer
 
   ColumnFilters<int> get toAyah => $composableBuilder(
       column: $table.toAyah, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isFullSurah => $composableBuilder(
+      column: $table.isFullSurah, builder: (column) => ColumnFilters(column));
 
   $$SessionsTableFilterComposer get sessionId {
     final $$SessionsTableFilterComposer composer = $composerBuilder(
@@ -10982,6 +11145,9 @@ class $$SessionMemorizationsTableOrderingComposer
   ColumnOrderings<int> get toAyah => $composableBuilder(
       column: $table.toAyah, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<bool> get isFullSurah => $composableBuilder(
+      column: $table.isFullSurah, builder: (column) => ColumnOrderings(column));
+
   $$SessionsTableOrderingComposer get sessionId {
     final $$SessionsTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -11040,6 +11206,9 @@ class $$SessionMemorizationsTableAnnotationComposer
 
   GeneratedColumn<int> get toAyah =>
       $composableBuilder(column: $table.toAyah, builder: (column) => column);
+
+  GeneratedColumn<bool> get isFullSurah => $composableBuilder(
+      column: $table.isFullSurah, builder: (column) => column);
 
   $$SessionsTableAnnotationComposer get sessionId {
     final $$SessionsTableAnnotationComposer composer = $composerBuilder(
@@ -11113,6 +11282,7 @@ class $$SessionMemorizationsTableTableManager extends RootTableManager<
             Value<int> surahId = const Value.absent(),
             Value<int> fromAyah = const Value.absent(),
             Value<int> toAyah = const Value.absent(),
+            Value<bool> isFullSurah = const Value.absent(),
           }) =>
               SessionMemorizationsCompanion(
             id: id,
@@ -11120,6 +11290,7 @@ class $$SessionMemorizationsTableTableManager extends RootTableManager<
             surahId: surahId,
             fromAyah: fromAyah,
             toAyah: toAyah,
+            isFullSurah: isFullSurah,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -11127,6 +11298,7 @@ class $$SessionMemorizationsTableTableManager extends RootTableManager<
             required int surahId,
             required int fromAyah,
             required int toAyah,
+            Value<bool> isFullSurah = const Value.absent(),
           }) =>
               SessionMemorizationsCompanion.insert(
             id: id,
@@ -11134,6 +11306,7 @@ class $$SessionMemorizationsTableTableManager extends RootTableManager<
             surahId: surahId,
             fromAyah: fromAyah,
             toAyah: toAyah,
+            isFullSurah: isFullSurah,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
@@ -11211,6 +11384,13 @@ typedef $$SessionRevisionsTableCreateCompanionBuilder
   required int surahId,
   required int fromAyah,
   required int toAyah,
+  Value<String> label,
+  Value<bool> isFullSurah,
+  Value<int> sortOrder,
+  Value<double> memorizationScore,
+  Value<double> tajweedScore,
+  Value<double> fluencyScore,
+  Value<double> accuracyScore,
 });
 typedef $$SessionRevisionsTableUpdateCompanionBuilder
     = SessionRevisionsCompanion Function({
@@ -11219,6 +11399,13 @@ typedef $$SessionRevisionsTableUpdateCompanionBuilder
   Value<int> surahId,
   Value<int> fromAyah,
   Value<int> toAyah,
+  Value<String> label,
+  Value<bool> isFullSurah,
+  Value<int> sortOrder,
+  Value<double> memorizationScore,
+  Value<double> tajweedScore,
+  Value<double> fluencyScore,
+  Value<double> accuracyScore,
 });
 
 final class $$SessionRevisionsTableReferences extends BaseReferences<
@@ -11272,6 +11459,28 @@ class $$SessionRevisionsTableFilterComposer
 
   ColumnFilters<int> get toAyah => $composableBuilder(
       column: $table.toAyah, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get label => $composableBuilder(
+      column: $table.label, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isFullSurah => $composableBuilder(
+      column: $table.isFullSurah, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get memorizationScore => $composableBuilder(
+      column: $table.memorizationScore,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get tajweedScore => $composableBuilder(
+      column: $table.tajweedScore, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get fluencyScore => $composableBuilder(
+      column: $table.fluencyScore, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get accuracyScore => $composableBuilder(
+      column: $table.accuracyScore, builder: (column) => ColumnFilters(column));
 
   $$SessionsTableFilterComposer get sessionId {
     final $$SessionsTableFilterComposer composer = $composerBuilder(
@@ -11332,6 +11541,31 @@ class $$SessionRevisionsTableOrderingComposer
   ColumnOrderings<int> get toAyah => $composableBuilder(
       column: $table.toAyah, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get label => $composableBuilder(
+      column: $table.label, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isFullSurah => $composableBuilder(
+      column: $table.isFullSurah, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get memorizationScore => $composableBuilder(
+      column: $table.memorizationScore,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get tajweedScore => $composableBuilder(
+      column: $table.tajweedScore,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get fluencyScore => $composableBuilder(
+      column: $table.fluencyScore,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get accuracyScore => $composableBuilder(
+      column: $table.accuracyScore,
+      builder: (column) => ColumnOrderings(column));
+
   $$SessionsTableOrderingComposer get sessionId {
     final $$SessionsTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -11390,6 +11624,27 @@ class $$SessionRevisionsTableAnnotationComposer
 
   GeneratedColumn<int> get toAyah =>
       $composableBuilder(column: $table.toAyah, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<bool> get isFullSurah => $composableBuilder(
+      column: $table.isFullSurah, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<double> get memorizationScore => $composableBuilder(
+      column: $table.memorizationScore, builder: (column) => column);
+
+  GeneratedColumn<double> get tajweedScore => $composableBuilder(
+      column: $table.tajweedScore, builder: (column) => column);
+
+  GeneratedColumn<double> get fluencyScore => $composableBuilder(
+      column: $table.fluencyScore, builder: (column) => column);
+
+  GeneratedColumn<double> get accuracyScore => $composableBuilder(
+      column: $table.accuracyScore, builder: (column) => column);
 
   $$SessionsTableAnnotationComposer get sessionId {
     final $$SessionsTableAnnotationComposer composer = $composerBuilder(
@@ -11461,6 +11716,13 @@ class $$SessionRevisionsTableTableManager extends RootTableManager<
             Value<int> surahId = const Value.absent(),
             Value<int> fromAyah = const Value.absent(),
             Value<int> toAyah = const Value.absent(),
+            Value<String> label = const Value.absent(),
+            Value<bool> isFullSurah = const Value.absent(),
+            Value<int> sortOrder = const Value.absent(),
+            Value<double> memorizationScore = const Value.absent(),
+            Value<double> tajweedScore = const Value.absent(),
+            Value<double> fluencyScore = const Value.absent(),
+            Value<double> accuracyScore = const Value.absent(),
           }) =>
               SessionRevisionsCompanion(
             id: id,
@@ -11468,6 +11730,13 @@ class $$SessionRevisionsTableTableManager extends RootTableManager<
             surahId: surahId,
             fromAyah: fromAyah,
             toAyah: toAyah,
+            label: label,
+            isFullSurah: isFullSurah,
+            sortOrder: sortOrder,
+            memorizationScore: memorizationScore,
+            tajweedScore: tajweedScore,
+            fluencyScore: fluencyScore,
+            accuracyScore: accuracyScore,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -11475,6 +11744,13 @@ class $$SessionRevisionsTableTableManager extends RootTableManager<
             required int surahId,
             required int fromAyah,
             required int toAyah,
+            Value<String> label = const Value.absent(),
+            Value<bool> isFullSurah = const Value.absent(),
+            Value<int> sortOrder = const Value.absent(),
+            Value<double> memorizationScore = const Value.absent(),
+            Value<double> tajweedScore = const Value.absent(),
+            Value<double> fluencyScore = const Value.absent(),
+            Value<double> accuracyScore = const Value.absent(),
           }) =>
               SessionRevisionsCompanion.insert(
             id: id,
@@ -11482,6 +11758,13 @@ class $$SessionRevisionsTableTableManager extends RootTableManager<
             surahId: surahId,
             fromAyah: fromAyah,
             toAyah: toAyah,
+            label: label,
+            isFullSurah: isFullSurah,
+            sortOrder: sortOrder,
+            memorizationScore: memorizationScore,
+            tajweedScore: tajweedScore,
+            fluencyScore: fluencyScore,
+            accuracyScore: accuracyScore,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
@@ -11558,10 +11841,6 @@ typedef $$SessionEvaluationsTableCreateCompanionBuilder
   Value<double> tajweedScore,
   Value<double> fluencyScore,
   Value<double> accuracyScore,
-  Value<double> revisionMemorizationScore,
-  Value<double> revisionTajweedScore,
-  Value<double> revisionFluencyScore,
-  Value<double> revisionAccuracyScore,
 });
 typedef $$SessionEvaluationsTableUpdateCompanionBuilder
     = SessionEvaluationsCompanion Function({
@@ -11571,10 +11850,6 @@ typedef $$SessionEvaluationsTableUpdateCompanionBuilder
   Value<double> tajweedScore,
   Value<double> fluencyScore,
   Value<double> accuracyScore,
-  Value<double> revisionMemorizationScore,
-  Value<double> revisionTajweedScore,
-  Value<double> revisionFluencyScore,
-  Value<double> revisionAccuracyScore,
 });
 
 final class $$SessionEvaluationsTableReferences extends BaseReferences<
@@ -11621,22 +11896,6 @@ class $$SessionEvaluationsTableFilterComposer
 
   ColumnFilters<double> get accuracyScore => $composableBuilder(
       column: $table.accuracyScore, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get revisionMemorizationScore => $composableBuilder(
-      column: $table.revisionMemorizationScore,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get revisionTajweedScore => $composableBuilder(
-      column: $table.revisionTajweedScore,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get revisionFluencyScore => $composableBuilder(
-      column: $table.revisionFluencyScore,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get revisionAccuracyScore => $composableBuilder(
-      column: $table.revisionAccuracyScore,
-      builder: (column) => ColumnFilters(column));
 
   $$SessionsTableFilterComposer get sessionId {
     final $$SessionsTableFilterComposer composer = $composerBuilder(
@@ -11687,22 +11946,6 @@ class $$SessionEvaluationsTableOrderingComposer
       column: $table.accuracyScore,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get revisionMemorizationScore => $composableBuilder(
-      column: $table.revisionMemorizationScore,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get revisionTajweedScore => $composableBuilder(
-      column: $table.revisionTajweedScore,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get revisionFluencyScore => $composableBuilder(
-      column: $table.revisionFluencyScore,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get revisionAccuracyScore => $composableBuilder(
-      column: $table.revisionAccuracyScore,
-      builder: (column) => ColumnOrderings(column));
-
   $$SessionsTableOrderingComposer get sessionId {
     final $$SessionsTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -11747,18 +11990,6 @@ class $$SessionEvaluationsTableAnnotationComposer
 
   GeneratedColumn<double> get accuracyScore => $composableBuilder(
       column: $table.accuracyScore, builder: (column) => column);
-
-  GeneratedColumn<double> get revisionMemorizationScore => $composableBuilder(
-      column: $table.revisionMemorizationScore, builder: (column) => column);
-
-  GeneratedColumn<double> get revisionTajweedScore => $composableBuilder(
-      column: $table.revisionTajweedScore, builder: (column) => column);
-
-  GeneratedColumn<double> get revisionFluencyScore => $composableBuilder(
-      column: $table.revisionFluencyScore, builder: (column) => column);
-
-  GeneratedColumn<double> get revisionAccuracyScore => $composableBuilder(
-      column: $table.revisionAccuracyScore, builder: (column) => column);
 
   $$SessionsTableAnnotationComposer get sessionId {
     final $$SessionsTableAnnotationComposer composer = $composerBuilder(
@@ -11812,10 +12043,6 @@ class $$SessionEvaluationsTableTableManager extends RootTableManager<
             Value<double> tajweedScore = const Value.absent(),
             Value<double> fluencyScore = const Value.absent(),
             Value<double> accuracyScore = const Value.absent(),
-            Value<double> revisionMemorizationScore = const Value.absent(),
-            Value<double> revisionTajweedScore = const Value.absent(),
-            Value<double> revisionFluencyScore = const Value.absent(),
-            Value<double> revisionAccuracyScore = const Value.absent(),
           }) =>
               SessionEvaluationsCompanion(
             id: id,
@@ -11824,10 +12051,6 @@ class $$SessionEvaluationsTableTableManager extends RootTableManager<
             tajweedScore: tajweedScore,
             fluencyScore: fluencyScore,
             accuracyScore: accuracyScore,
-            revisionMemorizationScore: revisionMemorizationScore,
-            revisionTajweedScore: revisionTajweedScore,
-            revisionFluencyScore: revisionFluencyScore,
-            revisionAccuracyScore: revisionAccuracyScore,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -11836,10 +12059,6 @@ class $$SessionEvaluationsTableTableManager extends RootTableManager<
             Value<double> tajweedScore = const Value.absent(),
             Value<double> fluencyScore = const Value.absent(),
             Value<double> accuracyScore = const Value.absent(),
-            Value<double> revisionMemorizationScore = const Value.absent(),
-            Value<double> revisionTajweedScore = const Value.absent(),
-            Value<double> revisionFluencyScore = const Value.absent(),
-            Value<double> revisionAccuracyScore = const Value.absent(),
           }) =>
               SessionEvaluationsCompanion.insert(
             id: id,
@@ -11848,10 +12067,6 @@ class $$SessionEvaluationsTableTableManager extends RootTableManager<
             tajweedScore: tajweedScore,
             fluencyScore: fluencyScore,
             accuracyScore: accuracyScore,
-            revisionMemorizationScore: revisionMemorizationScore,
-            revisionTajweedScore: revisionTajweedScore,
-            revisionFluencyScore: revisionFluencyScore,
-            revisionAccuracyScore: revisionAccuracyScore,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
