@@ -103,5 +103,12 @@ void main() {
     // القسم ح.7: زر مشاركة تقرير الطالب — لا نضغطه (SharePlus يحتاج قناة
     // منصّة غير متاحة في اختبارات الودجت)، نتحقق فقط من وجوده.
     expect(find.byTooltip('مشاركة تقرير الطالب'), findsOneWidget);
+
+    // طلب المستخدم: السورة الحالية والكمية المحفوظة من القرآن ضمن تقرير
+    // الطالب — يوسف بلا currentSurahId ولا تقدّم مُسجَّل بعد، فتُعرَض
+    // القيمتان الافتراضيتان ('—' و'0%').
+    expect(find.text('السورة الحالية'), findsOneWidget);
+    expect(find.text('المحفوظ من القرآن'), findsOneWidget);
+    expect(find.text('—'), findsOneWidget);
   });
 }

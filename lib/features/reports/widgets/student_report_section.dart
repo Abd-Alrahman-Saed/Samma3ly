@@ -1,17 +1,25 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:quran_mobile/core/enums/attendance_status.dart';
 import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
-import 'package:quran_mobile/core/utils/date_utils.dart';
 import 'package:quran_mobile/core/widgets/error_banner.dart';
 import 'package:quran_mobile/core/widgets/loading_overlay.dart';
 import 'package:quran_mobile/core/widgets/session_card.dart';
 import 'package:quran_mobile/domain/entities/session.dart';
 import 'package:quran_mobile/domain/entities/student.dart';
+import 'package:quran_mobile/domain/services/juz_quarter_progress_service.dart';
+import 'package:quran_mobile/features/memorization/providers/juz_quarter_progress_provider.dart';
 import 'package:quran_mobile/features/reports/providers/report_provider.dart';
+import 'package:quran_mobile/features/reports/widgets/student_report_share_card.dart';
 import 'package:quran_mobile/features/sessions/providers/session_provider.dart';
 import 'package:quran_mobile/features/students/providers/student_provider.dart';
 
@@ -83,6 +91,13 @@ class _SelectedStudentReport extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final studentAsync = ref.watch(studentByIdProvider(studentId));
     final sessionsAsync = ref.watch(sessionsByStudentProvider(studentId));
+    // القسم "تقرير كل طالب" — السورة الحالية والكمية المحفوظة من القرآن،
+    // نفس مصدرَي بطاقتَي شاشة تفاصيل الطالب (student.currentSurahId
+    // وJuzQuarterProgressService، القسم ح.2) — لا حساب جديد، إعادة عرض
+    // لنفس البيانات هنا. لا تحجب الشاشة بانتظارهما (نفس تسامح
+    // student_details_screen.dart): تظهر '—'/0% لحين وصولهما.
+    final surahsAsync = ref.watch(surahListProvider);
+    final memorizedAsync = ref.watch(juzQuarterProgressProvider(studentId));
 
     if (studentAsync.isLoading || sessionsAsync.isLoading) {
       return const LoadingOverlay();
@@ -103,6 +118,10 @@ class _SelectedStudentReport extends ConsumerWidget {
     // جلسات المراجعة-فقط، فتخفّض متوسط الطالب زوراً).
     final scored = sessions.where((s) => s.overallScore != null).toList();
     final avgScore = scored.isEmpty ? 0.0 : scored.map((s) => s.overallScore!).reduce((a, b) => a + b) / scored.length;
+    final currentSurahName = student.currentSurahId != null
+        ? (surahsAsync.valueOrNull ?? const []).firstWhereOrNull((s) => s.id == student.currentSurahId)?.name
+        : null;
+    final memorizedPct = memorizedAsync.valueOrNull != null ? JuzQuarterProgressService.overallPercentage(memorizedAsync.value!) : 0.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,7 +144,16 @@ class _SelectedStudentReport extends ConsumerWidget {
             ),
             IconButton(
               tooltip: 'مشاركة تقرير الطالب',
-              onPressed: () => _share(student, sessions, total, attendancePct, avgScore),
+              onPressed: () => _shareReport(
+                context,
+                student: student,
+                sessions: sessions,
+                total: total,
+                attendancePct: attendancePct,
+                avgScore: avgScore,
+                currentSurahName: currentSurahName,
+                memorizedPct: memorizedPct,
+              ),
               icon: const AppIcon(AppIcons.share, size: 16, color: AppColors.textSecondary),
             ),
             TextButton(onPressed: onChangeStudent, child: const Text('تغيير')),
@@ -139,6 +167,18 @@ class _SelectedStudentReport extends ConsumerWidget {
             Expanded(child: _MiniStat(label: 'الحضور', value: '${attendancePct.toStringAsFixed(0)}%')),
             const SizedBox(width: 8),
             Expanded(child: _MiniStat(label: 'متوسط التقييم', value: avgScore.toStringAsFixed(1))),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // طلب المستخدم: الكمية المحفوظة من القرآن والسورة الحالية ضمن
+        // تقرير الطالب — نفس بطاقتَي شاشة تفاصيل الطالب (currentSurahId
+        // وJuzQuarterProgressService، القسم ح.2)، معروضتان هنا كإضافة على
+        // المعلومات الموجودة مسبقاً، لا بديلاً عنها.
+        Row(
+          children: [
+            Expanded(child: _MiniStat(label: 'السورة الحالية', value: currentSurahName ?? '—')),
+            const SizedBox(width: 8),
+            Expanded(child: _MiniStat(label: 'المحفوظ من القرآن', value: '${memorizedPct.toStringAsFixed(0)}%')),
           ],
         ),
         const SizedBox(height: 12),
@@ -180,22 +220,69 @@ class _SelectedStudentReport extends ConsumerWidget {
     );
   }
 
-  Future<void> _share(Student student, List<Session> sessions, int total, double attendancePct, double avgScore) {
-    final buffer = StringBuffer()
-      ..writeln('تقرير الطالب: ${student.fullName}')
-      ..writeln('عدد الجلسات: $total')
-      ..writeln('نسبة الحضور: ${attendancePct.toStringAsFixed(0)}%')
-      ..writeln('متوسط التقييم: ${avgScore.toStringAsFixed(1)}/10');
-    if (sessions.isNotEmpty) {
-      buffer.writeln('\nآخر الجلسات:');
-      for (final s in sessions.take(5)) {
-        buffer.writeln('- ${AppDateUtils.formatDate(s.date)}: ${s.attendanceStatus}'
-            '${s.overallScore != null ? ' (${s.overallScore!.toStringAsFixed(1)}/10)' : ''}');
-      }
-    }
-    return SharePlus.instance.share(
-      ShareParams(text: buffer.toString(), subject: 'تقرير الطالب: ${student.fullName}'),
+  /// مشاركة تقرير الطالب كصورة — نفس أسلوب
+  /// `SessionCreateScreen._shareSession` (القسم ح.14) بالضبط: بطاقة
+  /// `StudentReportShareCard` تُدرَج في overlay جذر التطبيق (لا في شجرة
+  /// هذا الودجت نفسه)، تُلتقَط عبر `RepaintBoundary.toImage`، ثم تُشارَك
+  /// كملف PNG عبر شيت المشاركة الأصلي للنظام. هذا الودجت (`ConsumerWidget`
+  /// بلا state خاص) لا يُهدَم أثناء الضغط (لا تنقّل يحدث من هنا)، فلا حاجة
+  /// لالتقاط `ProviderContainer` مسبقاً كما في شاشة الجلسة — لكن نفس أسلوب
+  /// الـoverlay مُتَّبَع للاتساق وتفادي أي اعتماد على مكان هذا الودجت داخل
+  /// الشجرة وقت الالتقاط.
+  Future<void> _shareReport(
+    BuildContext context, {
+    required Student student,
+    required List<Session> sessions,
+    required int total,
+    required double attendancePct,
+    required double avgScore,
+    required String? currentSurahName,
+    required double memorizedPct,
+  }) async {
+    final overlay = Overlay.of(context, rootOverlay: true);
+    final boundaryKey = GlobalKey();
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => Positioned(
+        left: -2000,
+        top: 0,
+        child: Material(
+          color: Colors.transparent,
+          child: RepaintBoundary(
+            key: boundaryKey,
+            child: StudentReportShareCard(
+              student: student,
+              totalSessions: total,
+              attendancePercent: attendancePct,
+              averageScore: avgScore,
+              currentSurahName: currentSurahName,
+              memorizedPercent: memorizedPct,
+              recentSessions: [
+                for (final s in sessions.take(5))
+                  ReportSessionLine(date: s.date, attendanceStatus: s.attendanceStatus, score: s.overallScore),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
+    overlay.insert(entry);
+    try {
+      // فرصة لإتمام تخطيط/رسم الإطار الأول قبل الالتقاط.
+      await WidgetsBinding.instance.endOfFrame;
+      await WidgetsBinding.instance.endOfFrame;
+      final boundary = boundaryKey.currentContext?.findRenderObject();
+      if (boundary is! RenderRepaintBoundary) return;
+      final image = await boundary.toImage(pixelRatio: 3);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/student_report_${student.id}.png');
+      await file.writeAsBytes(byteData.buffer.asUint8List());
+      await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], subject: 'تقرير الطالب: ${student.fullName}'));
+    } finally {
+      entry.remove();
+    }
   }
 }
 
@@ -212,9 +299,9 @@ class _MiniStat extends StatelessWidget {
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.cardBorder)),
       child: Column(
         children: [
-          Text(value, style: const TextStyle(fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontFamily: 'Cairo', fontSize: 10.5, color: AppColors.textSecondary)),
+          Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: 'Cairo', fontSize: 10.5, color: AppColors.textSecondary)),
         ],
       ),
     );
