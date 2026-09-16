@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -5,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.quran_mobile"
+    namespace = "com.samma3ly.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "30.0.15729638"
 
@@ -19,21 +22,44 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.quran_mobile"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // اسم التطبيق الثابت للأبد على أي جهاز — لا يتغيّر بعد أول نشر
+        // حقيقي، وإلا اعتبره أندرويد تطبيقاً مختلفاً تماماً (يفرض حذف
+        // النسخة القديمة يدوياً، فتُفقَد بيانات المستخدم المحلية).
+        applicationId = "com.samma3ly.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            val keystorePropertiesFile = rootProject.file("key.properties")
+            if (keystorePropertiesFile.exists()) {
+                val keystoreProperties = Properties()
+                keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // مفتاح توقيع ثابت (android/key.properties، غير متتبَّع في
+            // Git) — لازم يكون نفسه في كل نسخة تُنشَر مستقبلاً، وإلا رفض
+            // أندرويد أي تحديث لاحق باعتباره تطبيقاً موقَّعاً بمفتاح
+            // مختلف. لو الملف غير موجود بعد (مثلاً على CI بلا الملف
+            // السرّي)، يرجع تلقائياً لمفتاح الـdebug — بناء صالح للاختبار
+            // فقط، غير مخصَّص للنشر الفعلي.
+            val keystorePropertiesFile = rootProject.file("key.properties")
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }
