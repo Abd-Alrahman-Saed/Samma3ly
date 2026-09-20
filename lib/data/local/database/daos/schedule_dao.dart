@@ -18,6 +18,8 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase> with _$ScheduleDaoMixin 
     return query.get();
   }
 
+  Future<List<Schedule>> getAll() => select(schedules).get();
+
   Future<Schedule?> getById(int id) => (select(schedules)..where((t) => t.id.equals(id))).getSingleOrNull();
 
   Future<int> insert(SchedulesCompanion entry) => into(schedules).insert(entry);

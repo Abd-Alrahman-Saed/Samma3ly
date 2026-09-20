@@ -53,9 +53,9 @@ class BackupService {
       memorizations: await _getAllMemorizations(),
       revisions: await _getAllRevisions(),
       evaluations: await _getAllEvaluations(),
-      schedules: await _scheduleDao.getUpcoming(),
+      schedules: await _scheduleDao.getAll(),
       goals: await _goalDao.getAll(),
-      memorizedRanges: await _memRangeDao.getByStudent(0),
+      memorizedRanges: await _memRangeDao.getAll(),
     );
 
     final json = jsonEncode(data.toJson());

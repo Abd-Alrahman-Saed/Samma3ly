@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:quran_mobile/core/icons/app_icons.dart';
 import 'package:quran_mobile/core/theme/app_colors.dart';
@@ -73,7 +74,7 @@ class SettingsScreen extends ConsumerWidget {
                     onTap: () async {
                       try {
                         final backupService = ref.read(backupServiceProvider);
-                        final dir = Directory('${Directory.current.path}/backups');
+                        final dir = await _backupsDir();
                         if (!await dir.exists()) await dir.create(recursive: true);
                         final filePath = '${dir.path}/backup_${DateTime.now().millisecondsSinceEpoch}.json';
                         await backupService.backup(filePath);
@@ -97,7 +98,7 @@ class SettingsScreen extends ConsumerWidget {
                     label: 'مشاركة نسخة احتياطية',
                     enabled: true,
                     onTap: () async {
-                      final dir = Directory('${Directory.current.path}/backups');
+                      final dir = await _backupsDir();
                       final picked = await _pickBackupFile(context, dir);
                       if (picked == null) return;
                       await _shareBackup(picked);
@@ -110,7 +111,7 @@ class SettingsScreen extends ConsumerWidget {
                     label: 'استعادة نسخة احتياطية',
                     enabled: true,
                     onTap: () async {
-                      final dir = Directory('${Directory.current.path}/backups');
+                      final dir = await _backupsDir();
                       final picked = await _pickBackupFile(context, dir);
                       if (picked == null || !context.mounted) return;
                       final modified = (await picked.stat()).modified;
@@ -215,6 +216,14 @@ Future<void> _showNotificationSettingsDialog(BuildContext context, WidgetRef ref
       ),
     ),
   );
+}
+
+// `Directory.current` isn't a writable app directory on Android/iOS (it's
+// often `/` in release builds), so backup/restore silently failed there —
+// use the app's real documents directory instead.
+Future<Directory> _backupsDir() async {
+  final docsDir = await getApplicationDocumentsDirectory();
+  return Directory('${docsDir.path}/backups');
 }
 
 Future<void> _shareBackup(File file) async {
