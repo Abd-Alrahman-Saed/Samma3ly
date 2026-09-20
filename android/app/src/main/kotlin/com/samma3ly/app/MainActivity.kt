@@ -1,4 +1,4 @@
-package com.example.quran_mobile
+package com.samma3ly.app
 
 import io.flutter.embedding.android.FlutterActivity
 
